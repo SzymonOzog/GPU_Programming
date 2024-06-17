@@ -1,6 +1,6 @@
 #include <iostream>
 
-__global__ void add (int n , float* a, float* b, float* c)
+__global__ void add(int n , float* a, float* b, float* c)
 {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i < n)
@@ -43,7 +43,5 @@ int main()
   cudaFree(a_d);
   cudaFree(b_d);
   cudaFree(c_d);
-
-  std::cout<<"running"<<std::endl;
   return 0;
 }
