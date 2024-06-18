@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iomanip>
 #include <iostream> 
 #include <curand.h>
@@ -5,6 +6,7 @@
 #include <cuda_runtime.h>
 #include <cassert>
 #include <random>
+#include <string>
 
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -363,6 +365,40 @@ void test()
   test_softmax();
   std::cout<<"running test crossentropy"<<std::endl;
   test_crossentropy();
+
+}
+
+void read_mnist(const std::string filename, int length, float* x, float* y)
+{
+  int input_size = 784;
+  int labels = 10;
+
+  std::fstream fin;
+  fin.open("./mnist_train.csv");
+  std::string row;
+  constexpr char delim = ',';
+  for(int i = 0; i<length; i++)
+  {
+    fin >> row;
+    int pos = row.find(delim);
+    int label = std::stoi(row.substr(0, pos+1));
+    for(int j = 0; j<labels; j++)
+    {
+      y[labels*i + j] = (j==label);
+    }
+    row.erase(0, pos+1);
+    for(int j = 0; j<input_size; j++)
+    {
+      pos = row.find(delim);
+      if (pos == std::string::npos)
+      {
+        pos = row.length() - 1;
+      }
+      x[i*input_size+j] = std::stof(row.substr(0, pos+1)) / 255; //normalize value
+      row.erase(0, pos+1);
+    }
+    ASSERT(row.length() == 0, "didn't parse all values in row, %d", i);
+  }
 }
 
 int main(int argc, char** argv)
@@ -372,8 +408,21 @@ int main(int argc, char** argv)
     test();
     return 0;
   }
+
+  int test_length = 10000;
+  int train_length = 60000;
+
   float* input;
   int input_size = 784;
+  int labels = 10;
+
+  float* mnist_train_x = new float[input_size * train_length];
+  float* mnist_train_y = new float[labels * train_length];
+  read_mnist("./mnist_train.csv", train_length, mnist_train_x, mnist_train_x);
+
+  float* mnist_test_x = new float[input_size * test_length];
+  float* mnist_test_y = new float[labels * test_length];
+  read_mnist("./mnist_test.csv", test_length, mnist_test_x, mnist_test_x);
 
   int size1 = 300;
   float* weights1;
