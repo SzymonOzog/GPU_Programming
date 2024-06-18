@@ -12,7 +12,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
-__global__ void matmul_elem(int n, float* a, float* b, float* c)
+__global__ void matvec(int n, float* a, float* b, float* c)
 {
   int col = blockIdx.x*blockDim.x + threadIdx.x;
   if (col < n)
@@ -51,7 +51,7 @@ int main()
   dim3 dimGrid(ceil(N/(float)BLOCK_SIZE),1, 1);
   dim3 dimBlock(BLOCK_SIZE, 1, 1);
 
-  matmul_elem<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d);
+  matvec<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d);
   gpuErrchk(cudaPeekAtLastError());
   gpuErrchk(cudaDeviceSynchronize());
 
