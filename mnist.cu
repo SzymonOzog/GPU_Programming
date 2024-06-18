@@ -62,6 +62,20 @@ __global__ void softmax(int w, int h, float* a, float* b)
   }
 }
 
+__global__ void cross_entropy(int w, int h, float* preds, float* real, float* output)
+{
+  int idx = blockIdx.x*blockDim.x + threadIdx.x;
+  if (idx < h)
+  {
+    float loss = 0.f;
+    for (int i = 0; i<w; i++)
+    {
+      loss -= real[idx*w + i] * log(max(1e-6, preds[idx*w + i]));
+    }
+    output[idx] = loss;
+  }
+}
+
 __global__ void init_rand(int w, int h, float* mat)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
@@ -256,6 +270,87 @@ void test_softmax()
 
   free(output);
   free(input);
+  free(expected);
+}
+
+void test_crossentropy()
+{
+  int W = 3;
+  int H = 4;
+  float tolerance = 1e-6;
+  float* preds = new float[W*H];
+  preds[0] = 0.05f;
+  preds[1] = 0.9f;
+  preds[2] = 0.05f;
+
+  preds[3] = 0.3f;
+  preds[4] = 0.3f;
+  preds[5] = 0.4f;
+
+  preds[6] = 0.99f;
+  preds[7] = 0.05f;
+  preds[8] = 0.05f;
+
+  preds[9] = 0.99f;
+  preds[10] = 0.05f;
+  preds[11] = 0.05f;
+
+  float* output = new float[H];
+  float* expected = new float[H];
+  expected[0] = 2.995732f;
+  expected[1] = 1.203973f;
+  expected[2] = 2.995732f;
+  expected[3] = 0.010050f;
+  float* real = new float[W*H];
+
+  real[0] = 1;
+  real[1] = 0;
+  real[2] = 0;
+
+  real[3] = 0;
+  real[4] = 1;
+  real[5] = 0;
+
+  real[6] = 0;
+  real[7] = 0;
+  real[8] = 1;
+
+  real[9] = 1;
+  real[10] = 0;
+  real[11] = 0;
+  float* preds_d;
+  float* real_d;
+  float* output_d;
+
+  int BLOCK_SIZE = 16;
+  dim3 dimGrid = dim3(ceil(H/(float)BLOCK_SIZE), 1, 1);
+  dim3 dimBlock = dim3(BLOCK_SIZE, 1, 1);
+
+  gpuErrchk(cudaMalloc((void**) &preds_d, W*H*sizeof(float)));
+  gpuErrchk(cudaMalloc((void**) &real_d, W*H*sizeof(float)));
+  gpuErrchk(cudaMalloc((void**) &output_d, H*sizeof(float)));
+
+  gpuErrchk(cudaMemcpy(preds_d, preds, W*H*sizeof(float), cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMemcpy(real_d, real, W*H*sizeof(float), cudaMemcpyHostToDevice));
+
+  cross_entropy<<<dimGrid, dimBlock>>>(W, H, preds_d, real_d, output_d);
+  gpuErrchk(cudaPeekAtLastError());
+  gpuErrchk(cudaDeviceSynchronize());
+
+  gpuErrchk(cudaMemcpy(output, output_d, H*sizeof(float), cudaMemcpyDeviceToHost));
+  for(int i = 0; i<H; i++)
+  {
+    ASSERT(abs(output[i] - expected[i]) < tolerance, "failed at %d, expected %f, got %f", i, expected[i], output[i]);
+  }
+
+  cudaFree(output_d);
+  cudaFree(preds_d);
+  cudaFree(real_d);
+
+  free(output);
+  free(preds);
+  free(real);
+  free(expected);
 }
 
 void test()
@@ -266,6 +361,8 @@ void test()
   test_relu();
   std::cout<<"running test softmax"<<std::endl;
   test_softmax();
+  std::cout<<"running test crossentropy"<<std::endl;
+  test_crossentropy();
 }
 
 int main(int argc, char** argv)
