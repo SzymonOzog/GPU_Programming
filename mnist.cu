@@ -413,16 +413,17 @@ int main(int argc, char** argv)
   int train_length = 60000;
 
   float* input;
+  float* labels;
   int input_size = 784;
-  int labels = 10;
+  int labels_size = 10;
 
   float* mnist_train_x = new float[input_size * train_length];
-  float* mnist_train_y = new float[labels * train_length];
-  read_mnist("./mnist_train.csv", train_length, mnist_train_x, mnist_train_x);
+  float* mnist_train_y = new float[labels_size * train_length];
+  read_mnist("./mnist_train.csv", train_length, mnist_train_x, mnist_train_y);
 
   float* mnist_test_x = new float[input_size * test_length];
-  float* mnist_test_y = new float[labels * test_length];
-  read_mnist("./mnist_test.csv", test_length, mnist_test_x, mnist_test_x);
+  float* mnist_test_y = new float[labels_size * test_length];
+  read_mnist("./mnist_test.csv", test_length, mnist_test_x, mnist_test_y);
 
   int size1 = 300;
   float* weights1;
