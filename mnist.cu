@@ -43,8 +43,7 @@ __global__ void backward(int batch_size, int n, int out_w, float lr, float* weig
     for(int i = 0; i < n; i++)
     {
       float w = weights[i*out_w + column];
-      float dl = d_l[row*n + i];
-      dl += w*dl;
+      dl += w*d_l[row*n + i];
     }
     out_d_l[row*out_w + column] = dl;
   }
