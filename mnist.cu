@@ -1,3 +1,4 @@
+#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream> 
@@ -296,6 +297,7 @@ int main(int argc, char** argv)
     float cum_loss = 0.f;
     int correct = 0;
     int total = 0;
+    auto start_time = std::chrono::system_clock::now();
     for(int batch = 0; batch<train_length/BATCH_SIZE; batch++)
     {
       total += BATCH_SIZE;
@@ -462,7 +464,10 @@ int main(int argc, char** argv)
         val_loss += loss_h[i];
       }
     }
-    std::cout<<"epoch "<<epoch<<" cum loss "<<cum_loss<<" accuracy "<<(float)correct/total<<
+
+    auto time_total = std::chrono::system_clock::now() - start_time;
+    std::cout<<"epoch "<<epoch<<" took "<<std::chrono::duration_cast<std::chrono::milliseconds>(time_total).count()<<
+      "ms cum loss "<<cum_loss<<" accuracy "<<(float)correct/total<<
       " val loss "<<val_loss<<" val accuracy "<<(float)val_correct/val_total<<std::endl;
   }
 }
