@@ -144,8 +144,8 @@ __global__ void init_rand(int w, int h, float* mat)
   if (row < h && column < w)
   {
     curandState state;
-    curand_init(42, row*w+column, 0, &state);
-    mat[row*w + column] = curand_normal(&state)/10.f;
+    curand_init(44, row*w+column, 0, &state);
+    mat[row*w + column] = curand_normal(&state)*sqrtf(2.f/h);
   }
 }
 
@@ -613,7 +613,6 @@ int main(int argc, char** argv)
 
       float* loss_h = new float[BATCH_SIZE];
       gpuErrchk(cudaMemcpy(loss_h, loss, BATCH_SIZE*sizeof(float), cudaMemcpyDeviceToHost));
-      
       
       for (int i = 0; i < BATCH_SIZE; i++)
       {
