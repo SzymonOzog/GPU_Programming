@@ -260,9 +260,9 @@ int main(int argc, char** argv)
 
 
   int BLOCK_SIZE = 16;
-  int BATCH_SIZE = 16;
-  int EPOCHS = 3000;
-  float LR = 0.003f;
+  int BATCH_SIZE = 64;
+  int EPOCHS = 10;
+  float LR = 0.05f;
   dim3 dimGrid;
   dim3 dimBlock;
 
