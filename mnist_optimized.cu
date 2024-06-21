@@ -33,6 +33,21 @@ __global__ void forward(int batch_size, int n, int out_w, float* input, float* w
   }
 }
 
+__global__ void forward_relu(int batch_size, int n, int out_w, float* input, float* weights, float* biases, float* output)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < batch_size && column < out_w)
+  {
+    float out = biases[column];
+    for(int i = 0; i < n; i++)
+    {
+      out += weights[i*out_w + column] * input[row*n + i];
+    }
+    output[row*out_w+column] = out > 0.f ? out : 0.f;
+  }
+}
+
 __global__ void backward(int batch_size, int n, int out_w, float* weights, float* biases, float* d_l, float* out_d_l, float* activations)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
@@ -308,19 +323,13 @@ int main(int argc, char** argv)
       dimGrid = dim3(ceil(size1/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
       dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
 
-      forward<<<dimGrid, dimBlock>>>(BATCH_SIZE, input_size, size1, input, weights1, biases1, x1);
-      gpuErrchk(cudaPeekAtLastError());
-
-      relu<<<dimGrid, dimBlock>>>(size1, BATCH_SIZE, x1, a1);
+      forward_relu<<<dimGrid, dimBlock>>>(BATCH_SIZE, input_size, size1, input, weights1, biases1, a1);
       gpuErrchk(cudaPeekAtLastError());
 
       dimGrid = dim3(ceil(size2/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
       dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
 
-      forward<<<dimGrid, dimBlock>>>(BATCH_SIZE, size1, size2, a1, weights2, biases2, x2);
-      gpuErrchk(cudaPeekAtLastError());
-
-      relu<<<dimGrid, dimBlock>>>(size2, BATCH_SIZE, x2, a2);
+      forward_relu<<<dimGrid, dimBlock>>>(BATCH_SIZE, size1, size2, a1, weights2, biases2, a2);
       gpuErrchk(cudaPeekAtLastError());
 
       dimGrid = dim3(ceil(size3/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
@@ -406,19 +415,13 @@ int main(int argc, char** argv)
       dimGrid = dim3(ceil(size1/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
       dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
 
-      forward<<<dimGrid, dimBlock>>>(BATCH_SIZE, input_size, size1, input, weights1, biases1, x1);
-      gpuErrchk(cudaPeekAtLastError());
-
-      relu<<<dimGrid, dimBlock>>>(size1, BATCH_SIZE, x1, a1);
+      forward_relu<<<dimGrid, dimBlock>>>(BATCH_SIZE, input_size, size1, input, weights1, biases1, a1);
       gpuErrchk(cudaPeekAtLastError());
 
       dimGrid = dim3(ceil(size2/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
       dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
 
-      forward<<<dimGrid, dimBlock>>>(BATCH_SIZE, size1, size2, a1, weights2, biases2, x2);
-      gpuErrchk(cudaPeekAtLastError());
-
-      relu<<<dimGrid, dimBlock>>>(size2, BATCH_SIZE, x2, a2);
+      forward_relu<<<dimGrid, dimBlock>>>(BATCH_SIZE, size1, size2, a1, weights2, biases2, a2);
       gpuErrchk(cudaPeekAtLastError());
 
       dimGrid = dim3(ceil(size3/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
