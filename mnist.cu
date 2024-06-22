@@ -245,7 +245,7 @@ int main(int argc, char** argv)
 
   int BLOCK_SIZE = 16;
   int BATCH_SIZE = 16;
-  int EPOCHS = 3000;
+  int EPOCHS = 10;
   float LR = 0.003f;
   dim3 dimGrid;
   dim3 dimBlock;
@@ -292,6 +292,7 @@ int main(int argc, char** argv)
   gpuErrchk(cudaMalloc((void**) &loss, BATCH_SIZE*sizeof(float)));
 
 
+  float total_time = 0.f;
   for(int epoch = 0; epoch<EPOCHS; epoch++)
   {
     float cum_loss = 0.f;
@@ -465,9 +466,11 @@ int main(int argc, char** argv)
       }
     }
 
-    auto time_total = std::chrono::system_clock::now() - start_time;
-    std::cout<<"epoch "<<epoch<<" took "<<std::chrono::duration_cast<std::chrono::milliseconds>(time_total).count()<<
+    float epoch_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start_time).count();
+    total_time += epoch_time;
+    std::cout<<"epoch "<<epoch<<" took "<<epoch_time<<
       "ms cum loss "<<cum_loss<<" accuracy "<<(float)correct/total<<
       " val loss "<<val_loss<<" val accuracy "<<(float)val_correct/val_total<<std::endl;
   }
+  std::cout<<"finished training, total time = "<<total_time<<" ms"<<std::endl;
 }
