@@ -77,7 +77,7 @@ class Block:
 
 class Introduction(VoiceoverScene, ThreeDScene):
   def construct(self):
-    self.set_speech_service(GTTSService(transcription_model="base"))
+    self.set_speech_service(GTTSService())
     
     title = Text("GPU programming", font_size=72)
     with self.voiceover(text="Hello and welcome to episode 0 in the series on GPU programming") as trk:
@@ -139,15 +139,15 @@ class Introduction(VoiceoverScene, ThreeDScene):
     cpu_title = Text("CPU").scale(0.8).next_to(cpu, UP)
     gpu_title = Text("GPU").scale(0.8).next_to(gpu, UP)
 
-    cpu_code = """ void add(int n , float* a, float* b, float* c)
+    cpu_code = """void add(int n , float* a, float* b, float* c)
 {
   for (int i = 0; i<n; i++)
   {
     c[i] = a[i] + b[i];
   }
 }"""
-    cpu_code_obj = Code(code=cpu_code, tab_width=2, language="c").next_to(cpu_title, DOWN)
-    gpu_code = """ __global__ void add(int n , float* a, float* b, float* c)
+    cpu_code_obj = Code(code=cpu_code, tab_width=2, language="c", font_size=11, background="rectangle", line_no_buff=0.1, corner_radius=0.1).next_to(cpu_title, DOWN)
+    gpu_code = """__global__ void add(int n , float* a, float* b, float* c)
 {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i < n)
@@ -155,23 +155,22 @@ class Introduction(VoiceoverScene, ThreeDScene):
     c[i] = a[i] + b[i];
   }
 }"""
-    gpu_code_obj = Code(code=gpu_code, tab_width=2, language="c").next_to(gpu_title, DOWN)
+    gpu_code_obj = Code(code=gpu_code, tab_width=2, language="c", font_size=11, line_no_buff=0.1, corner_radius=0.1).next_to(gpu_title, DOWN).shift(0.2*LEFT)
 
     with self.voiceover(text="""First we will go over the overall structure of a GPU, how it's architecture differs
-                        from the CPU,<bookmark mark='1'> and we will write a few simple kernels and see<bookmark mark='2'> how the code compares to what we are used to with classical programming""") as trk:
+                        from the CPU, and we will write a few simple kernels and see how the code compares to what we are used to with classical programming""") as trk:
       self.play(Write(cpu_title), Create(cpu))
       self.play(Write(gpu_title), Create(gpu))
-      self.wait_until_bookmark("1")
+      self.wait(2)
       self.play(FadeOut(cpu), FadeOut(gpu))
-      self.wait_until_bookmark("2")
       self.play(Write(cpu_code_obj), Write(gpu_code_obj))
 
-    self.play(Unwrite(cpu_code_obj), Unwrite(gpu_code_obj))
+    self.play(Unwrite(cpu_code_obj), Unwrite(gpu_code_obj), Unwrite(gpu_title), Unwrite(cpu_title))
 
     m = 4
     n = 4
     blocks = [[[None] * m for j in range(m)] for i in range(m)]
-    current_pos = ORIGIN.copy() + LEFT + UP
+    current_pos = ORIGIN.copy() + 2*(LEFT + UP)
     for x in range(m):
       current_pos[1] = ORIGIN[1]
       for y in range(m):
@@ -206,23 +205,24 @@ class Introduction(VoiceoverScene, ThreeDScene):
       self.play(LaggedStart(blocks[0][1][0].create(x_range=n, y_range=n, z_index=z_max)))
       self.play(LaggedStart(blocks[1][1][0].create(x_range=n, y_range=n, z_index=z_max)))
 
-      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, {m}, {m}), dim3({n}, {n}, {n})>>>", tab_width=2, language="c").shift(2*UP)))
+      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, {m}, {m}), dim3({n}, {n}, {n})>>>", tab_width=2, language="c").shift(2*UP).set_z_index(z_max+1)))
       creations = []
       for x in range(m):
         for y in range(m):
           for z in range(m):
             if x == 0 or y == 0 or z == 0:
               creations.extend(blocks[x][y][z].create(x_range=n, y_range=n, z_range=n, z_index=z_max-z))
-      self.play(*creations)
-      self.move_camera(theta=-radians(65), gamma=radians(45), phi=-radians(45))
-
-      self.move_camera(theta=-radians(0), gamma=radians(0), phi=radians(0))
+      self.move_camera(theta=-radians(65), gamma=radians(45), phi=-radians(45), added_anims=creations)
+      self.wait(2)
+      self.move_camera(theta=-radians(90), gamma=radians(0), phi=radians(0))
     anims = [] 
     for obj in self.mobjects:
       anims.append(FadeOut(obj))
     self.play(*anims)
 
-    gpu_code = """ __global__ void update_layer(int w, int h, int batch_size, float lr, float* weights, float* biases, float* activations, float* d_l)
+    gpu_code = """
+__global__ void update_layer(int w, int h, int batch_size, float lr,
+                             float* weights, float* biases, float* activations, float* d_l)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
@@ -241,7 +241,7 @@ class Introduction(VoiceoverScene, ThreeDScene):
     biases[column] -= lr * db / batch_size;
   }
 } """
-    gpu_code_obj = Code(code=gpu_code, tab_width=2, language="c").next_to(gpu_title, DOWN)
+    gpu_code_obj = Code(code=gpu_code, tab_width=2, language="c", font_size=12, background="rectangle")
 
     with self.voiceover(text="""After that, we will go through a bigger project, where we'll creata a simple neural network using just CUDA 
                         and no external libraries""") as trk:
@@ -282,6 +282,10 @@ class Introduction(VoiceoverScene, ThreeDScene):
       self.play(FadeIn(bandwidth_bound), FadeIn(compute_bound))
       self.play(Create(mem_text), Create(compute_text))
 
+    self.play(Uncreate(mem_text), Uncreate(compute_text))
+    self.play(FadeOut(bandwidth_bound), FadeOut(compute_bound))
+    self.play(Uncreate(bandwidth_line), Unwrite(bandwidth_label), Uncreate(throughput_line), Unwrite(throughput_label))
+    self.play(Uncreate(axes), Unwrite(x_label), Unwrite(y_label))
     with self.voiceover(text="""We'll then do a few more specific examples on optimization as our neural network code will be
                         very simple and won't cover all of the performance checkboxes""") as trk:
       pass
