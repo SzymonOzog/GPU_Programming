@@ -286,9 +286,153 @@ __global__ void update_layer(int w, int h, int batch_size, float lr,
     self.play(FadeOut(bandwidth_bound), FadeOut(compute_bound))
     self.play(Uncreate(bandwidth_line), Unwrite(bandwidth_label), Uncreate(throughput_line), Unwrite(throughput_label))
     self.play(Uncreate(axes), Unwrite(x_label), Unwrite(y_label))
-    with self.voiceover(text="""We'll then do a few more specific examples on optimization as our neural network code will be
-                        very simple and won't cover all of the performance checkboxes""") as trk:
-      pass
+
+    def join(r1, r2, start, double=True):
+      nonlocal arrows
+      e_y = r2.get_y() + (1 if r2.get_y() < start[1] else -1) * r2.height/2
+      end = np.array([start[0], e_y, 0])
+      ret = None
+      if double: 
+        ret = DoubleArrow(start, end, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1)
+      else:
+        ret = Arrow(end, start, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1)
+      arrows.append(ret)
+      return ret
+
+    shared_store = []
+    shared_load = []
+    register_store = []
+    register_load = []
+    local_store = []
+    local_load = []
+    global_store = []
+    global_load = []
+    constant_load = []
+
+    thread_objs = []
+    rects = []
+    texts = []
+    arrows = []
+    def make_thread(idx=0):
+      nonlocal thread_objs, rects, texts
+      thread = Rectangle(height=0.5, width=2.2, color=BLUE)
+      texts.append(Text(f"Thread {idx}", font_size=15, color=BLUE))
+      rects.append(thread)
+      thread.add(texts[-1])
+
+      registers = Rectangle(height=0.5, width=1.0, color=GREEN).next_to(thread, UP, aligned_edge=LEFT, buff=0.5)
+      texts.append(Text("Registers", font_size=15, color=GREEN).move_to(registers.get_center()))
+      registers.add(texts[-1])
+      rects.append(registers)
+
+      local = Rectangle(height=0.5, width=1.0, color=GREEN).next_to(thread, UP, aligned_edge=RIGHT, buff=0.5)
+      l = Text("Local", font_size=15, color=GREEN)
+      m = Text("Memory", font_size=15, color=GREEN)
+      VGroup(l, m).arrange(DOWN, buff=0.05).move_to(local.get_center())
+      texts.append(l)
+      texts.append(m)
+      rects.append(local)
+      local.add(l)
+      local.add(m)
+
+      t_group = VGroup(thread, registers, local)
+      t_group.add(join(registers, thread, start=registers.get_corner(DOWN)))
+      t_group.add(join(local, thread, start=local.get_corner(DOWN)))
+
+      thread_objs.append(thread)
+      return t_group
+
+    def make_block(idx=0):
+      nonlocal rects, texts
+      block = Rectangle(height=3.5, width=5.0, color=PURPLE)
+      rects.append(block)
+
+      threads = VGroup(make_thread(0), make_thread(1)).arrange(RIGHT).shift(0.8*DOWN)
+      block.add(threads)
+
+      shared_mem = Rectangle(width=4.0, height=0.5, color=YELLOW).next_to(threads, UP)
+      rects.append(shared_mem)
+      block.add(shared_mem)
+
+      texts.append(Text(f"Shared Memory", font_size=15, color=YELLOW).move_to(shared_mem.get_center()))
+      shared_mem.add(texts[-1])
+      for t in thread_objs[idx*2:]:
+        block.add(join(t, shared_mem, t.get_corner(UP)))
+      texts.append(Text(f"Block {idx}", color=PURPLE).next_to(shared_mem, UP))
+      shared_mem.add(texts[-1])
+      
+      return block
+
+    blocks = VGroup(make_block(0), make_block(1)).arrange(RIGHT).shift(UP)
+
+    constant = Rectangle(width=blocks.width, height=1, color=YELLOW).next_to(blocks, DOWN)
+    texts.append(Text("Constant Memory", font_size=30, color=YELLOW).move_to(constant.get_center()))
+    rects.append(constant)
+
+    gmem = Rectangle(width=blocks.width, height=1, color=RED).next_to(constant, DOWN)
+    rects.append(gmem)
+    texts.append(Text("Global Memory", font_size=30, color=RED).move_to(gmem.get_center()))
+
+    subobjects = []
+    queue = [blocks]
+    while queue:
+      o = queue.pop()
+      subobjects.append(o)
+      queue.extend(o.submobjects)
+
+
+    for mo in subobjects:
+      for so in mo.submobjects.copy():
+        if any(so in x for x in [rects, texts, arrows, thread_objs]):
+          mo.remove(so)
+
+    for t in thread_objs[:2]:
+      join(t, constant, t.get_corner(DOWN+LEFT)+RIGHT*0.2, False)
+      join(t, gmem, t.get_corner(DOWN+LEFT))
+
+    for t in thread_objs[2:]:
+      join(t, constant, t.get_corner(DOWN+RIGHT)+LEFT*0.2, False)
+      join(t, gmem, t.get_corner(DOWN+RIGHT))
+
+    print(arrows)
+    for i in [1, 3, 7, 9]:
+      local_store.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      local_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    for i in [0, 2, 6, 8]:
+      register_store.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      register_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    for i in [4, 5, 10, 11]:
+      shared_store.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      shared_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    for i in [13, 15, 17, 19]:
+      global_store.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      global_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    for i in [12, 14, 16, 18]:
+      constant_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    with self.voiceover(text="""Afterwards we will dive deeper into memory architecture in gpus. This will be one of the most important
+                        part to understand""") as trk:
+      self.play(*[Create(r) for r in rects])
+      self.wait(1)
+      self.play(*[Write(t) for t in texts])
+      self.wait(1)
+      self.play(*[Create(a) for a in arrows])
+
+    with self.voiceover(text="""And with our new knowledge we will dive deeper into more advanced memory level optimizations that
+                        our neural network example won't cover because of it's low memory requirements""") as trk:
+      self.play(*local_store)
+      self.play(*local_load)
+      self.play(*register_store)
+      self.play(*register_load)
+      self.play(*shared_store)
+      self.play(*shared_load)
+      self.play(*global_store)
+      self.play(*global_load)
+      self.play(*constant_load)
+
+    anims = [] 
+    for obj in self.mobjects:
+      anims.append(FadeOut(obj))
+    self.play(*anims)
 
     with self.voiceover(text="""Of course, in order to optimize, you need to know where your bottlenecks are, so a few tools
                         for profiling will naturally get discussed""") as trk:
