@@ -209,10 +209,10 @@ class Introduction(VoiceoverScene, ThreeDScene):
       self.play(code_obj.animate.become(Code(code=f"<<<dim3(1, 1, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)), LaggedStart(blocks[0][0][0].create(x_range=n, y_range=n, z_index=z_max)))
       self.wait(0.5)
 
-      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, 1, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)), LaggedStart(blocks[1][0][0].create(x_range=n, y_range=n, z_index=z_max)))
+      self.play(code_obj.animate.become(Code(code=f"<<<dim3(2, 1, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)), LaggedStart(blocks[1][0][0].create(x_range=n, y_range=n, z_index=z_max)))
       self.wait(0.5)
 
-      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, {m}, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)),
+      self.play(code_obj.animate.become(Code(code=f"<<<dim3(2, 2, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)),
                 LaggedStart(blocks[0][1][0].create(x_range=n, y_range=n, z_index=z_max)), LaggedStart(blocks[1][1][0].create(x_range=n, y_range=n, z_index=z_max)))
 
       self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, {m}, {m}), dim3({n}, {n}, {n})>>>", tab_width=2, language="c").shift(2*UP+9*OUT).set_z_index(z_max+1)))
