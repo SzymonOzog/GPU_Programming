@@ -192,34 +192,30 @@ class Introduction(VoiceoverScene, ThreeDScene):
       self.add_fixed_in_frame_mobjects(code_obj)
       self.add_fixed_orientation_mobjects(code_obj)
       self.play(LaggedStart(blocks[0][0][0].create(x_range=n, z_index=z_max)))
+      self.wait(0.5)
 
-      self.wait(1)
-      self.play(code_obj.animate.become(Code(code=f"<<<dim3(1, 1, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)))
-      self.play(LaggedStart(blocks[0][0][0].create(x_range=n, y_range=n, z_index=z_max)))
+      self.play(code_obj.animate.become(Code(code=f"<<<dim3(1, 1, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)), LaggedStart(blocks[0][0][0].create(x_range=n, y_range=n, z_index=z_max)))
+      self.wait(0.5)
 
-      self.wait(1)
-      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, 1, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)))
+      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, 1, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)), LaggedStart(blocks[1][0][0].create(x_range=n, y_range=n, z_index=z_max)))
+      self.wait(0.5)
 
-      self.play(LaggedStart(blocks[1][0][0].create(x_range=n, y_range=n, z_index=z_max)))
+      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, {m}, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)),
+                LaggedStart(blocks[0][1][0].create(x_range=n, y_range=n, z_index=z_max)), LaggedStart(blocks[1][1][0].create(x_range=n, y_range=n, z_index=z_max)))
 
-      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, {m}, 1), dim3({n}, {n}, 1)>>>", tab_width=2, language="c").shift(2*UP)))
-      self.play(LaggedStart(blocks[0][1][0].create(x_range=n, y_range=n, z_index=z_max)))
-      self.play(LaggedStart(blocks[1][1][0].create(x_range=n, y_range=n, z_index=z_max)))
-
-      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, {m}, {m}), dim3({n}, {n}, {n})>>>", tab_width=2, language="c").shift(2*UP).set_z_index(z_max+1)))
+      self.play(code_obj.animate.become(Code(code=f"<<<dim3({m}, {m}, {m}), dim3({n}, {n}, {n})>>>", tab_width=2, language="c").shift(2*UP+9*OUT).set_z_index(z_max+1)))
       creations = []
       for x in range(m):
         for y in range(m):
           for z in range(m):
             if x == 0 or y == 0 or z == 0:
               creations.extend(blocks[x][y][z].create(x_range=n, y_range=n, z_range=n, z_index=z_max-z))
-      self.move_camera(theta=-radians(65), gamma=radians(45), phi=-radians(45), added_anims=creations)
-      self.wait(2)
-      self.move_camera(theta=-radians(90), gamma=radians(0), phi=radians(0))
+      self.move_camera(theta=-radians(65), gamma=radians(45), phi=-radians(45), added_anims=[LaggedStart(*creations, lag_ratio=0.001)])
     anims = [] 
     for obj in self.mobjects:
       anims.append(FadeOut(obj))
     self.play(*anims)
+    self.move_camera(theta=-radians(90), gamma=radians(0), phi=radians(0))
 
     gpu_code = """
 __global__ void update_layer(int w, int h, int batch_size, float lr,
