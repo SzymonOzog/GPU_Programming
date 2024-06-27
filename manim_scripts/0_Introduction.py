@@ -84,17 +84,6 @@ class Introduction(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="Hello and welcome to episode 0 in the series on GPU programming") as trk:
       self.play(Write(title))
 
-    with self.voiceover(text="""It's supposed to give you a quickstart on how, and when to run code on a GPU
-                        as opposed to the CPU""") as trk:
-      pass
-
-    with self.voiceover(text="""This time I'm recording the series as the episodes are released so there won't be a 
-                        schedule for how many episodes there will be and what will they cover""") as trk:
-      pass
-
-    with self.voiceover(text="But there is a rough outline of what I want to cover") as trk:
-      pass
-
     self.play(Unwrite(title))
 
     control = Rectangle(width=2.1, height=2.1, color=PURPLE).shift(LEFT * 4)
@@ -140,6 +129,29 @@ class Introduction(VoiceoverScene, ThreeDScene):
     cpu_title = Text("CPU").scale(0.8).next_to(cpu, UP)
     gpu_title = Text("GPU").scale(0.8).next_to(gpu, UP)
 
+    font_size = 24
+    cpu_details = VGroup(Text("Low latency", font_size=font_size),  Text("Low throughput", font_size=font_size), Text("Optimized for serial operations", font_size=font_size)).arrange(DOWN).next_to(cpu_title, DOWN)
+    gpu_details = VGroup(Text("High latency", font_size=font_size), Text("High throughput", font_size=font_size), Text("Optimized for parallel operations", font_size=font_size)).arrange(DOWN).next_to(gpu_title, DOWN)
+    with self.voiceover(text="""It's supposed to give you a quickstart on how, and when to run code on a GPU
+                        as opposed to the CPU, and what are the key differences between them""") as trk:
+      self.play(Write(cpu_title), Write(gpu_title))
+      self.wait(1)
+      for i in range(3):
+        self.play(Write(cpu_details[i]), Write(gpu_details[i]))
+        self.wait(1)
+
+    with self.voiceover(text="""This time I'm recording the series as the episodes are released so there won't be a 
+                        schedule for how many episodes there will be and what will they cover""") as trk:
+      pass
+
+    anims = [] 
+    for obj in self.mobjects:
+      if obj not in [cpu_title, gpu_title]:
+        anims.append(FadeOut(obj))
+    with self.voiceover(text="But there is a rough outline of what I want to cover") as trk:
+      self.play(*anims)
+
+
     cpu_code = """void add(int n , float* a, float* b, float* c)
 {
   for (int i = 0; i<n; i++)
@@ -160,8 +172,8 @@ class Introduction(VoiceoverScene, ThreeDScene):
 
     with self.voiceover(text="""First we will go over the overall structure of a GPU, how it's architecture differs
                         from the CPU, and we will write a few simple kernels and see how the code compares to what we are used to with classical programming""") as trk:
-      self.play(Write(cpu_title), Create(cpu))
-      self.play(Write(gpu_title), Create(gpu))
+      self.play(Create(cpu))
+      self.play(Create(gpu))
       self.wait(2)
       self.play(FadeOut(cpu), FadeOut(gpu))
       self.play(Write(cpu_code_obj), Write(gpu_code_obj))
