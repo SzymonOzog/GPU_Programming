@@ -2,6 +2,7 @@ from manim import *
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.gtts import GTTSService
 from math import radians, degrees
+import random
 
 class Thread(VGroup):
     def __init__(
@@ -409,6 +410,9 @@ __global__ void update_layer(int w, int h, int batch_size, float lr,
       global_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
     for i in [12, 14, 16, 18]:
       constant_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+
+    access_anims = [shared_store, shared_load, register_store, register_load, local_store, local_load, global_store, global_load, constant_load]
+
     with self.voiceover(text="""Afterwards we will dive deeper into memory architecture in gpus. This will be one of the most important
                         part to understand""") as trk:
       self.play(*[Create(r) for r in rects])
@@ -416,23 +420,18 @@ __global__ void update_layer(int w, int h, int batch_size, float lr,
       self.play(*[Write(t) for t in texts])
       self.wait(1)
       self.play(*[Create(a) for a in arrows])
+      while trk.get_remaining_duration() > 0:
+        self.play(*access_anims[random.randint(0, len(access_anims) -1)])
 
     with self.voiceover(text="""And with our new knowledge we will dive deeper into more advanced memory level optimizations that
                         our neural network example won't cover because of it's low memory requirements""") as trk:
-      self.play(*local_store)
-      self.play(*local_load)
-      self.play(*register_store)
-      self.play(*register_load)
-      self.play(*shared_store)
-      self.play(*shared_load)
-      self.play(*global_store)
-      self.play(*global_load)
-      self.play(*constant_load)
+      while trk.get_remaining_duration() > 1:
+        self.play(*access_anims[random.randint(0, len(access_anims) -1)])
+      anims = [] 
+      for obj in self.mobjects:
+        anims.append(FadeOut(obj))
+      self.play(*anims)
 
-    anims = [] 
-    for obj in self.mobjects:
-      anims.append(FadeOut(obj))
-    self.play(*anims)
 
     with self.voiceover(text="""Of course, in order to optimize, you need to know where your bottlenecks are, so a few tools
                         for profiling will naturally get discussed""") as trk:
