@@ -1,6 +1,6 @@
 from manim import *
 from manim_voiceover import VoiceoverScene
-from manim_voiceover.services.gtts import GTTSService
+from manim_voiceover.services.recorder import RecorderService
 from math import radians, degrees
 import random
 
@@ -78,7 +78,7 @@ class Block:
 
 class Introduction(VoiceoverScene, ThreeDScene):
   def construct(self):
-    self.set_speech_service(GTTSService())
+    self.set_speech_service(RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None))
     
     title = Text("GPU programming", font_size=72)
     with self.voiceover(text="Hello and welcome to episode 0 in the series on GPU programming") as trk:
@@ -133,23 +133,20 @@ class Introduction(VoiceoverScene, ThreeDScene):
     cpu_details = VGroup(Text("Low latency", font_size=font_size),  Text("Low throughput", font_size=font_size), Text("Optimized for serial operations", font_size=font_size)).arrange(DOWN).next_to(cpu_title, DOWN)
     gpu_details = VGroup(Text("High latency", font_size=font_size), Text("High throughput", font_size=font_size), Text("Optimized for parallel operations", font_size=font_size)).arrange(DOWN).next_to(gpu_title, DOWN)
     with self.voiceover(text="""It's supposed to give you a quickstart on how, and when to run code on a GPU
-                        as opposed to the CPU, and what are the key differences between them""") as trk:
+                        as opposed to the CPU and what are the key differences between them""") as trk:
       self.play(Write(cpu_title), Write(gpu_title))
-      self.wait(1)
+      self.wait(1.6)
       for i in range(3):
         self.play(Write(cpu_details[i]), Write(gpu_details[i]))
-        self.wait(1)
+        self.wait(1.5)
 
     with self.voiceover(text="""This time I'm recording the series as the episodes are released so there won't be a 
-                        schedule for how many episodes there will be and what will they cover""") as trk:
-      pass
+                        direct table of contents, but there is a rough outline of topics that I want to cover""") as trk:
+      while trk.get_remaining_duration() > 4:
+        self.wait(0.3)
+      for i in range(3):
+        self.play(Unwrite(cpu_details[2-i]), Unwrite(gpu_details[2-i]))
 
-    anims = [] 
-    for obj in self.mobjects:
-      if obj not in [cpu_title, gpu_title]:
-        anims.append(FadeOut(obj))
-    with self.voiceover(text="But there is a rough outline of what I want to cover") as trk:
-      self.play(*anims)
 
 
     cpu_code = """void add(int n , float* a, float* b, float* c)
@@ -172,9 +169,11 @@ class Introduction(VoiceoverScene, ThreeDScene):
 
     with self.voiceover(text="""First we will go over the overall structure of a GPU, how it's architecture differs
                         from the CPU, and we will write a few simple kernels and see how the code compares to what we are used to with classical programming""") as trk:
-      self.play(Create(cpu))
-      self.play(Create(gpu))
-      self.wait(2)
+      self.play(*[Create(x) for x in [control, alu1, alu2, alu3, alu4, cache, dram_cpu]])
+      self.play(*[Write(x) for x in [control_text, alu_text1, alu_text2, alu_text3, alu_text4, cache_text, dram_cpu_text]])
+      self.play(*[Create(x) for x in gpu_alus], Create(dram_gpu))
+      self.play(Write(dram_gpu_text))
+      self.wait(3)
       self.play(FadeOut(cpu), FadeOut(gpu))
       self.play(Write(cpu_code_obj), Write(gpu_code_obj))
 
@@ -252,9 +251,9 @@ __global__ void update_layer(int w, int h, int batch_size, float lr,
 } """
     gpu_code_obj = Code(code=gpu_code, tab_width=2, language="c", font_size=12, background="rectangle")
 
-    with self.voiceover(text="""After that, we will go through a bigger project, where we'll creata a simple neural network using just CUDA 
+    with self.voiceover(text="""After that, we will go through a bigger project, where we'll create a simple neural network using just CUDA 
                         and no external libraries""") as trk:
-      self.play(Create(gpu_code_obj))
+      self.play(Create(gpu_code_obj, run_time=5))
 
     self.play(Uncreate(gpu_code_obj))
     axes = Axes(x_range=[0, 10, 1], y_range=[0, 7, 1], x_length=7, y_length=5, axis_config={"include_tip": False})
@@ -284,17 +283,17 @@ __global__ void update_layer(int w, int h, int batch_size, float lr,
 
     graph = VGroup(axes, x_label, y_label, bandwidth_line, bandwidth_label,
                    throughput_line, throughput_label, bandwidth_bound, compute_bound, mem_text, compute_text)
-    with self.voiceover(text="""After the fundamentals are done we'll dive into performance characteristics, We'll discuss the most commont problems 
-                        with optimization, and we'll optimize our neural network to run faster""") as trk:
+    with self.voiceover(text="""With the fundamentals covered we'll dive into performance characteristics, We'll discuss the most common
+                        bottlenecks and some ways to mitgate them. We will use some of that information immediately to optimize our neural network code""") as trk:
       self.play(Create(axes), Write(x_label), Write(y_label))
       self.play(Create(bandwidth_line), Write(bandwidth_label), Create(throughput_line), Write(throughput_label))
       self.play(FadeIn(bandwidth_bound), FadeIn(compute_bound))
       self.play(Create(mem_text), Create(compute_text))
-
-    self.play(Uncreate(mem_text), Uncreate(compute_text))
-    self.play(FadeOut(bandwidth_bound), FadeOut(compute_bound))
-    self.play(Uncreate(bandwidth_line), Unwrite(bandwidth_label), Uncreate(throughput_line), Unwrite(throughput_label))
-    self.play(Uncreate(axes), Unwrite(x_label), Unwrite(y_label))
+      while trk.get_remaining_duration() > 3:
+        self.wait(0.3)
+      self.play(Uncreate(mem_text), Uncreate(compute_text))
+      self.play(FadeOut(bandwidth_bound), FadeOut(compute_bound))
+      self.play(Uncreate(bandwidth_line), Unwrite(bandwidth_label), Uncreate(throughput_line), Unwrite(throughput_label))
 
     def join(r1, r2, start, double=True):
       nonlocal arrows
@@ -421,8 +420,9 @@ __global__ void update_layer(int w, int h, int batch_size, float lr,
 
     access_anims = [shared_store, shared_load, register_store, register_load, local_store, local_load, global_store, global_load, constant_load]
 
-    with self.voiceover(text="""Afterwards we will dive deeper into memory architecture in gpus. This will be one of the most important
+    with self.voiceover(text="""Afterwards we will study memory architecture in gpus. This will be one of the most important
                         part to understand""") as trk:
+      self.play(Uncreate(axes), Unwrite(x_label), Unwrite(y_label))
       self.play(*[Create(r) for r in rects])
       self.wait(1)
       self.play(*[Write(t) for t in texts])
@@ -432,36 +432,51 @@ __global__ void update_layer(int w, int h, int batch_size, float lr,
         self.play(*access_anims[random.randint(0, len(access_anims) -1)])
 
     with self.voiceover(text="""And with our new knowledge we will dive deeper into more advanced memory level optimizations that
-                        our neural network example won't cover because of it's low memory requirements""") as trk:
+                        our neural network example won't be able to cover because of it's low memory requirements""") as trk:
       while trk.get_remaining_duration() > 1:
         self.play(*access_anims[random.randint(0, len(access_anims) -1)])
       anims = [] 
       for obj in self.mobjects:
         anims.append(FadeOut(obj))
       self.play(*anims)
+    self.wait(1)
 
 
     with self.voiceover(text="""Of course, in order to optimize, you need to know where your bottlenecks are, so a few tools
                         for profiling will naturally get discussed""") as trk:
       pass
+    self.wait(1)
 
     with self.voiceover(text="""That should mark the end of the fundamental part - after that, we'll see where this series goes""") as trk:
       pass
+    self.wait(1)
 
-    with self.voiceover(text="""Remember, that real learning happens when you actually do the work yourself, so I highly encourage you to 
-                        code along and experiment in your own environment""") as trk:
+    with self.voiceover(text="""Remember, that real learning happens when you actually do the work yourself, make errors and struggle with fixing them
+                        so I highly encourage you to code along and experiment in your own environment""") as trk:
       pass
+    self.wait(1)
 
     with self.voiceover(text="""And that will be your first excercise - set up your workplace. I'll leave some links in the description on how
-                        to install and run CUDA on your device. Also, for those that don't have a CUDA capable GPU, there is a wonderfull lecture
+                        to install and run CUDA on your device.""") as trk:
+      pass
+    self.wait(1)
+
+    with self.voiceover(text="""Also, for those that don't have a CUDA capable GPU, there is a wonderfull lecture
                         from Jeremy Howard where he shows how to run CUDA code in notebooks such as google Colab where you can get some free compute""") as trk:
       pass
+    self.wait(1)
+
+    with self.voiceover(text="""I'll leave the link to the notebook and the video and I highly recommend that you check it out
+                        as well as all other lectures from the CUDA Mode group - they are truly wonderful resources for both beginners and advanced users""") as trk:
+      pass
+    self.wait(1)
 
     ppmp = ImageMobject("./PPMP.jpg")
     with self.voiceover(text="""For those that want to dive deeper into GPU programming, I highly recomend a book \"programming massively parallel processors\", 
                         It has an amazing overview of GPU's and is one of the best if not the best resource on the topic""") as trk:
       self.play(FadeIn(ppmp))
     self.play(FadeOut(ppmp))
+    self.wait(1)
 
     tbob = ImageMobject("./3b1b.png")
     with self.voiceover(text="""In this series we will also build a simple neural network, I will explain it as we go but explaining neural networks
@@ -470,5 +485,11 @@ __global__ void update_layer(int w, int h, int batch_size, float lr,
       self.play(FadeIn(tbob))
     self.wait(1)
     self.play(FadeOut(tbob))
-    self.wait(3)
 
+    gh = ImageMobject("./gh_logo.png", scale_to_resolution=1080)
+    with self.voiceover(text="""The code for all of the examples as well as the animations will be 
+                        available on github. So go check it out.""") as trk:
+      self.play(FadeIn(gh))
+    self.wait(1)
+    self.play(FadeOut(gh))
+    self.wait(3)
