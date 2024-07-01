@@ -86,48 +86,94 @@ class Introduction(VoiceoverScene, ThreeDScene):
 
     self.play(Unwrite(title))
 
-    control = Rectangle(width=2.1, height=2.1, color=PURPLE).shift(LEFT * 4)
-    control_text = Text("Control", font_size=24).move_to(control.get_center())
+    cpu_rects = []
+    cpu_texts = []
+    def create_alu():
+      alu = Rectangle(width=1, height=1, color=BLUE, fill_opacity=0.5)
+      sw = 0.04
+      cpu_rects.append(alu)
+      alu_text = Text("ALU", font_size=14).move_to(alu.get_center())
+      cpu_texts.append(alu_text)
 
-    alu1 = Rectangle(width=1, height=1, color=BLUE).next_to(control, RIGHT, aligned_edge=UP, buff=0.1)
-    alu2 = Rectangle(width=1, height=1, color=BLUE).next_to(alu1, RIGHT, buff=0.1)
-    alu3 = Rectangle(width=1, height=1, color=BLUE).next_to(control, RIGHT, aligned_edge=DOWN, buff=0.1)
-    alu4 = Rectangle(width=1, height=1, color=BLUE).next_to(alu3, RIGHT, buff=0.1)
+      cache = Rectangle(width=1, height=0.25, fill_opacity=0.5, color=RED).next_to(alu, DOWN, aligned_edge=LEFT, buff=sw)
+      cpu_rects.append(cache)
+      cache_text = Text("L1 Cache", font_size=14).move_to(cache.get_center())
+      cpu_texts.append(cache_text)
+      
+      control = Rectangle(width=0.5, height=1.25+sw, color=PURPLE, fill_opacity=0.5).next_to(alu, RIGHT, aligned_edge=UP, buff=sw)
+      cpu_rects.append(control)
+      control_text1 = Text("Con", font_size=14)
+      control_text2 = Text("trol", font_size=14)
+      ct = VGroup(control_text1, control_text2).arrange(DOWN, buff=0.05).move_to(control)
+      cpu_texts.append(control_text1)
+      cpu_texts.append(control_text2)
+      return VGroup(alu, alu_text, cache, cache_text, control, ct)
 
-    alu_text1 = Text("ALU", font_size=24).move_to(alu1.get_center())
-    alu_text2 = Text("ALU", font_size=24).move_to(alu2.get_center())
-    alu_text3 = Text("ALU", font_size=24).move_to(alu3.get_center())
-    alu_text4 = Text("ALU", font_size=24).move_to(alu4.get_center())
 
-    cache = Rectangle(width=4.3, height=0.5, color=RED).next_to(control, DOWN, buff=0.1).align_to(control, LEFT)
-    cache_text = Text("Cache", font_size=24).move_to(cache.get_center())
+    alu1 = create_alu().shift(4*LEFT+UP)
+    alu2 = create_alu().next_to(alu1, RIGHT, buff=0.1)
+    alu3 = create_alu().next_to(alu1, DOWN, aligned_edge=LEFT, buff=0.1)
+    alu4 = create_alu().next_to(alu3, RIGHT, buff=0.1)
+    
+    cache1 = Rectangle(width=alu1.width, height=0.4, color=RED, fill_opacity=0.5).next_to(alu3, DOWN, aligned_edge=LEFT, buff=0.1)
+    cache2 = Rectangle(width=alu1.width, height=0.4, color=RED, fill_opacity=0.5).next_to(alu4, DOWN, aligned_edge=LEFT, buff=0.1)
+    cpu_rects.append(cache1)
+    cpu_rects.append(cache2)
+    cpu_texts.append(Text("L2 Cache", font_size=14).move_to(cache1))
+    cpu_texts.append(Text("L2 Cache", font_size=14).move_to(cache2))
 
-    dram_cpu = Rectangle(width=4.3, height=0.5, color=GREEN).next_to(cache, DOWN, buff=0.1).align_to(cache, LEFT)
+    cache3 = Rectangle(width=cache1.width*2 + 0.1, height=0.5, color=RED, fill_opacity=0.5).next_to(cache1, DOWN, aligned_edge=LEFT, buff=0.1)
+    cpu_rects.append(cache3)
+    cpu_texts.append(Text("L3 Cache", font_size=14).move_to(cache3))
+
+
+    dram_cpu = Rectangle(width=cache3.width, height=0.7, color=GREEN, fill_opacity=0.5).next_to(cache3, DOWN, buff=0.1).align_to(alu3, LEFT)
     dram_cpu_text = Text("DRAM", font_size=24).move_to(dram_cpu.get_center())
+    cpu_rects.append(dram_cpu)
+    cpu_texts.append(dram_cpu_text)
 
+    gpu_rects = []
+    gpu_texts = []
     gpu_alu_list = []
     for _ in range(5):
-      cc = VGroup(Rectangle(width=0.5, height=0.2, color=PURPLE), 
-                  Rectangle(width=0.5, height=0.2, color=RED)).arrange(DOWN, buff=0.1)
-      gpu_alu_list.append(VGroup(cc, *[Rectangle(width=0.5, height=0.5, color=BLUE) for _ in range(8)]).arrange(RIGHT, buff=0.1))
+      cc = VGroup(Rectangle(width=0.5, height=0.2, color=PURPLE, fill_opacity=0.5), 
+                  Rectangle(width=0.5, height=0.2, color=RED, fill_opacity=0.5)).arrange(DOWN, buff=0.1)
+      gpu_rects.append(cc[0])
+      gpu_rects.append(cc[1])
+      alus = [Rectangle(width=0.5, height=0.5, color=BLUE, fill_opacity=0.5) for _ in range(8)]
+      gpu_rects.extend(alus)
+      gpu_alu_list.append(VGroup(cc, *alus).arrange(RIGHT, buff=0.1))
     gpu_alus = VGroup(*gpu_alu_list).scale(0.8).arrange(DOWN, buff=0.16).shift(RIGHT * 4)
 
 
-    dram_gpu = Rectangle(width=4.25, height=0.5, color=GREEN).match_width(gpu_alus).next_to(gpu_alus, DOWN, buff=0.1)
-    dram_gpu_text = Text("DRAM", font_size=24).move_to(dram_gpu.get_center())
+    l2 = Rectangle(width=4.25, height=0.4, color=RED, fill_opacity=0.5).match_width(gpu_alus).next_to(gpu_alus, DOWN, buff=0.1)
+    gpu_rects.append(l2)
+    l2_text = Text("L2 Cache", font_size=14).move_to(l2)
+    gpu_texts.append(l2_text)
 
-    cpu = VGroup(control, control_text,
-                   alu1, alu_text1,
-                   alu2, alu_text2,
-                   alu3, alu_text3,
-                   alu4, alu_text4,
-                   cache, cache_text, 
-                   dram_cpu, dram_cpu_text)
+    dram_gpu = Rectangle(width=4.25, height=0.5, color=GREEN, fill_opacity=0.5).match_width(gpu_alus).next_to(l2, DOWN, buff=0.1)
+    gpu_rects.append(dram_gpu)
+    dram_gpu_text = Text("DRAM", font_size=14).move_to(dram_gpu.get_center())
+    gpu_texts.append(dram_gpu_text)
 
-    gpu = VGroup(gpu_alus, dram_gpu, dram_gpu_text).match_height(cpu).align_to(cpu, UP)
+    cpu = VGroup(*cpu_rects, *cpu_texts, dram_cpu, dram_cpu_text)
+
+    gpu = VGroup(gpu_alus, l2, l2_text, dram_gpu, dram_gpu_text).match_height(cpu).align_to(cpu, UP)
 
     cpu_title = Text("CPU").scale(0.8).next_to(cpu, UP)
     gpu_title = Text("GPU").scale(0.8).next_to(gpu, UP)
+
+    subobjects = []
+    queue = [cpu, gpu]
+    while queue:
+      o = queue.pop()
+      subobjects.append(o)
+      queue.extend(o.submobjects)
+
+    for mo in subobjects:
+      for so in mo.submobjects.copy():
+        if any(so in x for x in [cpu_rects, cpu_texts, gpu_rects, gpu_texts]):
+          mo.remove(so)
 
     font_size = 24
     cpu_details = VGroup(Text("Low latency", font_size=font_size),  Text("Low throughput", font_size=font_size), Text("Optimized for serial operations", font_size=font_size)).arrange(DOWN).next_to(cpu_title, DOWN)
@@ -169,12 +215,16 @@ class Introduction(VoiceoverScene, ThreeDScene):
 
     with self.voiceover(text="""First we will go over the overall structure of a GPU, how it's architecture differs
                         from the CPU, and we will write a few simple kernels and see how the code compares to what we are used to with classical programming""") as trk:
-      self.play(*[Create(x) for x in [control, alu1, alu2, alu3, alu4, cache, dram_cpu]])
-      self.play(*[Write(x) for x in [control_text, alu_text1, alu_text2, alu_text3, alu_text4, cache_text, dram_cpu_text]])
-      self.play(*[Create(x) for x in gpu_alus], Create(dram_gpu))
-      self.play(Write(dram_gpu_text))
+      self.play(*[Create(x) for x in cpu_rects])
+      self.play(*[Write(x) for x in cpu_texts])
+
+      self.play(*[Create(x) for x in gpu_rects])
+      self.play(*[Write(x) for x in gpu_texts])
+
       self.wait(3)
-      self.play(FadeOut(cpu), FadeOut(gpu))
+      self.play(*[Unwrite(x) for x in cpu_texts], *[Uncreate(x) for x in cpu_rects])
+
+      self.play(*[Unwrite(x) for x in gpu_texts],*[Uncreate(x) for x in gpu_rects])
       self.play(Write(cpu_code_obj), Write(gpu_code_obj))
 
     self.play(Unwrite(cpu_code_obj), Unwrite(gpu_code_obj), Unwrite(gpu_title), Unwrite(cpu_title))
