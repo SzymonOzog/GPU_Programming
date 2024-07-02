@@ -151,3 +151,66 @@ class Introduction(VoiceoverScene, ThreeDScene):
                         that can point us to the fact that they all must execute exatly the same instruction at the same time""") as trk:
       self.wait(2)
       self.play(*[Indicate(x, run_time=3) for x in gpu_rects if x.color == PURPLE])
+
+    
+    with self.voiceover(text="""Let's put this comparison to actual numbers and compare my CPU which is a 
+                        AMD Ryzen 7 3800X and my GPU - GTX 3090Ti""") as trk:
+      self.play(*[Unwrite(x) for x in cpu_texts], *[Uncreate(x) for x in cpu_rects], *[Unwrite(x) for x in gpu_texts],*[Uncreate(x) for x in gpu_rects])
+
+    font_size = 32
+    cpu_details = BulletedList("8 Cores",  "32 MB L3 Cache", "4MB L2 Cache", "64 KB/Core L1 Cache", font_size=font_size).shift(2*LEFT)
+    gpu_details = BulletedList("10752 Cores", "No L3 Cache", "6MB L2 Cache", "128 KB/SM L1 Cache", font_size=font_size).shift(2*RIGHT)
+
+
+    with self.voiceover(text="""My cpu has just 8 cores - compared to 10752 cores in my GPU""") as trk:
+      self.play(Write(cpu_details[0]), Write(gpu_details[0]))
+    with self.voiceover(text="""It also has 32 MB of L3 cache that is not present in my GPU""") as trk:
+      self.play(Write(cpu_details[1]), Write(gpu_details[1]))
+    with self.voiceover(text="""It has 4 MB of L2 cache whereas my GPU has 6MB""") as trk:
+      self.play(Write(cpu_details[2]), Write(gpu_details[2]))
+
+    with self.voiceover(text="""But to be fair, each thread has it's own L2 Cache giving us 512 KB per thread""") as trk:
+      font_size = 20
+      part = Text("512KB/Core L2 Cache", font_size=font_size)
+      dot = MathTex("\\cdot").scale(2)
+      dot.next_to(part[0], LEFT, SMALL_BUFF)
+      part.add_to_back(dot)
+      part.move_to(cpu_details[2], aligned_edge=LEFT)
+      self.play(Transform(cpu_details[2], part))
+    with self.voiceover(text="""The GPU L2 Cache is more simillar in the structure to the L3 in the CPU because it's shared between 
+                        the threads""") as trk:
+      pass
+    with self.voiceover(text="""But if we were to compare it to the CPU L2 it would give around 558B per core""") as trk:
+      part = Text("558B/Core L2 Cache", font_size=font_size)
+      dot = MathTex("\\cdot").scale(2)
+      dot.next_to(part[0], LEFT, SMALL_BUFF)
+      part.add_to_back(dot)
+      part.move_to(gpu_details[2], aligned_edge=LEFT)
+      self.play(Transform(gpu_details[2], part))
+
+
+    with self.voiceover(text="""And finally the CPU has 64KB of L1 Cache per Core and the GPU has 128 KB of L1 Cache per SM""") as trk:
+      self.play(Write(cpu_details[3]), Write(gpu_details[3]))
+
+    gpu_rects = []
+    cc = VGroup(Rectangle(width=0.5, height=0.2, color=PURPLE, fill_opacity=0.5), 
+                Rectangle(width=0.5, height=0.2, color=RED, fill_opacity=0.5)).arrange(DOWN, buff=0.1)
+    gpu_rects.append(cc[0])
+    gpu_rects.append(cc[1])
+    alus = [Rectangle(width=0.5, height=0.5, color=BLUE, fill_opacity=0.5) for _ in range(8)]
+    gpu_rects.extend(alus)
+    sm = VGroup(cc, *alus).arrange(RIGHT, buff = 0.1).set_z_index(1).shift(3*UP) 
+    with self.voiceover(text="""You might wonder what this SM thing is - we will discuss the detais of it later, but for now
+                        think of it as one row of connected cores in our diagram""") as trk:
+      self.play(*[Create(x) for x in gpu_rects])
+
+    with self.voiceover(text="""In my gpu a SM consists of 128 cores so that gives us 1KB of L1 Cache per core""") as trk:
+      self.play(*[Uncreate(x) for x in gpu_rects])
+      part = Text("1KB/Core L1 Cache", font_size=font_size)
+      dot = MathTex("\\cdot").scale(2)
+      dot.next_to(part[0], LEFT, SMALL_BUFF)
+      part.add_to_back(dot)
+      part.move_to(gpu_details[3], aligned_edge=LEFT)
+      self.play(Transform(gpu_details[3], part))
+
+    self.wait(1)
