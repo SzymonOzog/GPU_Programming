@@ -211,7 +211,7 @@ class Introduction(VoiceoverScene, ThreeDScene):
     c[i] = a[i] + b[i];
   }
 }"""
-    gpu_code_obj = Code(code=gpu_code, tab_width=2, language="c", font_size=11, line_no_buff=0.1, corner_radius=0.1).next_to(gpu_title, DOWN).shift(0.2*LEFT)
+    gpu_code_obj = Code(code=gpu_code, tab_width=2, language="c", font_size=11, background="rectangle", line_no_buff=0.1, corner_radius=0.1).next_to(gpu_title, DOWN).shift(0.2*LEFT)
 
     with self.voiceover(text="""First we will go over the overall structure of a GPU, how it's architecture differs
                         from the CPU, and we will write a few simple kernels and see how the code compares to what we are used to with classical programming""") as trk:
