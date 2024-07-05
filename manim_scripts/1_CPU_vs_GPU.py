@@ -1,3 +1,4 @@
+import math
 from manim import *
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.gtts import GTTSService
@@ -436,3 +437,82 @@ cudaFree(c_d);"""
       self.play(Transform(steps[4].copy(), code_obj, replace_mobject_with_target_in_scene=True))
     self.play(steps[4].animate.set_color(GREEN))
     self.wait(1)
+
+    with self.voiceover(text="""Now let's chech what are the actuall time differences when running our vector addition code on a GPU vs the CPU""") as trk:
+      anims = [] 
+      for obj in self.mobjects:
+        anims.append(FadeOut(obj))
+      self.play(*anims)
+
+    ps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+    cpu_t = [8610,  9760,  11060,  16320,  27310,  55421,  95662,  181362,  357233,  706197,  1.40494e+06,  2.84067e+06,  5.66813e+06,  1.13283e+07,  2.27314e+07,  4.65509e+07,  1.38753e+08,  3.43102e+08,  4.8381e+08,  1.00493e+09,  1.76705e+09,  3.9403e+09,  8.13902e+09,  1.7344e+10]
+    gpu_t = [2.28495e+06,2.30132e+06,2.26564e+06,2.27229e+06,2.26786e+06,2.26626e+06,2.28136e+06,2.29248e+06,2.29704e+06,2.33805e+06,2.33565e+06,2.87786e+06,2.3503e+06,2.34703e+06,2.36478e+06,2.47582e+06,2.72161e+06,3.02623e+06,4.00075e+06,8.21823e+06,1.37786e+07,3.02901e+07,4.73732e+07,9.24e+07]
+
+    n = [2**p for p in ps] 
+    log_cpu_t = [math.log10(t) for t in cpu_t]
+    log_gpu_t = [math.log10(t) for t in gpu_t]
+
+    ax = Axes(
+        x_range=[ps[0] , ps[-1], 2],
+        y_range=[log_cpu_t[0] , log_cpu_t[-1], 1],
+        x_axis_config={"scaling": LogBase(2)},
+        y_axis_config={"scaling": LogBase()},
+        axis_config={"include_numbers": True})
+
+    labels = ax.get_axis_labels(x_label="n", y_label="Time[ns]")
+
+    cpu_graph = ax.plot_line_graph(
+        x_values=n,
+        y_values=cpu_t,
+        line_color=BLUE,
+        add_vertex_dots=False
+    )
+
+    gpu_graph = ax.plot_line_graph(
+        x_values=n,
+        y_values=gpu_t,
+        line_color=GREEN,
+        add_vertex_dots=False
+    )
+    gpu_label = Text("GPU times", font_size=32, color=GREEN).next_to(labels[1], DOWN).shift(0.2*RIGHT+0.2*DOWN)
+    cpu_label = Text("CPU times", font_size=32, color=BLUE).next_to(gpu_label, DOWN)
+
+    with self.voiceover(text="""Here is a graph of the results for different input sizes""") as trk:
+      self.play(Create(ax), Write(labels))
+      self.play(Create(cpu_graph), Create(gpu_graph))
+      self.play(Write(gpu_label), Write(cpu_label))
+
+    with self.voiceover(text="""It's worth noting that the scale is logarithmic so the ratios are much higher than they seem at first glance""") as trk:
+      pass
+
+
+    ratio = [c/g for c,g in zip(cpu_t, gpu_t)]
+    ax2 = Axes(
+        x_range=[ps[0] , ps[-1], 2],
+        y_range=[ratio[0] , ratio[-1], 20],
+        x_axis_config={"scaling": LogBase(2)},
+        y_axis_config={},
+        axis_config={"include_numbers": True})
+
+    labels2 = ax.get_axis_labels(x_label="n", y_label="\\frac{CPU}{GPU}")
+    
+    ratio_graph = ax2.plot_line_graph(
+        x_values=n,
+        y_values=ratio,
+        line_color=BLUE,
+        add_vertex_dots=False
+    )
+    with self.voiceover(text="""If we were to graph the ratios, it turns out that our GPU code runs up to 180 times faster for big input sizes""") as trk:
+      self.play(Transform(ax, ax2), Transform(labels, labels2), Transform(VGroup(gpu_label, cpu_label, gpu_graph, cpu_graph), ratio_graph))
+    self.wait(1)
+
+    with self.voiceover(text="""And to be real with you, this kernel is just the simplest one to present.
+                        Since it does 3 memory accesses per one operation - it's not actually that much faster. 
+                        We'll get into some kernels that get crazy improvements on the GPU - and if you want to see those - subscribe and stay tuned for the next episode""") as trk:
+      pass
+    self.wait(1)
+    anims = [] 
+    for obj in self.mobjects:
+      anims.append(FadeOut(obj))
+    self.play(*anims)
+    self.wait(3)
