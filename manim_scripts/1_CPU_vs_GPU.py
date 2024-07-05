@@ -246,7 +246,6 @@ class Introduction(VoiceoverScene, ThreeDScene):
           ret.append(["?"])
       return ret
     self.wait(1)
-    # self.play(*[x.animate.shift(RIGHT) for x in [v1, v2, v3, plus, eq]])
     cpu_code = """void add(int n , float* a, float* b, float* c)
 {
   for (int i = 0; i<n; i++)
@@ -340,3 +339,32 @@ class Introduction(VoiceoverScene, ThreeDScene):
       self.play(t3[1].animate.set_color(RED))
 
     self.wait(1)
+
+    with self.voiceover(text="""Now that we have our kernel written, we actually need to run it""") as trk:
+      anims = [] 
+      for obj in self.mobjects:
+        anims.append(FadeOut(obj))
+      self.play(*anims)
+      
+    steps = BulletedList("Allocate the memory on the GPU",
+                         "Copy the data from the CPU to the GPU",
+                         "Run the kernel",
+                         "Copy the data back to the CPU",
+                         "Free the memory",
+                         font_size=24).shift(2*LEFT)
+
+    with self.voiceover(text="""To do that, we need to first allocate the memory for our inputs, and outputs on the GPU""") as trk:
+      self.play(Create(steps[0]))
+
+    with self.voiceover(text="""And since our GPU cannot access the data in our RAM or on our Hard Drive - we need to copy our data from the 
+                        CPU to the GPU""") as trk:
+      self.play(Create(steps[1]))
+
+    with self.voiceover(text="""We can then run our kernel""") as trk:
+      self.play(Create(steps[2]))
+
+    with self.voiceover(text="""Copy the results back to the CPU to be able to read them""") as trk:
+      self.play(Create(steps[3]))
+
+    with self.voiceover(text="""And free the memory on our GPU""") as trk:
+      self.play(Create(steps[4]))
