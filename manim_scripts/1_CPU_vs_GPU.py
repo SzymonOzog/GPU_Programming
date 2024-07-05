@@ -5,7 +5,7 @@ from manim_voiceover.services.gtts import GTTSService
 from manim_voiceover.services.recorder import RecorderService
 from manim.mobject.text.text_mobject import remove_invisible_chars
 
-class Introduction(VoiceoverScene, ThreeDScene):
+class GPUvsCPU(VoiceoverScene, ThreeDScene):
   def construct(self):
     self.set_speech_service(
         GTTSService()
@@ -17,7 +17,7 @@ class Introduction(VoiceoverScene, ThreeDScene):
       self.play(Write(title))
 
     subtitle = Text("GPU vs CPU", font_size=48).next_to(title, DOWN)
-    desc = BulletedList("Architectural Differences", "Latency and Throughput", "When is it beneficial to use a GPU", font_size=32).next_to(subtitle, DOWN)
+    desc = BulletedList("Architectural Differences", "When is it beneficial to use a GPU", "How to write code for the GPU", font_size=32).next_to(subtitle, DOWN)
 
     with self.voiceover(text="In this episode we are going to discuss the key differences between the gpu and the cpu") as trk:
       self.play(Write(subtitle))
@@ -25,17 +25,13 @@ class Introduction(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="How the architecture of the two differs") as trk:
       self.play(Write(desc[0]))
 
-    with self.voiceover(text="What is this latency and throughput stuff that is always mentioned when talking about those things") as trk:
+    with self.voiceover(text="When to use one over the other") as trk:
       self.play(Write(desc[1]))
 
-    with self.voiceover(text="and when to use one over the other") as trk:
+    with self.voiceover(text="And finally, we are going to crack open the editor and write some code") as trk:
       self.play(Write(desc[2]))
 
-    with self.voiceover(text="And finally, we are going to crack open the editor and write some code") as trk:
-      for i in range(3):
-        self.play(Unwrite(desc[2-i]), run_time=trk.duration/5)
-      self.play(Unwrite(subtitle), run_time=trk.duration/5)
-      self.play(Unwrite(title), run_time=trk.duration/5)
+    self.play(*[Unwrite(desc[2-i]) for i in range(3)],Unwrite(subtitle), Unwrite(title))
 
     cpu_rects = []
     cpu_texts = []
@@ -157,6 +153,7 @@ class Introduction(VoiceoverScene, ThreeDScene):
     
     with self.voiceover(text="""Let's put this comparison to actual numbers and compare my CPU which is a 
                         AMD Ryzen 7 3800X and my GPU - GTX 3090Ti""") as trk:
+      self.wait(3)
       self.play(*[Unwrite(x) for x in cpu_texts], *[Uncreate(x) for x in cpu_rects], *[Unwrite(x) for x in gpu_texts],*[Uncreate(x) for x in gpu_rects])
 
     font_size = 32
@@ -400,7 +397,7 @@ cudaFree(c_d);"""
     self.play(FadeOut(code_obj))
 
     code_obj = Code(code=c1, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).next_to(steps,RIGHT)
-    with self.voiceover(text="""Then we have to move the code from the cpu to the gpu, assuming that we already have our CPU pointers allocated,
+    with self.voiceover(text="""Then we have to move the data from the cpu to the gpu, assuming that we already have our CPU pointers allocated,
                         we just have to call the cudaMemcpy function. As arguments we pass in the source pointer, the destination poiner,
                         the size of the memory we want to copy, and a marker indicating the type of the copy. In our case we are copying from Host memory
                         to Device memory, so from the CPU to the GPU""") as trk:
