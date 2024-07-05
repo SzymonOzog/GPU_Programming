@@ -347,11 +347,11 @@ class Introduction(VoiceoverScene, ThreeDScene):
       self.play(*anims)
       
     steps = BulletedList("Allocate the memory on the GPU",
-                         "Copy the data from the CPU to the GPU",
+                         "Copy the data to the GPU",
                          "Run the kernel",
                          "Copy the data back to the CPU",
                          "Free the memory",
-                         font_size=24).shift(2*LEFT)
+                         font_size=24).shift(3*LEFT)
 
     with self.voiceover(text="""To do that, we need to first allocate the memory for our inputs, and outputs on the GPU""") as trk:
       self.play(Create(steps[0]))
@@ -368,3 +368,71 @@ class Introduction(VoiceoverScene, ThreeDScene):
 
     with self.voiceover(text="""And free the memory on our GPU""") as trk:
       self.play(Create(steps[4]))
+
+    c0 = """float* a_d;
+float* b_d;
+float* c_d;
+int N = 4096;
+cudaMalloc((void**) &a_d, N*sizeof(float));
+cudaMalloc((void**) &b_d, N*sizeof(float));
+cudaMalloc((void**) &c_d, N*sizeof(float)); """
+
+    c1 = """cudaMemcpy(a_d, a, N*sizeof(float), cudaMemcpyHostToDevice);
+cudaMemcpy(b_d, b, N*sizeof(float), cudaMemcpyHostToDevice); """
+
+    c2 = """int BLOCK_SIZE=2048;
+add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
+
+    c3 = "cudaMemcpy(c, c_d, N*sizeof(float), cudaMemcpyDeviceToHost);"
+
+    c4 = """cudaFree(a_d);
+cudaFree(b_d);
+cudaFree(c_d);"""
+    
+    code_obj = Code(code=c0, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).next_to(steps,RIGHT)
+    with self.voiceover(text="""In order to allocate our memory, we need to first create a pointer, just like in regular C,
+                        the _d suffix is a common naming convention for marking pointers that are living on the device - so in our case the GPU
+                        and then, again simillarly to C we call the cudaMalloc function, passing in our pointer, and the size
+                        that we want to allocate""") as trk:
+      self.play(steps[0].animate.set_color(YELLOW))
+      self.play(Transform(steps[0].copy(), code_obj, replace_mobject_with_target_in_scene=True))
+    self.play(FadeOut(code_obj))
+
+    code_obj = Code(code=c1, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).next_to(steps,RIGHT)
+    with self.voiceover(text="""Then we have to move the code from the cpu to the gpu, assuming that we already have our CPU pointers allocated,
+                        we just have to call the cudaMemcpy function. As arguments we pass in the source pointer, the destination poiner,
+                        the size of the memory we want to copy, and a marker indicating the type of the copy. In our case we are copying from Host memory
+                        to Device memory, so from the CPU to the GPU""") as trk:
+      self.play(steps[0].animate.set_color(GREEN))
+      self.play(steps[1].animate.set_color(YELLOW))
+      self.play(Transform(steps[1].copy(), code_obj, replace_mobject_with_target_in_scene=True))
+    self.play(FadeOut(code_obj))
+
+
+    code_obj = Code(code=c2, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).next_to(steps,RIGHT)
+    with self.voiceover(text="""In order to run our kernel, we need to specify how many blocks we want to run, and how many threads are there in each block.
+                        CUDA lets us configure this with this strange looking triple angle brackets.""") as trk:
+      self.play(steps[1].animate.set_color(GREEN))
+      self.play(steps[2].animate.set_color(YELLOW))
+      self.play(Transform(steps[2].copy(), code_obj, replace_mobject_with_target_in_scene=True))
+
+    with self.voiceover(text="""To cover the full span of our vector, we need to launch the minimum of N threads, so if each block consist of BLOCK_SIZE threads.
+                        we have to run the ceiling division of N divided by block size """) as trk:
+      pass
+    self.play(FadeOut(code_obj))
+
+    code_obj = Code(code=c3, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).next_to(steps,RIGHT)
+    with self.voiceover(text="""Finally we copy the result back to the CPU using the same function as before, but this time the destination pointer is,
+                        the cpu pointer, the source pointer is the GPU pointer and the direction is from Device to Host""") as trk:
+      self.play(steps[2].animate.set_color(GREEN))
+      self.play(steps[3].animate.set_color(YELLOW))
+      self.play(Transform(steps[3].copy(), code_obj, replace_mobject_with_target_in_scene=True))
+    self.play(FadeOut(code_obj))
+
+    code_obj = Code(code=c4, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).next_to(steps,RIGHT)
+    with self.voiceover(text="""What is left is to clean up our memory - we do that by calling the cuda free funciton""") as trk:
+      self.play(steps[3].animate.set_color(GREEN))
+      self.play(steps[4].animate.set_color(YELLOW))
+      self.play(Transform(steps[4].copy(), code_obj, replace_mobject_with_target_in_scene=True))
+    self.play(steps[4].animate.set_color(GREEN))
+    self.wait(1)
