@@ -8,7 +8,8 @@ class Introduction(VoiceoverScene, ThreeDScene):
   def construct(self):
     self.set_speech_service(
         GTTSService()
-        # RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None))
+        # RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None)
+        )
 
     title = Text("GPU programming", font_size=72).shift(2*UP)
     with self.voiceover(text="Hello and welcome to episode 1 in the series on GPU programming") as trk:
