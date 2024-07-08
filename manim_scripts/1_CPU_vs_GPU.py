@@ -154,11 +154,11 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""Let's put this comparison to actual numbers and compare my CPU which is a 
                         AMD Ryzen 7 3800X and my GPU - GTX 3090Ti""") as trk:
       self.wait(3)
-      self.play(*[Unwrite(x) for x in cpu_texts], *[Uncreate(x) for x in cpu_rects], *[Unwrite(x) for x in gpu_texts],*[Uncreate(x) for x in gpu_rects])
+      self.play(*[Unwrite(x) for x in cpu_texts if x is not cpu_title], *[Uncreate(x) for x in cpu_rects], *[Unwrite(x) for x in gpu_texts if x is not gpu_title],*[Uncreate(x) for x in gpu_rects])
 
     font_size = 32
-    cpu_details = BulletedList("8 Cores",  "32 MB L3 Cache", "4MB L2 Cache", "64 KB/Core L1 Cache", font_size=font_size).shift(2*LEFT)
-    gpu_details = BulletedList("10752 Cores", "No L3 Cache", "6MB L2 Cache", "128 KB/SM L1 Cache", font_size=font_size).shift(2*RIGHT)
+    cpu_details = BulletedList("8 Cores",  "32 MB L3 Cache", "4MB L2 Cache", "64 KB/Core L1 Cache", font_size=font_size).next_to(cpu_title, DOWN)
+    gpu_details = BulletedList("10752 Cores", "No L3 Cache", "6MB L2 Cache", "128 KB/SM L1 Cache", font_size=font_size).next_to(gpu_title, DOWN)
 
 
     with self.voiceover(text="""My cpu has just 8 cores - compared to 10752 cores in my GPU""") as trk:
@@ -214,9 +214,23 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
 
     self.wait(1)
 
-    with self.voiceover(text="""Let's get into some examples of when a GPU can vastly outperform the CPU""") as trk:
+    with self.voiceover(text="""And both architectures have their advantages, and disadvantages - they are just ment to solve completly different problems""") as trk:
       for i in range(4):
         self.play(Unwrite(cpu_details[3-i], run_time=trk.duration/4), Unwrite(gpu_details[3-i], run_time=trk.duration/4))
+
+    font_size = 36 
+    cpu_details = BulletedList("Low latency",  "Low throughput", "Optimized for serial operations", font_size=font_size).next_to(cpu_title, DOWN)
+    gpu_details = BulletedList("High latency", "High throughput", "Optimized for parallel operations", font_size=font_size).next_to(gpu_title, DOWN)
+
+    with self.voiceover(text="""The cpu is optimized for running code that runs sequentially, minimizing the latency of the operations
+                        where as the gpu is optimized for code that runs in parallel - maximizing the throughput""") as trk:
+      for i in range(3):
+        self.play(Write(cpu_details[i]), Write(gpu_details[i]))
+        
+    with self.voiceover(text="""I like to give an analogy that the CPU is like having 8 Albert Einsteins and the GPU is like having 10752 average high school students""") as trk:
+      pass
+
+    self.play(*[Unwrite(cpu_details[i]) for i in range(3)], *[Unwrite(gpu_details[i]) for i in range(3)], Unwrite(cpu_title), Unwrite(gpu_title))
 
     n = 6
     v2 = Matrix([*[[f"b_{i}"] for i in range(n-2)], ["\\vdots"], ["b_n"]], element_alignment_corner=ORIGIN).shift(DOWN)
@@ -224,8 +238,8 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
     v1 = Matrix([*[[f"a_{i}"] for i in range(n-2)], ["\\vdots"], ["a_n"]], element_alignment_corner=ORIGIN).next_to(plus, LEFT)
     eq = Tex("=").next_to(v2, RIGHT)
     v3 = Matrix([*[["?"] for i in range(n-2)], ["\\vdots"], ["?"]], element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
-    with self.voiceover(text="""One such example of a highly parralelizable algorithm is vector addition""") as trk:
 
+    with self.voiceover(text="""One such example of a highly parralelizable algorithm is vector addition""") as trk:
       self.play(*[Create(x) for x in [v1, v2, v3, plus, eq]])
 
     def create_m(m):
@@ -386,6 +400,13 @@ add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
     c4 = """cudaFree(a_d);
 cudaFree(b_d);
 cudaFree(c_d);"""
+
+    device = Text("Device = GPU", font_size=48).move_to(cpu_title).shift(0.5*UP)
+    host = Text("Host = CPU", font_size=48).move_to(gpu_title).shift(0.5*UP)
+    with self.voiceover(text="""Just a quick jargon checkup before showing you the code - CUDA refers to GPU as the Device,
+                        and the CPU as the host""") as trk:
+      self.play(Write(device))
+      self.play(Write(host))
     
     code_obj = Code(code=c0, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).next_to(steps,RIGHT)
     with self.voiceover(text="""In order to allocate our memory, we need to first create a pointer, just like in regular C,
@@ -435,11 +456,13 @@ cudaFree(c_d);"""
     self.play(steps[4].animate.set_color(GREEN))
     self.wait(1)
 
-    with self.voiceover(text="""Now let's chech what are the actuall time differences when running our vector addition code on a GPU vs the CPU""") as trk:
-      anims = [] 
-      for obj in self.mobjects:
-        anims.append(FadeOut(obj))
-      self.play(*anims)
+    with self.voiceover(text="""Now let's check what are the actual time differences when running our vector addition code on a GPU vs the CPU""") as trk:
+      pass
+
+    anims = [] 
+    for obj in self.mobjects:
+      anims.append(FadeOut(obj))
+    self.play(*anims)
 
     ps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
     cpu_t = [8610,  9760,  11060,  16320,  27310,  55421,  95662,  181362,  357233,  706197,  1.40494e+06,  2.84067e+06,  5.66813e+06,  1.13283e+07,  2.27314e+07,  4.65509e+07,  1.38753e+08,  3.43102e+08,  4.8381e+08,  1.00493e+09,  1.76705e+09,  3.9403e+09,  8.13902e+09,  1.7344e+10]
