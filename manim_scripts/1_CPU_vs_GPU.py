@@ -17,7 +17,7 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
       self.play(Write(title))
 
     subtitle = Text("GPU vs CPU", font_size=48).next_to(title, DOWN)
-    desc = BulletedList("Architectural Differences", "When is it beneficial to use a GPU", "How to write code for the GPU", font_size=32).next_to(subtitle, DOWN)
+    desc = BulletedList("Architectural Differences", "When is it beneficial to use a GPU", "How to write code for the GPU", font_size=48).next_to(subtitle, DOWN).align_to(title, LEFT)
 
     with self.voiceover(text="In this episode we are going to discuss the key differences between the gpu and the cpu") as trk:
       self.play(Write(subtitle))
