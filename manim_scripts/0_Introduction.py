@@ -175,9 +175,9 @@ class Introduction(VoiceoverScene, ThreeDScene):
         if any(so in x for x in [cpu_rects, cpu_texts, gpu_rects, gpu_texts]):
           mo.remove(so)
 
-    font_size = 24
-    cpu_details = VGroup(Text("Low latency", font_size=font_size),  Text("Low throughput", font_size=font_size), Text("Optimized for serial operations", font_size=font_size)).arrange(DOWN).next_to(cpu_title, DOWN)
-    gpu_details = VGroup(Text("High latency", font_size=font_size), Text("High throughput", font_size=font_size), Text("Optimized for parallel operations", font_size=font_size)).arrange(DOWN).next_to(gpu_title, DOWN)
+    font_size = 36 
+    cpu_details = BulletedList("Low latency",  "Low throughput", "Optimized for serial operations", font_size=font_size).next_to(cpu_title, DOWN)
+    gpu_details = BulletedList("High latency", "High throughput", "Optimized for parallel operations", font_size=font_size).next_to(gpu_title, DOWN)
     with self.voiceover(text="""It's supposed to give you a quickstart on how, and when to run code on a GPU
                         as opposed to the CPU and what are the key differences between them""") as trk:
       self.play(Write(cpu_title), Write(gpu_title))
