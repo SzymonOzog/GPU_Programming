@@ -92,7 +92,7 @@ class Introduction(VoiceoverScene, ThreeDScene):
       alu = Rectangle(width=1, height=1, color=BLUE, fill_opacity=0.5)
       sw = 0.04
       cpu_rects.append(alu)
-      alu_text = Text("ALU", font_size=14).move_to(alu.get_center())
+      alu_text = Text("Core", font_size=14).move_to(alu.get_center())
       cpu_texts.append(alu_text)
 
       cache = Rectangle(width=1, height=0.25, fill_opacity=0.5, color=RED).next_to(alu, DOWN, aligned_edge=LEFT, buff=sw)
