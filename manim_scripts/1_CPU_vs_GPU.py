@@ -139,16 +139,16 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""First of all, we can see that the GPU consists of a much greated number of cores
                         but that comes at a cost, as the CPU cores are much more capable""") as trk:
       self.wait(1)
-      self.play(*[Indicate(x, run_time=3) for x in cpu_rects + gpu_rects if x.color == BLUE])
+      self.play(*[Indicate(x, run_time=3) for x in cpu_rects + gpu_rects if str(x.color).upper() == BLUE])
 
     with self.voiceover(text="""Secondly, the CPU has a much deeper memory hierarchy, allowing for much lower memory access latency""") as trk:
       self.wait(1)
-      self.play(*[Indicate(x, run_time=3) for x in cpu_rects if x.color == RED])
+      self.play(*[Indicate(x, run_time=3) for x in cpu_rects if str(x.color).upper() == RED])
 
     with self.voiceover(text="""Also, we can see that there are thread groups in the GPU that share the control units,
                         that can point us to the fact that they all must execute exatly the same instruction at the same time""") as trk:
       self.wait(2)
-      self.play(*[Indicate(x, run_time=3) for x in gpu_rects if x.color == PURPLE])
+      self.play(*[Indicate(x, run_time=3) for x in gpu_rects if str(x.color).upper() == PURPLE])
 
     
     with self.voiceover(text="""Let's put this comparison to actual numbers and compare my CPU which is a 
