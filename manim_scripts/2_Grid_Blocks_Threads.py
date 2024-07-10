@@ -107,7 +107,6 @@ class KernelGrid(VoiceoverScene, ThreeDScene):
     t1.append(Tex("$T_0$", font_size=fs).move_to(block1.get_corner(UP)+DOWN*0.2, aligned_edge=UP))
     t1.append(Tex("$T_1$", font_size=fs).move_to(block1.get_corner(DOWN)-DOWN*0.2, aligned_edge=DOWN))
     t1.append(Tex("$B_0$", font_size=fs).next_to(block1, LEFT))
-
     block2 = SurroundingRectangle(VGroup(*v1.get_entries()[2:4])).shift(1.5*LEFT)
     t2 = []
     t2.append(Tex("$T_0$", font_size=fs).move_to(block2.get_corner(UP)+DOWN*0.2, aligned_edge=UP))
@@ -149,8 +148,31 @@ class KernelGrid(VoiceoverScene, ThreeDScene):
 int BLOCK_SIZE=2;
 add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
 
-    code_obj = Code(code=code, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).shift(UP)
+    code_obj = Code(code=code, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).shift(2*UP)
+
+    gpu_code = """__global__ void add(int n , float* a, float* b, float* c)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i < n)
+  {
+    c[i] = a[i] + b[i];
+  }
+}"""
+    gpu_code_obj = Code(code=gpu_code, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).shift(2*DOWN)
+    def transform_code(tidx, bidx):
+      new = f"""__global__ void add(int n , float* a, float* b, float* c)
+{{
+  int i = {bidx} * 2 + {tidx};
+  if (i < n)
+  {{
+    c[i] = a[i] + b[i];
+  }}
+}}"""
+      return Code(code=new, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).shift(2*DOWN)
+
+
     with self.voiceover(text="""If we launched the kernel with just 6 elements and 2 threads per block""") as trk:
+      self.play(Create(gpu_code_obj))
       self.play(Create(code_obj))
 
     with self.voiceover(text="""the resulting kernel grid would look like this""") as trk:
@@ -158,4 +180,30 @@ add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
       self.play(LaggedStart(blocks[1][0][0].create(x_range=n, z_index=1)))
       self.play(LaggedStart(blocks[2][0][0].create(x_range=n, z_index=1)))
 
+    l1 = Line(blocks[0][0][0].threads[0][0][0].get_corner(UP+LEFT), blocks[0][0][0].threads[n-1][0][0].get_corner(UP+RIGHT))
+    b1 = Brace(l1, direction=UP)
+    t1 = b1.get_text("threadIdx.x").scale(0.6)
+
+    l2 = Line(blocks[0][0][0].threads[0][0][0].get_corner(UP+LEFT), blocks[2][0][0].threads[n-1][0][0].get_corner(UP+RIGHT))
+    b2 = Brace(l2, direction=UP, buff=0.4)
+    t2 = b2.get_text("blockIdx.x").scale(0.6)
+
+    with self.voiceover(text="""Where the code gets assigned a thread index""") as trk:
+      self.play(Create(b1), Write(t1))
+
+    with self.voiceover(text="""And a block index""") as trk:
+      self.play(Create(b2), Write(t2))
+
+    with self.voiceover(text="""When running each thread in our block, it will run a copy of our code with 
+                        values of blockIdx and threadIdx set to match the curerntly executed thread.
+                        The blockDim variable represents our block dimension and is constant across all threads
+                        in our case - we set the block size to 2""") as trk:
+      for b in range(m):
+        for t in range(n):
+          blocks[b][0][0].threads[t][0][0].save_state()
+          gpu_code_obj.save_state()
+          self.play(blocks[b][0][0].threads[t][0][0].animate.set_color(GREEN), Transform(gpu_code_obj, transform_code(b, t)))
+          self.wait(0.5)
+          self.play(Restore(blocks[b][0][0].threads[t][0][0]), Restore(gpu_code_obj))
+          self.wait(0.5)
 
