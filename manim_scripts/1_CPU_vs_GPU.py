@@ -8,8 +8,8 @@ from manim.mobject.text.text_mobject import remove_invisible_chars
 class GPUvsCPU(VoiceoverScene, ThreeDScene):
   def construct(self):
     self.set_speech_service(
-        GTTSService()
-        # RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None)
+        # GTTSService()
+        RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None)
         )
 
     title = Text("GPU programming", font_size=72).shift(2*UP)
@@ -168,7 +168,7 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""It has 4 MB of L2 cache whereas my GPU has 6MB""") as trk:
       self.play(Write(cpu_details[2]), Write(gpu_details[2]))
 
-    with self.voiceover(text="""But to be fair, each thread has it's own L2 Cache giving us 512 KB per thread""") as trk:
+    with self.voiceover(text="""But to be fair, each core has it's own L2 Cache giving us 512 KB per core""") as trk:
       font_size = 20
       part = Text("512KB/Core L2 Cache", font_size=font_size)
       dot = MathTex("\\cdot").scale(2)
@@ -177,7 +177,7 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
       part.move_to(cpu_details[2], aligned_edge=LEFT)
       self.play(Transform(cpu_details[2], part))
     with self.voiceover(text="""The GPU L2 Cache is more simillar in the structure to the L3 in the CPU because it's shared between 
-                        the threads""") as trk:
+                        the cores""") as trk:
       pass
     with self.voiceover(text="""But if we were to compare it to the CPU L2 it would give around 558B per core""") as trk:
       part = Text("558B/Core L2 Cache", font_size=font_size)
@@ -201,6 +201,7 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
     sm = VGroup(cc, *alus).arrange(RIGHT, buff = 0.1).set_z_index(1).shift(3*UP) 
     with self.voiceover(text="""You might wonder what this SM thing is - we will discuss the detais of it later, but for now
                         think of it as one row of connected cores in our diagram""") as trk:
+      self.wait(5)
       self.play(*[Create(x) for x in gpu_rects])
 
     with self.voiceover(text="""In my gpu a SM consists of 128 cores so that gives us 1KB of L1 Cache per core""") as trk:
@@ -218,6 +219,10 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
       for i in range(4):
         self.play(Unwrite(cpu_details[3-i], run_time=trk.duration/4), Unwrite(gpu_details[3-i], run_time=trk.duration/4))
 
+        
+    with self.voiceover(text="""I like to give an analogy that the CPU is like having 8 Albert Einsteins and the GPU is like having 10752 average high school students""") as trk:
+      pass
+
     font_size = 36 
     cpu_details = BulletedList("Low latency",  "Low throughput", "Optimized for serial operations", font_size=font_size).next_to(cpu_title, DOWN)
     gpu_details = BulletedList("High latency", "High throughput", "Optimized for parallel operations", font_size=font_size).next_to(gpu_title, DOWN)
@@ -225,10 +230,10 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""The cpu is optimized for running code that runs sequentially, minimizing the latency of the operations
                         where as the gpu is optimized for code that runs in parallel - maximizing the throughput""") as trk:
       for i in range(3):
-        self.play(Write(cpu_details[i]), Write(gpu_details[i]))
-        
-    with self.voiceover(text="""I like to give an analogy that the CPU is like having 8 Albert Einsteins and the GPU is like having 10752 average high school students""") as trk:
-      pass
+        self.play(Write(cpu_details[i]))
+      self.wait(3)
+      for i in range(3):
+        self.play(Write(gpu_details[i]))
 
     self.play(*[Unwrite(cpu_details[i]) for i in range(3)], *[Unwrite(gpu_details[i]) for i in range(3)], Unwrite(cpu_title), Unwrite(gpu_title))
 
@@ -279,6 +284,7 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
       self.play(Transform(v3, Matrix(create_m(n-2), element_alignment_corner=ORIGIN).next_to(eq, RIGHT)))
 
     with self.voiceover(text="""So what we want to do, is just run everything in parallel""") as trk:
+      self.wait(2)
       self.play(*[FadeOut(v1.get_entries()[i].copy(), target_position=v3.get_entries()[i]) for i in range(n) if i != n-2], 
                 *[FadeOut(v2.get_entries()[i].copy(), target_position=v3.get_entries()[i]) for i in range(n) if i != n-2],
                 Transform(v3, Matrix(create_m(n-1), element_alignment_corner=ORIGIN).next_to(eq, RIGHT)))
@@ -331,7 +337,7 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""When we launch our Kernel, we need to specify how many blocks we will launch, and how many threads will each block contain""") as trk:
       pass
 
-    with self.voiceover(text="""For exaple, when we launch n/2 blocks, each containing n threads, here's how the structure of our blocks will look like""") as trk:
+    with self.voiceover(text="""For exaple, when we launch n/2 blocks, each containing 2 threads, here's how the structure of our blocks will look like""") as trk:
       self.play(Create(block1), *[Write(t) for t in t1])
       self.play(Create(block2), *[Write(t) for t in t2])
       self.play(Create(block3), *[Write(t) for t in t3])
@@ -347,6 +353,7 @@ class GPUvsCPU(VoiceoverScene, ThreeDScene):
 
     with self.voiceover(text="""For example, if we had an uneaven number of elements, the alignment of blocks might look like this,
                         where the last thread in the last block would read and write out of bouds, the check ensures that we don't do that""") as trk:
+      self.wait(2)
       self.play(*[x.animate.shift(0.7*DOWN) for x in [block3]+t3])
       self.play(t3[1].animate.set_color(RED))
 
