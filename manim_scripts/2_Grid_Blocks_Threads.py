@@ -60,8 +60,7 @@ class Block:
                 t.add(Text(str(z), font_size=15).move_to(t.get_corner(UP)).rotate(radians(90),LEFT))
               if x == 0:
                 t.add(Text(str(y), font_size=15).move_to(t.get_corner(LEFT)).rotate(radians(90),DOWN))
-            if x == 0 or y == 0 or z == 0:
-              self.threads[x][y][z] = t.move_to(current_pos)
+            self.threads[x][y][z] = t.move_to(current_pos)
 
   def create(self, x_range=1, y_range=1, z_range=1, z_index=0):
     anims = []
@@ -125,8 +124,8 @@ class KernelGrid(VoiceoverScene, ThreeDScene):
       self.play(Create(block2), *[Write(t) for t in t2])
       self.play(Create(block3), *[Write(t) for t in t3])
 
-    m = 4
-    n = 4
+    m = 3
+    n = 2
     blocks = [[[None] * m for j in range(m)] for i in range(m)]
     current_pos = ORIGIN.copy() + 2*(LEFT + UP)
     for x in range(m):
@@ -238,14 +237,34 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     for x in range(m):
       for y in range(m):
         for z in range(m):
-          if x == 0 or y == 0 or z == 0:
-            creations.extend(blocks[x][y][z].create(x_range=n, y_range=n, z_range=n, z_index=0))
+          creations.extend(blocks[x][y][z].create(x_range=n, y_range=n, z_range=n, z_index=0))
 
     self.add_fixed_in_frame_mobjects(code_obj)
     self.add_fixed_orientation_mobjects(code_obj)
 
+    theta = self.camera.get_theta()
+    phi =   self.camera.get_phi()
+    gamma = self.camera.get_gamma()
+
     with self.voiceover(text="""While a 3 dimensional grid might look like this""") as trk:
-      self.move_camera(theta=-radians(65), gamma=radians(45), phi=-radians(45),
+      self.move_camera(theta=-radians(25), gamma=radians(85), phi=-radians(45),
                        added_anims=[LaggedStart(*creations, lag_ratio=0.001), Transform(code_obj, transform_run([m,m,m], [n,n,n]))])
 
     self.wait(2)
+    self.begin_ambient_camera_rotation(-0.1, about="phi")
+    with self.voiceover(text="You might wonder what is the purpose of multiple dimensions") as trk:
+      pass
+
+    self.wait(0.5)
+    with self.voiceover(text="""and it's mostly just syntactic sugar - some algorithms operate on multidimensional data
+                        and checking boundary conditions for them might be easier in those""") as trk:
+      pass
+
+    self.wait(0.5)
+    with self.voiceover(text="""also, they might be more readable when you express them in a row/column form""") as trk:
+      pass
+
+    self.wait(0.5)
+    with self.voiceover(text="""as a side note - there might be some edge cases where using a multidimensional grid instead of a single dimensional grid
+                        results in a bit smaller register usage but that is rarely of big importance""") as trk:
+      pass
