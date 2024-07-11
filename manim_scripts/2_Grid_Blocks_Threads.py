@@ -125,8 +125,8 @@ class KernelGrid(VoiceoverScene, ThreeDScene):
       self.play(Create(block2), *[Write(t) for t in t2])
       self.play(Create(block3), *[Write(t) for t in t3])
 
-    m = 3
-    n = 2
+    m = 4
+    n = 4
     blocks = [[[None] * m for j in range(m)] for i in range(m)]
     current_pos = ORIGIN.copy() + 2*(LEFT + UP)
     for x in range(m):
@@ -176,15 +176,15 @@ add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
       self.play(Create(code_obj))
 
     with self.voiceover(text="""the resulting kernel grid would look like this""") as trk:
-      self.play(LaggedStart(blocks[0][0][0].create(x_range=n, z_index=1)))
-      self.play(LaggedStart(blocks[1][0][0].create(x_range=n, z_index=1)))
-      self.play(LaggedStart(blocks[2][0][0].create(x_range=n, z_index=1)))
+      self.play(LaggedStart(blocks[0][0][0].create(x_range=2, z_index=1)))
+      self.play(LaggedStart(blocks[1][0][0].create(x_range=2, z_index=1)))
+      self.play(LaggedStart(blocks[2][0][0].create(x_range=2, z_index=1)))
 
-    l1 = Line(blocks[0][0][0].threads[0][0][0].get_corner(UP+LEFT), blocks[0][0][0].threads[n-1][0][0].get_corner(UP+RIGHT))
+    l1 = Line(blocks[0][0][0].threads[0][0][0].get_corner(UP+LEFT), blocks[0][0][0].threads[1][0][0].get_corner(UP+RIGHT))
     b1 = Brace(l1, direction=UP)
     t1 = b1.get_text("threadIdx.x").scale(0.6)
 
-    l2 = Line(blocks[0][0][0].threads[0][0][0].get_corner(UP+LEFT), blocks[2][0][0].threads[n-1][0][0].get_corner(UP+RIGHT))
+    l2 = Line(blocks[0][0][0].threads[0][0][0].get_corner(UP+LEFT), blocks[2][0][0].threads[1][0][0].get_corner(UP+RIGHT))
     b2 = Brace(l2, direction=UP, buff=0.4)
     t2 = b2.get_text("blockIdx.x").scale(0.6)
 
@@ -198,8 +198,8 @@ add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
                         values of blockIdx and threadIdx set to match the curerntly executed thread.
                         The blockDim variable represents our block dimension and is constant across all threads
                         in our case - we set the block size to 2""") as trk:
-      for b in range(m):
-        for t in range(n):
+      for b in range(3):
+        for t in range(2):
           blocks[b][0][0].threads[t][0][0].save_state()
           gpu_code_obj.save_state()
           self.play(blocks[b][0][0].threads[t][0][0].animate.set_color(GREEN), Transform(gpu_code_obj, transform_code(b, t)))
@@ -207,3 +207,45 @@ add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
           self.play(Restore(blocks[b][0][0].threads[t][0][0]), Restore(gpu_code_obj))
           self.wait(0.5)
 
+    with self.voiceover(text="""Some of the more alert viewers might have noticed that we keep using threadIdx and blockIdx x values,
+                        and that might imply that there are more dimensions""") as trk:
+      self.play(Uncreate(b2), Unwrite(t2), Uncreate(b1), Unwrite(t1))
+      self.play(Uncreate(gpu_code_obj))
+
+    def transform_run(dim_grid, dim_block):
+      code = f"""dim3 dimGrid({','.join(map(str,dim_grid))});
+dim3 dimBlock({','.join(map(str,dim_block))});
+add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
+      return Code(code=code, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).shift(2*UP)
+
+    with self.voiceover(text="""And that is indeed true, we can run up to 3 dimensions by passing in a dim3 variable 
+                        as our kernel parameters""") as trk:
+      self.play(Transform(code_obj, transform_run([3,1,1], [2,1,1])))
+
+
+
+    with self.voiceover(text="""so a 2 dimensional kernel grid would look like this""") as trk:
+      self.play(Transform(code_obj, transform_run([3,2,1], [2,2,1])), 
+                LaggedStart(blocks[0][0][0].create(x_range=2, y_range=2, z_index=1)),
+                LaggedStart(blocks[1][0][0].create(x_range=2, y_range=2, z_index=1)),
+                LaggedStart(blocks[2][0][0].create(x_range=2, y_range=2, z_index=1)),
+                LaggedStart(blocks[0][1][0].create(x_range=2, y_range=2, z_index=1)),
+                LaggedStart(blocks[1][1][0].create(x_range=2, y_range=2, z_index=1)),
+                LaggedStart(blocks[2][1][0].create(x_range=2, y_range=2, z_index=1)))
+
+    self.wait(1)
+    creations = []
+    for x in range(m):
+      for y in range(m):
+        for z in range(m):
+          if x == 0 or y == 0 or z == 0:
+            creations.extend(blocks[x][y][z].create(x_range=n, y_range=n, z_range=n, z_index=0))
+
+    self.add_fixed_in_frame_mobjects(code_obj)
+    self.add_fixed_orientation_mobjects(code_obj)
+
+    with self.voiceover(text="""While a 3 dimensional grid might look like this""") as trk:
+      self.move_camera(theta=-radians(65), gamma=radians(45), phi=-radians(45),
+                       added_anims=[LaggedStart(*creations, lag_ratio=0.001), Transform(code_obj, transform_run([m,m,m], [n,n,n]))])
+
+    self.wait(2)
