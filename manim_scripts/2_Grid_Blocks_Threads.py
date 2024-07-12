@@ -242,10 +242,6 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     self.add_fixed_in_frame_mobjects(code_obj)
     self.add_fixed_orientation_mobjects(code_obj)
 
-    theta = self.camera.get_theta()
-    phi =   self.camera.get_phi()
-    gamma = self.camera.get_gamma()
-
     with self.voiceover(text="""While a 3 dimensional grid might look like this""") as trk:
       self.move_camera(theta=-radians(25), gamma=radians(85), phi=-radians(45),
                        added_anims=[LaggedStart(*creations, lag_ratio=0.001), Transform(code_obj, transform_run([m,m,m], [n,n,n]))])
@@ -268,3 +264,94 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     with self.voiceover(text="""as a side note - there might be some edge cases where using a multidimensional grid instead of a single dimensional grid
                         results in a bit smaller register usage but that is rarely of big importance""") as trk:
       pass
+
+    self.wait(0.5)
+    with self.voiceover(text="""As an example we can look into a square matrix multiplication kernel""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+      self.stop_ambient_camera_rotation("phi")
+      self.move_camera(theta=-radians(90), gamma=radians(0), phi=radians(0))
+
+
+    with self.voiceover(text="""As a brief remainder, matrix multiplication is a function that takes 2 matrices as the input
+                        and returns another matrix whose entries are dot products beteen rows of the first matrix and columns of the second one""") as trk:
+      mul = Tex("$\\cdot$").shift(2*LEFT + UP)
+      m1 = Matrix([[f"a_{{0,0}}", f"a_{{0,1}}"], [f"a_{{1,0}}", f"a_{{1,1}}"]]).next_to(mul, LEFT)
+      m2 = Matrix([[f"b_{{0,0}}", f"b_{{0,1}}"], [f"b_{{1,0}}", f"b_{{1,1}}"]]).next_to(mul, RIGHT)
+      eq = Tex("$=$").next_to(m2, RIGHT)
+      m3 = Matrix([[f"c_{{0,0}}", f"c_{{0,1}}"], [f"c_{{1,0}}", f"c_{{1,1}}"]]).next_to(eq, RIGHT)
+      m = [[f"$c_{{{j},{i}}} = a_{{{j},0}}*b_{{0,{i}}}+a_{{{j},0}}*b_{{1,{i}}}$" for i in range(2)] for j in range(2)]
+      fs = 48
+      t1 = Tex(m[0][0], font_size = fs).next_to(m1, DOWN, aligned_edge=LEFT)
+      t2 = Tex(m[0][1], font_size = fs).next_to(t1, DOWN, aligned_edge=LEFT)
+      t3 = Tex(m[1][0], font_size = fs).next_to(t2, DOWN, aligned_edge=LEFT)
+      t4 = Tex(m[1][1], font_size = fs).next_to(t3, DOWN, aligned_edge=LEFT)
+      
+
+      self.add(m1)
+      self.add(mul)
+      self.add(m2)
+      self.add(eq)
+      self.add(m3)
+
+      i1 = SurroundingRectangle(m1.get_entries()[:2], color=BLUE)
+      i2 = SurroundingRectangle(VGroup(m2.get_entries()[0], m2.get_entries()[2]), color=BLUE)
+      g1 = VGroup(i1.copy(), i2.copy(),
+                  m1.get_entries()[0].copy(), m1.get_entries()[1].copy(), 
+                  m2.get_entries()[0].copy(), m2.get_entries()[2].copy()) 
+      self.play(Create(i1), Create(i2))
+      self.play(Transform(g1, t1, replace_mobject_with_target_in_scene=True))
+      self.wait(1)
+
+      dd = m1.get_entries()[0].get_y() - m1.get_entries()[2].get_y()
+      dr = m2.get_entries()[0].get_x() - m2.get_entries()[1].get_x()
+      self.play(i2.animate.shift(LEFT * dr))
+      g1 = VGroup(i1.copy(), i2.copy(),
+                  m1.get_entries()[0].copy(), m1.get_entries()[1].copy(), 
+                  m2.get_entries()[1].copy(), m2.get_entries()[3].copy()) 
+      self.play(Transform(g1, t2, replace_mobject_with_target_in_scene=True))
+      self.wait(1)
+      self.play(i1.animate.shift(DOWN * dd), i2.animate.shift(RIGHT * dr))
+      g1 = VGroup(i1.copy(), i2.copy(),
+                  m1.get_entries()[2].copy(), m1.get_entries()[3].copy(), 
+                  m2.get_entries()[0].copy(), m2.get_entries()[2].copy()) 
+      self.play(Transform(g1, t3, replace_mobject_with_target_in_scene=True))
+      self.wait(1)
+      self.play(i2.animate.shift(LEFT * dr))
+      g1 = VGroup(i1.copy(), i2.copy(),
+                  m1.get_entries()[2].copy(), m1.get_entries()[3].copy(), 
+                  m2.get_entries()[1].copy(), m2.get_entries()[3].copy()) 
+      self.play(Transform(g1, t4, replace_mobject_with_target_in_scene=True))
+      self.wait(1)
+
+
+    matmul = """__global__ void matmul_elem(int n, float* a, float* b, float* c)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < n && column < n)
+  {
+    float dot_prod = 0.f;
+    for(int i = 0; i < n; i++)
+    {
+      dot_prod += a[row*n + i] * b[i*n + column];
+    }
+    c[row*n+column] = dot_prod;
+  }
+}"""
+    matmul_obj = Code(code=matmul, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0.1, corner_radius=0.1)
+    matmul_sd="""__global__ void matmul_elem_onedim(int n, float* a, float* b, float* c)
+{
+  int idx = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = idx/n;
+  int column = idx%n;
+  if (row < n && column < n)
+  {
+    float dot_prod = 0.f;
+    for(int i = 0; i < n; i++)
+    {
+      dot_prod += a[row*n + i] * b[i*n + column];
+    }
+    c[row*n+column] = dot_prod;
+  }
+}"""
+    matmul_sd_obj = Code(code=matmul_sd, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0.1, corner_radius=0.1)
