@@ -272,7 +272,7 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
       self.move_camera(theta=-radians(90), gamma=radians(0), phi=radians(0))
 
 
-    with self.voiceover(text="""As a brief remainder, matrix multiplication is a function that takes 2 matrices as the input
+    with self.voiceover(text="""As a remainder, matrix multiplication is a function that takes 2 matrices as the input
                         and returns another matrix whose entries are dot products beteen rows of the first matrix and columns of the second one""") as trk:
       mul = Tex("$\\cdot$").shift(2*LEFT + UP)
       m1 = Matrix([[f"a_{{0,0}}", f"a_{{0,1}}"], [f"a_{{1,0}}", f"a_{{1,1}}"]]).next_to(mul, LEFT)
@@ -322,6 +322,36 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
                   m2.get_entries()[1].copy(), m2.get_entries()[3].copy()) 
       self.play(Transform(g1, t4, replace_mobject_with_target_in_scene=True))
       self.wait(1)
+
+    with self.voiceover(text="""I do realize that the description was very brief so I'm going to leave some more links in the description
+                        for those that are unfamilliar with the operation""") as trk:
+      pass
+
+    m4 = Matrix([[f"a_{{{j},{i}}}" for i in range(3)] for j in range(3)])
+
+    with self.voiceover(text="""Before we jump into the code, there is one thing that you have to know about memory layout""") as trk:
+      self.play(*[Uncreate(x) for x in [m2, m3, i1, i2]], 
+                *[Unwrite(x) for x in [t1, t2, t3, t4, eq, mul]])
+
+    with self.voiceover(text="""When we create a 2D array in our code, the computer still stores it in 1 Dimension - the 2D access is just an 
+                        abstraction that is easier for us to read""") as trk:
+      self.play(Transform(m1, m4))
+
+      t1 = Tex("Row * Width + Column").set_color(BLUE).next_to(m1, DOWN)
+      v = Matrix([[f"a_{i}" for i in range(9)]]).set_color(GREEN).next_to(t1, DOWN)
+      self.play(Create(v.get_brackets()[0]))
+      for i in range(3):
+        self.play(Transform(VGroup(m1.get_entries()[i*3:(i+1)*3]).copy(), VGroup(v.get_entries()[i*3:(i+1)*3]), replace_mobject_with_target_in_scene=True))
+      self.play(Create(v.get_brackets()[1]))
+
+
+    with self.voiceover(text="""In cuda we get access to the raw pointer so we actually have to index into it ourselves -
+                        when we have our row and column index, we can do that by multiplying the row by our matrix width
+                        and adding the column index into it""") as trk:
+      self.play(Write(t1))
+    self.wait(1)
+
+
 
 
     matmul = """__global__ void matmul_elem(int n, float* a, float* b, float* c)
