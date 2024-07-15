@@ -1,4 +1,5 @@
 from manim import *
+from manim.mobject.text.text_mobject import remove_invisible_chars
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.recorder import RecorderService
 from manim_voiceover.services.gtts import GTTSService
@@ -352,9 +353,8 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     self.wait(1)
 
 
-
-
-    matmul = """__global__ void matmul_elem(int n, float* a, float* b, float* c)
+    matmul = """__global__ void matmul_elem
+    (int n, float* a, float* b, float* c)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
@@ -368,8 +368,8 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     c[row*n+column] = dot_prod;
   }
 }"""
-    matmul_obj = Code(code=matmul, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0.1, corner_radius=0.1)
-    matmul_sd="""__global__ void matmul_elem_onedim(int n, float* a, float* b, float* c)
+    matmul_sd="""__global__ void matmul_elem_onedim
+    (int n, float* a, float* b, float* c)
 {
   int idx = blockIdx.x*blockDim.x + threadIdx.x;
   int row = idx/n;
@@ -384,4 +384,46 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     c[row*n+column] = dot_prod;
   }
 }"""
-    matmul_sd_obj = Code(code=matmul_sd, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0.1, corner_radius=0.1)
+
+    matmul_obj = Code(code=matmul, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0.1, corner_radius=0.1).shift(3*LEFT)
+    matmul_sd_obj = Code(code=matmul_sd, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0.1, corner_radius=0.1).next_to(matmul_obj, RIGHT)
+
+    matmul_obj.code = remove_invisible_chars(matmul_obj.code)
+    matmul_sd_obj.code = remove_invisible_chars(matmul_sd_obj.code)
+
+
+    with self.voiceover(text="""To run out matrix multiplication kernel, we can assign each thread to 1 element in our output array""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+      self.play(Create(matmul_obj))
+
+    hl = SurroundingRectangle(matmul_obj.code[3:5], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We first calculate our row and column indices based on the current thread and block""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(matmul_obj.code[5], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Then we do the boundary check not to read and write outside our matrices""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(matmul_obj.code[7], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Then we create an intermediate variable that will store our dot product""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(matmul_obj.code[8:12], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And we iterate over the row vector of the first matrix, and the column vector of the second matrix
+                        calculating the dot product""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(matmul_obj.code[12], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Finally, we save our result in the output matrix""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    self.wait(1)
+    self.play(Uncreate(hl))
+    self.wait(1)
+    hl = SurroundingRectangle(matmul_sd_obj.code[4:6], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And just as I mentioned before, we could also do the same thing with a single dimensional grid.""") as trk:
+      self.play(Create(matmul_sd_obj))
+    self.wait(1)
+    with self.voiceover(text="""We just have to parse the rows and columns from our x dimension""") as trk:
+      self.play(Create(hl))
+
