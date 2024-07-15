@@ -76,6 +76,53 @@ class Block:
             anims.append(Create(self.threads[x][y][z]))
     return anims
 
+class Block2:
+  def __init__(self, x_r, y_r, z_r, center, show_tid=True):
+      self.threads = [[[None] * x_r for j in range(y_r)] for i in range(z_r)]
+      current_pos = center.copy()
+      self.x_r = x_r
+      self.y_r = y_r
+      self.z_r = z_r
+      for x in range(x_r):
+        current_pos[1] = center[1]
+        current_pos += 0.25 * RIGHT
+        for y in range(y_r):
+          current_pos[2] = center[2]
+          current_pos += 0.25 * DOWN
+          for z in range(z_r):
+            current_pos += 0.25 * IN
+            t = Thread(side_length=0.25, stroke_width=0.5,fill_opacity=1)
+            self.threads[x][y][z] = t.move_to(current_pos)
+
+  def create(self, x_range=1, y_range=1, z_range=1, z_index=0):
+    anims = []
+    for x in range(x_range):
+      for y in range(y_range):
+        for z in range(z_range):
+          if self.threads[x][y][z] is not None and not self.threads[x][y][z].visible:
+            self.threads[x][y][z].visible=True
+            self.threads[x][y][z].z_index=z_index
+            for so in self.threads[x][y][z].submobjects:
+              so.z_index=z_index
+            anims.append(Create(self.threads[x][y][z]))
+    return anims
+
+  def rotate(self):
+    anims = []
+    for x in range(self.x_r):
+      for y in range(self.y_r):
+        for z in range(self.z_r):
+          anims.append(Rotate(self.threads[x][y][z], angle = PI/4, axis = UP+RIGHT+OUT, about_point=ORIGIN))
+    return anims
+
+  def get_entries(self):
+    entries = []
+    for z in range(self.z_r):
+      for y in range(self.y_r):
+        for x in range(self.x_r):
+          entries.append(self.threads[x][y][z])
+    return entries
+
 class KernelGrid(VoiceoverScene, ThreeDScene):
   def construct(self):
     self.set_speech_service(
@@ -427,3 +474,40 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     with self.voiceover(text="""We just have to parse the rows and columns from our x dimension""") as trk:
       self.play(Create(hl))
 
+
+    self.wait(2)
+    x_r, y_r, z_r = 3,2,3
+    block = Block2(x_r, y_r, z_r, ORIGIN+UP, False)
+    with self.voiceover(text="""And the simillar memory pattern happens when we extend out data to the third dimension""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+      self.play(*block.create(x_r, y_r, z_r))
+
+      self.play(*block.rotate())
+      self.wait(1)
+
+    v = Matrix([[f"a_{{{i}}}" for i in range(x_r*y_r*z_r)]]).scale(0.5)
+
+
+    self.play(Create(v.get_brackets()[0]))
+    with self.voiceover(text="""It just simply gets flattened out, across each data dimension we add""") as trk:
+      for z in range(z_r):
+        for y in range(y_r):
+          i = z * x_r * y_r + y * x_r
+          self.play(Transform(VGroup(*block.get_entries()[i:i+3]), VGroup(v.get_entries()[i:i+3]), replace_mobject_with_target_in_scene=True))
+    self.play(Create(v.get_brackets()[1]))
+
+    with self.voiceover(text="""Can you come up with the formula for our 1 dimensional index
+                        when we know our x, y and z coordinates?""") as trk:
+      pass
+
+    self.wait(2)
+    t1 = Tex("Z * Width * Height + Y * Width + X", font_size=36).set_color(BLUE).next_to(v, UP)
+    with self.voiceover(text="""If you guessed the following - you were right!""") as trk:
+      self.play(Write(t1))
+
+    self.wait(2)
+    with self.voiceover(text="""Now that we have the theory behind us, I'm going to leave an excercise for those that want to practice
+                        running a multidimensional kernel grid""") as trk:
+
+
+    self.wait(1)
