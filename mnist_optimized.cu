@@ -198,7 +198,7 @@ void read_mnist(const std::string filename, int length, float* x, float* y)
   int labels = 10;
 
   std::fstream fin;
-  fin.open("./mnist_train.csv");
+  fin.open(filename);
   std::string row;
   constexpr char delim = ',';
   for(int i = 0; i<length; i++)
