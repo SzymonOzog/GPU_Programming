@@ -40,6 +40,8 @@ class Thread(VGroup):
             self.add(face)
     init_points = generate_points
 
+texts = []
+
 class Block:
   def __init__(self, n, center, show_tid=True):
       self.threads = [[[None] * n for j in range(n)] for i in range(n)]
@@ -56,11 +58,14 @@ class Block:
             t = Thread(side_length=0.25, stroke_width=0.5,fill_opacity=1)
             if show_tid:
               if z == 0:
-                t.add(Text(str(x), font_size=15).move_to(t.get_corner(OUT)))
+                texts.append(Text(str(x), font_size=15).move_to(t.get_corner(OUT)))
+                t.add(texts[-1])
               if y == 0:
-                t.add(Text(str(z), font_size=15).move_to(t.get_corner(UP)).rotate(radians(90),LEFT))
+                texts.append(Text(str(z), font_size=15).move_to(t.get_corner(UP)).rotate(radians(90),LEFT))
+                t.add(texts[-1])
               if x == 0:
-                t.add(Text(str(y), font_size=15).move_to(t.get_corner(LEFT)).rotate(radians(90),DOWN))
+                texts.append(Text(str(y), font_size=15).move_to(t.get_corner(LEFT)).rotate(radians(90),DOWN))
+                t.add(texts[-1])
             self.threads[x][y][z] = t.move_to(current_pos)
 
   def create(self, x_range=1, y_range=1, z_range=1, z_index=0):
@@ -126,8 +131,8 @@ class Block2:
 class KernelGrid(VoiceoverScene, ThreeDScene):
   def construct(self):
     self.set_speech_service(
-        GTTSService()
-        # RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None)
+        # GTTSService()
+        RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None)
         )
 
     title = Text("GPU programming", font_size=72).shift(2*UP)
@@ -173,23 +178,22 @@ class KernelGrid(VoiceoverScene, ThreeDScene):
       self.play(Create(block3), *[Write(t) for t in t3])
 
     m = 3
-    n = 2
+    n = 3
     blocks = [[[None] * m for j in range(m)] for i in range(m)]
-    current_pos = ORIGIN.copy() + 2*(LEFT + UP)
+    start_pos = ORIGIN.copy() + 2*(LEFT + UP + OUT)
+    current_pos = ORIGIN.copy() + 2*(LEFT + UP + OUT)
     for x in range(m):
-      current_pos[1] = ORIGIN[1]
+      current_pos[1] = start_pos[1]
       for y in range(m):
-        current_pos[2] = ORIGIN[2]
+        current_pos[2] = start_pos[2]
         for z in range(m):
-          blocks[x][y][z] = Block(n, current_pos, show_tid=z==0)
+          blocks[x][y][z] = Block(n, current_pos, show_tid=z==0 and y>0)
           current_pos += 2 * IN
         current_pos += 2 * DOWN
       current_pos += 2 * RIGHT
     
     self.play(*[Uncreate(x) for x in [v1, v2, v3, plus, eq]])
-    self.play(Uncreate(block1), *[Unwrite(t) for t in t1])
-    self.play(Uncreate(block2), *[Unwrite(t) for t in t2])
-    self.play(Uncreate(block3), *[Unwrite(t) for t in t3])
+    self.play(Uncreate(block1), *[Unwrite(t) for t in t1], Uncreate(block2), *[Unwrite(t) for t in t2], Uncreate(block3), *[Unwrite(t) for t in t3])
 
     code = """int N=6;
 int BLOCK_SIZE=2;
@@ -209,13 +213,17 @@ add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
     def transform_code(tidx, bidx):
       new = f"""__global__ void add(int n , float* a, float* b, float* c)
 {{
+  //int i = blockIdx.x * blockDim.x + threadIdx.x;
   int i = {bidx} * 2 + {tidx};
   if (i < n)
   {{
     c[i] = a[i] + b[i];
   }}
 }}"""
-      return Code(code=new, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).shift(2*DOWN)
+      c = Code(code=new, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1).shift(2*DOWN)
+      c.code = remove_invisible_chars(c.code)
+      c.code[2].set_color(GREEN_E)
+      return c
 
 
     with self.voiceover(text="""If we launched the kernel with just 6 elements and 2 threads per block""") as trk:
@@ -223,15 +231,15 @@ add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
       self.play(Create(code_obj))
 
     with self.voiceover(text="""the resulting kernel grid would look like this""") as trk:
-      self.play(LaggedStart(blocks[0][0][0].create(x_range=2, z_index=1)))
-      self.play(LaggedStart(blocks[1][0][0].create(x_range=2, z_index=1)))
-      self.play(LaggedStart(blocks[2][0][0].create(x_range=2, z_index=1)))
+      self.play(LaggedStart(blocks[0][1][0].create(x_range=2, z_index=1)))
+      self.play(LaggedStart(blocks[1][1][0].create(x_range=2, z_index=1)))
+      self.play(LaggedStart(blocks[2][1][0].create(x_range=2, z_index=1)))
 
-    l1 = Line(blocks[0][0][0].threads[0][0][0].get_corner(UP+LEFT), blocks[0][0][0].threads[1][0][0].get_corner(UP+RIGHT))
+    l1 = Line(blocks[0][1][0].threads[0][0][0].get_corner(UP+LEFT), blocks[0][1][0].threads[1][0][0].get_corner(UP+RIGHT))
     b1 = Brace(l1, direction=UP)
     t1 = b1.get_text("threadIdx.x").scale(0.6)
 
-    l2 = Line(blocks[0][0][0].threads[0][0][0].get_corner(UP+LEFT), blocks[2][0][0].threads[1][0][0].get_corner(UP+RIGHT))
+    l2 = Line(blocks[0][1][0].threads[0][0][0].get_corner(UP+LEFT), blocks[2][1][0].threads[1][0][0].get_corner(UP+RIGHT))
     b2 = Brace(l2, direction=UP, buff=0.4)
     t2 = b2.get_text("blockIdx.x").scale(0.6)
 
@@ -247,16 +255,16 @@ add<<<ceil(N/(float)BLOCK_SIZE), BLOCK_SIZE>>>(N, a_d, b_d, c_d); """
                         in our case - we set the block size to 2""") as trk:
       for b in range(3):
         for t in range(2):
-          blocks[b][0][0].threads[t][0][0].save_state()
-          gpu_code_obj.save_state()
-          self.play(blocks[b][0][0].threads[t][0][0].animate.set_color(GREEN), Transform(gpu_code_obj, transform_code(b, t)))
+          blocks[b][1][0].threads[t][0][0].save_state()
+          self.play(blocks[b][1][0].threads[t][0][0].animate.set_color(GREEN), Transform(gpu_code_obj, transform_code(t, b)))
           self.wait(0.5)
-          self.play(Restore(blocks[b][0][0].threads[t][0][0]), Restore(gpu_code_obj))
+          self.play(Restore(blocks[b][1][0].threads[t][0][0]))
           self.wait(0.5)
 
     with self.voiceover(text="""Some of the more alert viewers might have noticed that we keep using threadIdx and blockIdx x values,
                         and that might imply that there are more dimensions""") as trk:
       self.play(Uncreate(b2), Unwrite(t2), Uncreate(b1), Unwrite(t1))
+      self.wait(4)
       self.play(Uncreate(gpu_code_obj))
 
     def transform_run(dim_grid, dim_block):
@@ -267,18 +275,19 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
 
     with self.voiceover(text="""And that is indeed true, we can run up to 3 dimensions by passing in a dim3 variable 
                         as our kernel parameters""") as trk:
+      self.wait(2)
       self.play(Transform(code_obj, transform_run([3,1,1], [2,1,1])))
 
 
 
     with self.voiceover(text="""so a 2 dimensional kernel grid would look like this""") as trk:
       self.play(Transform(code_obj, transform_run([3,2,1], [2,2,1])), 
-                LaggedStart(blocks[0][0][0].create(x_range=2, y_range=2, z_index=1)),
-                LaggedStart(blocks[1][0][0].create(x_range=2, y_range=2, z_index=1)),
-                LaggedStart(blocks[2][0][0].create(x_range=2, y_range=2, z_index=1)),
                 LaggedStart(blocks[0][1][0].create(x_range=2, y_range=2, z_index=1)),
                 LaggedStart(blocks[1][1][0].create(x_range=2, y_range=2, z_index=1)),
-                LaggedStart(blocks[2][1][0].create(x_range=2, y_range=2, z_index=1)))
+                LaggedStart(blocks[2][1][0].create(x_range=2, y_range=2, z_index=1)),
+                LaggedStart(blocks[0][2][0].create(x_range=2, y_range=2, z_index=1)),
+                LaggedStart(blocks[1][2][0].create(x_range=2, y_range=2, z_index=1)),
+                LaggedStart(blocks[2][2][0].create(x_range=2, y_range=2, z_index=1)))
 
     self.wait(1)
     creations = []
@@ -297,7 +306,7 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     self.wait(2)
     self.begin_ambient_camera_rotation(-0.1, about="phi")
     with self.voiceover(text="You might wonder what is the purpose of multiple dimensions") as trk:
-      pass
+      self.play(*[Unwrite(x) for x in texts])
 
     self.wait(0.5)
     with self.voiceover(text="""and it's mostly just syntactic sugar - some algorithms operate on multidimensional data
@@ -393,8 +402,9 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
       self.play(Create(v.get_brackets()[1]))
 
 
-    with self.voiceover(text="""In cuda we get access to the raw pointer so we actually have to index into it ourselves -
-                        when we have our row and column index, we can do that by multiplying the row by our matrix width
+    with self.voiceover(text="""In cuda we get access to the raw pointer so we actually have to index into it ourselves - when we have our row and column index""") as trk:
+      pass
+    with self.voiceover(text="""we can do that by multiplying the row by our matrix width
                         and adding the column index into it""") as trk:
       self.play(Write(t1))
     self.wait(1)
@@ -471,7 +481,8 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     with self.voiceover(text="""And just as I mentioned before, we could also do the same thing with a single dimensional grid.""") as trk:
       self.play(Create(matmul_sd_obj))
     self.wait(1)
-    with self.voiceover(text="""We just have to parse the rows and columns from our x dimension""") as trk:
+    with self.voiceover(text="""We just have to parse the rows and columns from our x dimension, this adds a bit of an overhead but it's negligable 
+                        compared to the rest of the work done by the kernel""") as trk:
       self.play(Create(hl))
 
 
@@ -508,6 +519,35 @@ add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d); """
     self.wait(2)
     with self.voiceover(text="""Now that we have the theory behind us, I'm going to leave an excercise for those that want to practice
                         running a multidimensional kernel grid""") as trk:
-
-
+      pass
     self.wait(1)
+
+
+    with self.voiceover(text="""And the excercise looks like this: take in 3 arrays as the input""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+
+    a = Tex("$a \\in \\mathbb{R}^{x \\times y \\times z}$").shift(UP)
+    b = Tex("$b \\in \\mathbb{R}^{x \\times y}$").next_to(a, DOWN, aligned_edge=LEFT)
+    c = Tex("$c \\in \\mathbb{R}^{x}$").next_to(b, DOWN, aligned_edge=LEFT)
+    out = Tex("$out[x][y][z] = a[x][y][z] + b[x][y] + c[x]$").next_to(c, DOWN)
+    with self.voiceover(text="""A 3 dimensional array a""") as trk:
+      self.play(Write(a))
+
+    with self.voiceover(text="""A 2 dimensional array b""") as trk:
+      self.play(Write(b))
+
+    with self.voiceover(text="""A 1 dimensional array c""") as trk:
+      self.play(Write(c))
+
+    with self.voiceover(text="""And produce the output that is a 3 dimensional array being a sum of 3 input arrays
+                        broadcasted to 3 dimensions""") as trk:
+      self.play(Write(out))
+
+    with self.voiceover(text="""Please, share and discuss your code in the comments. Also if you liked the video, 
+                        subscribe to stay up to date, leave a thumbs up and share it with your friends""") as trk:
+      pass
+
+    with self.voiceover(text="""See you in the next episode - bye""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+
+    self.wait(2)
