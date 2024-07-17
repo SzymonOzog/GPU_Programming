@@ -80,7 +80,7 @@ __global__ void relu(int w, int h, float* a, float* b)
   }
 }
 
-__global__ void relu_backwards(int w, int h, int ns, float* a, float* d_l, float* b)
+__global__ void relu_backwards(int w, int h, float* a, float* d_l, float* b)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
@@ -377,14 +377,14 @@ int main(int argc, char** argv)
       backward<<<dimGrid, dimBlock>>>(BATCH_SIZE, size3, size2, weights3, biases3, d_l3, d_l2);
       gpuErrchk(cudaPeekAtLastError());
 
-      relu_backwards<<<dimGrid, dimBlock>>>(size2, BATCH_SIZE, size3, a2, d_l2, d_l2);
+      relu_backwards<<<dimGrid, dimBlock>>>(size2, BATCH_SIZE, a2, d_l2, d_l2);
 
       dimGrid = dim3(ceil(size1/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
       dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
 
       backward<<<dimGrid, dimBlock>>>(BATCH_SIZE, size2, size1, weights2, biases2, d_l2, d_l1);
       gpuErrchk(cudaPeekAtLastError());
-      relu_backwards<<<dimGrid, dimBlock>>>(size1, BATCH_SIZE, size2, a1, d_l1, d_l1);
+      relu_backwards<<<dimGrid, dimBlock>>>(size1, BATCH_SIZE, a1, d_l1, d_l1);
 
       dimGrid = dim3(ceil(size3/(float)BLOCK_SIZE), ceil(size2/(float)BLOCK_SIZE), 1);
       dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
