@@ -171,7 +171,7 @@ class KernelGrid(VoiceoverScene, ThreeDScene):
     t3.append(Tex("$T_1$", font_size=fs).move_to(block3.get_corner(DOWN)-DOWN*0.2, aligned_edge=DOWN))
     t3.append(Tex("$B_{\\frac{n}{2}}$", font_size=fs).next_to(block3, LEFT))
 
-    with self.voiceover(text="""In the last episode we've presented a vector addition kernel, where we launched blocks 2 threads""") as trk:
+    with self.voiceover(text="""During the last episode we've presented a vector addition kernel, where we launched blocks of 2 threads""") as trk:
       self.play(*[Create(x) for x in [v1, v2, v3, plus, eq]])
       self.play(Create(block1), *[Write(t) for t in t1])
       self.play(Create(block2), *[Write(t) for t in t2])
