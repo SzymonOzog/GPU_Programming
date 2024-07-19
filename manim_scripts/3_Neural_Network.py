@@ -111,3 +111,104 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
         for i in range(len(nn.neurons)-1):
           self.play(*[ShowPassingFlash(e.copy().set_color(BLUE)) for e in nn.edges[i]])
         self.play(Indicate(nn.neurons[-1][int(label)], color=BLUE))
+
+    with self.voiceover(text="""I also have to mention that you should be able to code all of the functionality yourself - and I highly encourage you to try to 
+                        pause the video and try to come up with a solution on your own""") as trk:
+      while trk.get_remaining_duration() > 0:
+        idx += 1
+        img, label, group = create_mnist(idx+1)
+        group.scale(0.7).next_to(nn.neurons[0][10], LEFT)
+        self.play(*[Create(x) for x in img])
+        anims = []
+        j = 0
+        for i, x in enumerate(img):
+          if i < 10 or i > 773:
+            anims.append(FadeOut(x, target_position=nn.neurons[0][j]))
+            j+=1
+          else:
+            j=11
+            anims.append(FadeOut(x, target_position=nn.neurons[0][10]))
+        self.play(*anims)
+        for i in range(len(nn.neurons)-1):
+          self.play(*[ShowPassingFlash(e.copy().set_color(BLUE)) for e in nn.edges[i]])
+        self.play(Indicate(nn.neurons[-1][int(label)], color=BLUE))
+
+    self.wait(1)
+
+    anims = []
+    for x in nn.neurons[1:]:
+      anims.extend([Uncreate(n) for n in x if n != nn.neurons[1][0]])
+    for x in nn.edges:
+      anims.extend([Uncreate(n) for n in x if n not in nn.neuron_to_input[nn.neurons[1][0]]])
+    for b,l in nn.braces:
+      anims.append(Unwrite(l))
+      anims.append(Uncreate(b))
+    with self.voiceover(text="""The first kernel that we will be writing, is the forward pass for our neural network layer""") as trk:
+      self.wait(2)
+      self.play(anims)
+
+    t1 = Tex("$x^1_0$=", "$x^0_0\\cdot$", "$w^0_{0,0}$+", "$x^0_1\\cdot$", "$w^0_{0,1}$+", "$x^0_2\\cdot$", "$w^0_{0,2}$+",
+             "$...+$", "$x^0_n\\cdot$", "$w^0_{0,n}$+", "$b^0_0$", font_size=32).next_to(nn.neurons[1][0], RIGHT)
+    with self.voiceover(text="""To calculate the output of a single neuron""") as trk:
+      self.play(Transform(nn.neurons[1][0].copy() , t1[0], replace_mobject_with_target_in_scene=True))
+
+    with self.voiceover(text="""We need to take the first input""") as trk:
+      self.play(Transform(nn.neurons[0][0].copy(), t1[1], replace_mobject_with_target_in_scene=True))
+
+    with self.voiceover(text="""And multiply it with a corresponding weight""") as trk:
+      self.play(Transform(nn.neuron_to_input[nn.neurons[1][0]][0].copy(), t1[2], replace_mobject_with_target_in_scene=True))
+
+    with self.voiceover(text="""We then do that for every other input and sum the results together""") as trk:
+      for i in range(1, 3):
+        self.play(Transform(nn.neurons[0][i].copy(), t1[(i*2)+1], replace_mobject_with_target_in_scene=True))
+        self.play(Transform(nn.neuron_to_input[nn.neurons[1][0]][i].copy(), t1[(i*2)+2], replace_mobject_with_target_in_scene=True))
+      rest = VGroup()
+      for i in range(3, 20):
+        rest.add(nn.neurons[0][i].copy())
+        if i < 19:
+          rest.add(nn.neuron_to_input[nn.neurons[1][0]][i].copy())
+      self.play(Transform(rest, t1[7], replace_mobject_with_target_in_scene=True)) 
+      self.play(Transform(nn.neurons[0][20].copy(), t1[8], replace_mobject_with_target_in_scene=True))
+      self.play(Transform(nn.neuron_to_input[nn.neurons[1][0]][19].copy(), t1[9], replace_mobject_with_target_in_scene=True))
+
+    with self.voiceover(text="""Adding a single bias term at the end""") as trk:
+      self.play(Write(t1[-1]))
+
+    self.wait(2)
+
+    s = 0.8
+    v1 = Matrix([["x_0", "x_1", "...", "x_n"]], element_alignment_corner=ORIGIN).scale(s).shift(3*LEFT)
+    v2 = Matrix([["w_0"], ["w_1"], ["\\vdots"], ["w_n"]], element_alignment_corner=ORIGIN).scale(s).next_to(v1, RIGHT)
+    plus = Tex("+").next_to(v2, RIGHT).scale(s)
+    bias = Tex("b_0").next_to(plus, RIGHT).scale(s)
+    with self.voiceover(text="""You might have noticed that the operation is just a dot product between the input and the weights so 
+                        we can express it like this""") as trk:
+      self.play(Unwrite(t1), Uncreate(nn.neurons[1][0]))
+      self.play(Transform(VGroup(*[x for x in nn.neurons[0]]), v1, replace_mobject_with_target_in_scene=True),
+                Transform(VGroup(*[x for x in nn.neuron_to_input[nn.neurons[1][0]]]), v2, replace_mobject_with_target_in_scene=True),
+                Write(plus), Write(bias))
+
+
+    m2 = Matrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                 ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                 ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                 ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]], element_alignment_corner=ORIGIN).scale(s).next_to(v1, RIGHT)
+    plus2 = Tex("+").next_to(m2, RIGHT)
+    b = Matrix([["b_0"], ["b_1"], ["\\vdots"], ["b_n"]], element_alignment_corner=ORIGIN).scale(s).next_to(plus2, RIGHT)
+    with self.voiceover(text="""Going even further, we can stack the weights into a matrix, and biases to a vector to get an equation, for the output
+                        of every neuron - not just one""") as trk:
+      self.wait(2)
+      self.play(Transform(v2, m2),
+                Transform(plus, plus2),
+                Transform(bias, b))
+
+    m1 = Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,m}"],
+                 ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,m}"],
+                 ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                 ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,m}"]], element_alignment_corner=ORIGIN).scale(s).move_to(v1)
+
+    with self.voiceover(text="""And usually we calculate our output for multiple inputs, so we can stack our inputs in a matrix as well""") as trk:
+      self.wait(3)
+      self.play(Transform(v1, m1))
+
+

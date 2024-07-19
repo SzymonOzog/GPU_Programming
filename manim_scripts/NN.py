@@ -1,5 +1,7 @@
 from manim import *
 import itertools as it
+from collections import defaultdict
+
 # A customizable Sequential Neural Network
 # Copied and edited based on https://www.youtube.com/watch?v=HnIeAP--vWc
 class NeuralNetworkMobject(VGroup):
@@ -33,6 +35,7 @@ class NeuralNetworkMobject(VGroup):
         self.neurons = []
         self.edges = []
         self.braces = []
+        self.neuron_to_input = defaultdict(list)
         self.add_neurons()
         self.add_edges()
         self.add_to_back(self.layers)
@@ -131,6 +134,7 @@ class NeuralNetworkMobject(VGroup):
             stroke_color=self.edge_color,
             stroke_width=self.edge_stroke_width,
         ))
+        self.neuron_to_input[neuron2].append(self.edges[-1][-1])
         return self.edges[-1][-1]
     
     # Labels each input neuron with a char l or a LaTeX character
