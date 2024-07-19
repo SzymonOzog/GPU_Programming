@@ -180,7 +180,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     v1 = Matrix([["x_0", "x_1", "...", "x_n"]], element_alignment_corner=ORIGIN).scale(s).shift(3*LEFT)
     v2 = Matrix([["w_0"], ["w_1"], ["\\vdots"], ["w_n"]], element_alignment_corner=ORIGIN).scale(s).next_to(v1, RIGHT)
     plus = Tex("+").next_to(v2, RIGHT).scale(s)
-    bias = Tex("b_0").next_to(plus, RIGHT).scale(s)
+    bias = Tex("$b_0$").next_to(plus, RIGHT).scale(s)
     with self.voiceover(text="""You might have noticed that the operation is just a dot product between the input and the weights so 
                         we can express it like this""") as trk:
       self.play(Unwrite(t1), Uncreate(nn.neurons[1][0]))
@@ -211,4 +211,47 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.wait(3)
       self.play(Transform(v1, m1))
 
+    self.wait(2)
+    forward = """__global__ void forward(int batch_size, int n, int out_w,
+                        float* input, float* weights, float* biases, float* output)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < batch_size && column < out_w)
+  {
+    output[row*out_w+column] = biases[column];
+    for(int i = 0; i < n; i++)
+    {
+      output[row*out_w+column] += weights[i*out_w + column] * input[row*n + i];
+    }
+  }
+}"""
+    code_obj = Code(code=forward, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
 
+    with self.voiceover(text="""And the code that we'll use for this will be simillar to our matmul code from the
+                        previous episode""") as trk:
+      self.wait(1)
+      self.play(Transform(VGroup(v1, v2, plus, bias), code_obj, replace_mobject_with_target_in_scene=True))
+
+    hl = SurroundingRectangle(code_obj.code[0][22:], buff=0.03, stroke_width=2, fill_opacity=0.3)
+
+    with self.voiceover(text="""This time, the matrix will not be square so we need to take 3 parameters for the shapes of our matrices""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[3:5], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Like in the matmul code, each thread produces one output element""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[5], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We check the bounary conditions before doing any reads or writes""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[7], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Then we initialize our output to the coresponding bias""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[8:12], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And we iterate over the weights and inputs and calculate the dot product""") as trk:
+      self.play(Transform(hl, hl_t))
+    self.wait(1)
