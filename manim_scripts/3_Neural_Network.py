@@ -255,3 +255,30 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""And we iterate over the weights and inputs and calculate the dot product""") as trk:
       self.play(Transform(hl, hl_t))
     self.wait(1)
+
+    with self.voiceover(text="""In order for our neural network to work, our layers require an activation function,
+                        otherwise they would just simply collaps to a one big linear layer""") as trk:
+      pass
+
+    axes = Axes(
+        x_range=[-5, 5, 1],
+        y_range=[-1, 5, 1],
+    ).scale(0.8)
+    relu_graph = axes.plot(lambda x: max(x, 0), color=BLUE)
+
+    title = Text("ReLU Activation Function", font_size=40)
+    title.to_edge(UP)
+
+    formula = MathTex(r"\text{ReLU}(x) = \begin{cases} x & \text{if } x > 0 \\ 0 & \text{if } x \leq 0 \end{cases}", font_size=32).shift(2*LEFT+UP)
+
+    self.wait(1)
+    with self.voiceover(text="""And the activation that we will be using is the relu function""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+      self.play(Write(title))
+
+    with self.voiceover(text="""It is a very simple concept - it returns 0 if x is lesser than 0, and x otherwise""") as trk:
+      self.play(Write(formula))
+
+    with self.voiceover(text="""This is what it looks like on a graph""") as trk:
+      self.play(Create(axes))
+      self.play(Create(relu_graph))
