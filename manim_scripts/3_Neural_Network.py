@@ -372,3 +372,57 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
                         That way - the powers will always be negative, and our values will remain in range of 0 to 1""") as trk:
       self.play(Transform(formula, formula2))
     self.wait(1)
+
+    softmax_code="""__global__ void softmax(int w, int h, float* a, float* b)
+{
+  int col = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < h && col < w)
+  {
+    float maxval = a[row*w];
+    for (int i = 1; i<w; i++)
+    {
+      maxval = max(maxval, a[row*w + i]);
+    }
+    float divisor = 0.f;
+    for (int i = 0; i<w; i++)
+    {
+      divisor += exp(a[row*w + i] - maxval);
+    }
+    b[row*w + col] = exp(a[row*w + col]-maxval)/(divisor);
+  }
+}"""
+
+
+    code_obj = Code(code=softmax_code, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""This is the code for the kernel that will implement our softmax function""") as trk:
+      self.wait(1)
+      self.play(Transform(formula, code_obj, replace_mobject_with_target_in_scene=True))
+
+    hl = SurroundingRectangle(code_obj.code[2:4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+
+    with self.voiceover(text="""We can see a simillar pattern for calculating one output element in a thread""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And performing a boundary check""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[6], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We then initialize our max value in the input vector to the first element of that vector""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[7:11], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And iterate over the rest of the values to find the maximum""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[11:16], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Then we iterate over the values again, calculating the divisor""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[16], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And finally, we calculate the probability for our element and store it in the output array""") as trk:
+      self.play(Transform(hl, hl_t))
+    self.wait(1)
