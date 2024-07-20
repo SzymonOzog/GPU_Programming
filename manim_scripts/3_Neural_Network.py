@@ -8,6 +8,11 @@ import random
 import numpy as np
 from NN import NeuralNetworkMobject
 
+def softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum(axis=0)
+
 mnist = np.loadtxt("mnist_train.csv", delimiter=",")
 def create_mnist(index, shape=(28,28)):
   example = mnist[index]
@@ -314,4 +319,56 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     hl_t = SurroundingRectangle(code_obj.code[6:8], buff=0.03, stroke_width=2, fill_opacity=0.3)
     with self.voiceover(text="""And we set our output to the activation if it was greater than 0 and 0 otherwise""") as trk:
       self.play(Transform(hl, hl_t))
+    self.wait(1)
+
+    with self.voiceover(text="""We will use the relu activation function for every layer in our network except for the last one""") as trk:
+      pass
+
+    formula = MathTex(
+        r"\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{K} e^{x_j}}"
+    )
+    example = [-1, 2, 0.1, 0.6, 0.2, 0.1, 1.1, -1.2, 0, -1]
+    conf = {"font_size": 36}
+
+    
+    func = Tex("$f($", "$x$", "$)$")
+    chart = BarChart(values = example, bar_names = [f"{i}" for i in range(10)], x_axis_config=conf).scale(0.5).next_to(func, LEFT)
+
+    
+    with self.voiceover(text="""What we want our last layer to do, is to output the probability, of an image representing
+                        a number from 0 to 9""") as trk:
+      pass
+
+    with self.voiceover(text="""Right now, our layer would output just numbers, that we would have to interpret ourselves""") as trk:
+      self.play(Uncreate(hl), Uncreate(code_obj))
+      self.play(Create(chart))
+
+    self.wait(1)
+    with self.voiceover(text="""We need to have some function""") as trk:
+      self.play(Write(func))
+    chart2 = BarChart(values = softmax(np.array(example)), bar_names = [f"p({i})" for i in range(10)], x_axis_config=conf).scale(0.5).next_to(func, RIGHT)
+
+    with self.voiceover(text="""That will take in our final layer's output""") as trk:
+      self.play(Transform(chart.copy(), func[1].copy().set_opacity(0), replace_mobject_with_target_in_scene=True))
+
+    with self.voiceover(text="""And return a probability distribution""") as trk:
+      self.play(Transform(func.copy().copy().set_opacity(0), chart2, replace_mobject_with_target_in_scene=True))
+    self.wait(1)
+
+    with self.voiceover(text="""We can achieve this result, by using a softmax function as our final activation""") as trk:
+      self.play(FadeOut(chart), FadeOut(chart2))
+      self.play(Transform(func, formula, replace_mobject_with_target_in_scene=True))
+
+    formula2 = MathTex(
+        r"\text{softmax}(x_i) = \frac{e^{x_i - max(x)}}{\sum_{j=1}^{K} e^{x_j - max(x)}}"
+    )
+    with self.voiceover(text="""Although there is one caveat, since it uses an exponential function, that grows - well exponentially
+                        if our input vector will contain multiple positive values, it can overflow as we will add a lot of big numbers together
+                        in our divisor""") as trk:
+      pass
+      
+
+    with self.voiceover(text="""We can mitigate this by subtracting the maximum of our vector from the exponent. 
+                        That way - the powers will always be negative, and our values will remain in range of 0 to 1""") as trk:
+      self.play(Transform(formula, formula2))
     self.wait(1)
