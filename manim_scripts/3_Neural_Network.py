@@ -282,3 +282,36 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""This is what it looks like on a graph""") as trk:
       self.play(Create(axes))
       self.play(Create(relu_graph))
+
+    self.wait(2)
+
+    relu = """__global__ void relu(int w, int h, float* a, float* b)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < w && column < h)
+  {
+    float activation = a[row*w+column];
+    b[row*w+column] =  activation > 0.f ? activation : 0.f;
+  }
+}"""
+
+    code_obj = Code(code=relu, tab_width=2, language="c", font_size=24, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""Time to write the code!""") as trk:
+      self.play(Unwrite(title), Unwrite(formula), Uncreate(axes), Uncreate(relu_graph))
+      self.play(Create(code_obj))
+
+    hl = SurroundingRectangle(code_obj.code[2:4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Again, each thread calculates one element in the output matrix""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We need to perform a boundary check""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[6:8], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And we set our output to the activation if it was greater than 0 and 0 otherwise""") as trk:
+      self.play(Transform(hl, hl_t))
+    self.wait(1)
