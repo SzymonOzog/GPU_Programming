@@ -426,3 +426,75 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""And finally, we calculate the probability for our element and store it in the output array""") as trk:
       self.play(Transform(hl, hl_t))
     self.wait(1)
+
+    
+    title = Text("Loss").to_edge(UP)
+    with self.voiceover(text="""The final component of our neural network will be the loss function""") as trk:
+      self.play(Uncreate(code_obj), Uncreate(hl))
+      self.wait(1)
+      self.play(Write(title))
+
+    with self.voiceover(text="""you can think of the loss function as the measure of how bad is our neural network -
+                        the higher the loss function, the worse is the result of our outputs""") as trk:
+      pass
+
+    eq = Tex("$H(p, q) = $","$-\\sum\\limits_{x=0}^{n}$", "$\\,p(x)$", "$\\,\\log$", "$\\,q(x)$")
+    with self.voiceover(text="""We will use a cross entropy loss function for our neural network""") as trk:
+      self.play(Write(eq))
+    real = Tex("$real \\; probability$", color=GREEN).next_to(eq[1], UP).shift(0.5*UP+RIGHT)
+    l1 = real.get_center()
+    l1[0] = eq[2].get_center()[0]
+    a1 = Arrow(l1, eq[2].get_center(), stroke_width=3, max_tip_length_to_length_ratio=0.15, color=GREEN)
+
+    with self.voiceover(text="""It takes 2 vectors, as the input""") as trk:
+      pass
+
+    with self.voiceover(text="""The vector of real probabilities for each class""") as trk:
+      self.play(Create(real), Create(a1), eq[2].animate.set_color(GREEN))
+
+    predicted = Tex("$predicted \\; probability$", color=BLUE).next_to(eq[3], DOWN).shift(0.5 * DOWN + LEFT)
+    l2 = predicted.get_center()
+    l2[0] = eq[4].get_center()[0]
+    a2 = Arrow(l2, eq[4].get_center(), stroke_width=3, max_tip_length_to_length_ratio=0.15, color=BLUE)
+    with self.voiceover(text="""And the vector of predictions of our neural network""") as trk:
+      self.play(Create(predicted), Create(a2), eq[4].animate.set_color(BLUE))
+
+    with self.voiceover(text="""It then iterates over all labels - so in our case the numbers from 0 to 9
+                        and calculates the cross entropy between the truth and our prediction""") as trk:
+      self.play(eq[1].animate.set_color(PURPLE))
+
+    with self.voiceover(text="""Note that our real probabilities will have 1 entry that is equal to 1, indicating the real number
+                        and the rest of the vector will be all zeros""") as trk:
+      self.wait(5)
+      self.play(VGroup(eq, real, a1, predicted, a2).animate.to_edge(LEFT))
+    axes = Axes(
+        x_range=[0, 1, 0.2],
+        y_range=[0, 5, 1],
+        axis_config={"include_tip": False, "include_numbers": True},
+       ).scale(0.5).to_edge(RIGHT)
+
+    x_label = axes.get_x_axis_label("q(x_{true})", direction=DOWN, edge=DOWN)
+    y_text = Tex("$H=-\\log q(x_{true})$")
+    y_label = axes.get_y_axis_label(y_text.rotate(PI/2), direction=LEFT, edge=LEFT)
+
+    plot = axes.plot(
+        lambda x: -np.log(x),
+        color=BLUE,
+        x_range=[0.01, 1]
+        )
+
+    with self.voiceover(text="""So our loss will collapse to just being the negative logarithm of the predicted probability for our true label""") as trk:
+      self.play(Create(axes), Write(x_label), Write(y_label))
+
+    self.wait(1)
+
+    with self.voiceover(text="""When we graph it, we can see that it's getting higher the lower our predicted probability is 
+                        for the number in the image, and it's 0 when the networks has correctly guessed the label""") as trk:
+      self.play(Create(plot))
+    self.wait(1)
+
+    with self.voiceover(text="""If you want some more intuition on where this loss function comes from,
+                        I invite you to watch my series on Information Theory""") as trk:
+      pass
+
+    self.wait(3)
