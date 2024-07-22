@@ -544,4 +544,33 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""In the end, we save our result in the output vector""") as trk:
       self.play(Transform(hl, hl_t))
 
-    self.wait(1)
+    self.wait(2)
+
+    init_rand = """__global__ void init_rand(int w, int h, float* mat)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < h && column < w)
+  {
+    curandState state;
+    curand_init(42, row*w+column, 0, &state);
+    mat[row*w + column] = curand_normal(&state)*sqrtf(2.f/h);
+  }
+}"""
+
+    code_obj2 = Code(code=init_rand, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+
+    with self.voiceover(text="""There is one last kernel that I want to mention""") as trk:
+      self.play(Uncreate(hl))
+
+    with self.voiceover(text="""Our weights have to actually be initialized to some value, we can also do that on the gpu
+                        using the code on the screen""") as trk:
+      self.play(Transform(code_obj, code_obj2))
+
+    with self.voiceover(text="""It's pretty straightforward, so I won't go into it in detail, one thing that might be
+                        confusing is the sqrt function, this is just He initialization - I won't go over it as it's outside
+                        of the scope for the series, but I'll leave a link in the description for those that want to read more
+                        on the subject""") as trk:
+      pass
+
