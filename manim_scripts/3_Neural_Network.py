@@ -498,3 +498,50 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       pass
 
     self.wait(3)
+
+
+    cross_entropy_code = """__global__ void cross_entropy(int w, int h, float* preds, float* real, float* output)
+{
+  int idx = blockIdx.x*blockDim.x + threadIdx.x;
+  if (idx < h)
+  {
+    float loss = 0.f;
+    for (int i = 0; i<w; i++)
+    {
+      loss -= real[idx*w + i] * log(max(1e-6, preds[idx*w + i]));
+    }
+    output[idx] = loss;
+  }
+}"""
+    code_obj = Code(code=cross_entropy_code, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""Without further ado, lets write the kernel for our loss""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+      self.play(Create(code_obj))
+
+
+    hl = SurroundingRectangle(code_obj.code[2], buff=0.03, stroke_width=2, fill_opacity=0.3)
+
+    with self.voiceover(text="""This time we will reduce our input size to 1 dimension, so we only operate on 
+                        the X axis in our kernel grid""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[3], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We do our standard boundary check""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[5:10], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And we iterate over each number and calculate it's contribution to our loss""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[8][20:-1], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""One thing to note is the max function in the logarithm, we do the max of a very small number,
+                        and our prediction for numerical stability - because the log function is undefined for 0""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[10], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""In the end, we save our result in the output vector""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    self.wait(1)
