@@ -73,7 +73,7 @@ __global__ void relu(int w, int h, float* a, float* b)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
-  if (row < w && column < h)
+  if (row < h && column < w)
   {
     float activation = a[row*w+column];
     b[row*w+column] =  activation > 0.f ? activation : 0.f;
@@ -84,7 +84,7 @@ __global__ void relu_backwards(int w, int h, float* a, float* d_l, float* b)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
-  if (row < w && column < h)
+  if (row < h && column < w)
   {
     float activation = a[row*w+column];
     b[row*w+column] = activation > 0.f ? d_l[row*w+column] : 0.f;
@@ -142,7 +142,7 @@ __global__ void init_rand(int w, int h, float* mat)
   if (row < h && column < w)
   {
     curandState state;
-    curand_init(44, row*w+column, 0, &state);
+    curand_init(42, row*w+column, 0, &state);
     mat[row*w + column] = curand_normal(&state)*sqrtf(2.f/h);
   }
 }
