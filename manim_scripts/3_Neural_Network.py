@@ -86,12 +86,15 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
         self.play(Create(b), Write(l))
         self.wait(0.5)
 
+    texts = [Tex(i, font_size=20).next_to(nn.neurons[-1][i], RIGHT, buff=SMALL_BUFF) for i in range(10)]
+
     with self.voiceover(text="""And an output layer with 10 output neurons corresponding to digits 0 to 9""") as trk:
       self.play(*[Create(n) for n in nn.neurons[-1]], *[Create(n) for n in nn.edges[-1]])
       b, l = nn.braces[-1]
       b.next_to(nn.neurons[-1][0], UP, buff=0.04)
       l.next_to(b, UP, buff=0.04)
       self.play(Create(b), Write(l))
+      self.play(LaggedStart(*[Write(x) for x in texts]))
 
 
     with self.voiceover(text="""As I've mentioned in the introduction to the series, I'm going to do some explanations on how neural networks work
@@ -118,7 +121,8 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
         self.play(Indicate(nn.neurons[-1][int(label)], color=BLUE))
 
     with self.voiceover(text="""I also have to mention that you should be able to code all of the functionality yourself - and I highly encourage you to try to 
-                        pause the video and try to come up with a solution on your own""") as trk:
+                        pause the video and try to come up with a solution on your own. Another note would be that this episode will not introduce any new concepts
+                        in the realm of GPU programming - it's ment to reinforce what we've learned so far""") as trk:
       while trk.get_remaining_duration() > 0:
         idx += 1
         img, label, group = create_mnist(idx+1)
@@ -148,6 +152,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     for b,l in nn.braces:
       anims.append(Unwrite(l))
       anims.append(Uncreate(b))
+    anims.extend([Unwrite(x) for x in texts])
     with self.voiceover(text="""The first kernel that we will be writing, is the forward pass for our neural network layer""") as trk:
       self.wait(2)
       self.play(anims)
@@ -212,7 +217,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
                  ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                  ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,m}"]], element_alignment_corner=ORIGIN).scale(s).move_to(v1)
 
-    with self.voiceover(text="""And usually we calculate our output for multiple inputs, so we can stack our inputs in a matrix as well""") as trk:
+    with self.voiceover(text="""And usually we calculate our output for a batch of inputs, so we can stack our inputs in a matrix as well""") as trk:
       self.wait(3)
       self.play(Transform(v1, m1))
 
@@ -290,14 +295,14 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
 
     self.wait(2)
 
-    relu = """__global__ void relu(int w, int h, float* a, float* b)
+    relu = """__global__ void relu(int w, int h, float* input, float* output)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
-  if (row < w && column < h)
+  if (row < h && column < w)
   {
-    float activation = a[row*w+column];
-    b[row*w+column] =  activation > 0.f ? activation : 0.f;
+    float activation = input[row*w+column];
+    output[row*w+column] =  activation > 0.f ? activation : 0.f;
   }
 }"""
 
@@ -373,23 +378,23 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.play(Transform(formula, formula2))
     self.wait(1)
 
-    softmax_code="""__global__ void softmax(int w, int h, float* a, float* b)
+    softmax_code="""__global__ void softmax(int w, int h, float* input, float* output)
 {
   int col = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
   if (row < h && col < w)
   {
-    float maxval = a[row*w];
+    float maxval = input[row*w];
     for (int i = 1; i<w; i++)
     {
-      maxval = max(maxval, a[row*w + i]);
+      maxval = max(maxval, input[row*w + i]);
     }
     float divisor = 0.f;
     for (int i = 0; i<w; i++)
     {
-      divisor += exp(a[row*w + i] - maxval);
+      divisor += exp(input[row*w + i] - maxval);
     }
-    b[row*w + col] = exp(a[row*w + col]-maxval)/(divisor);
+    output[row*w + col] = exp(input[row*w + col]-maxval)/(divisor);
   }
 }"""
 
@@ -517,8 +522,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     code_obj.code = remove_invisible_chars(code_obj.code)
 
     with self.voiceover(text="""Without further ado, lets write the kernel for our loss""") as trk:
-      self.play(*[FadeOut(x) for x in self.mobjects])
-      self.play(Create(code_obj))
+      self.play(Transform(VGroup(axes, x_label, y_label, plot, a2, a1, predicted, real, eq, title), code_obj, replace_mobject_with_target_in_scene=True))
 
 
     hl = SurroundingRectangle(code_obj.code[2], buff=0.03, stroke_width=2, fill_opacity=0.3)
@@ -534,6 +538,10 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     hl_t = SurroundingRectangle(code_obj.code[5:10], buff=0.03, stroke_width=2, fill_opacity=0.3)
     with self.voiceover(text="""And we iterate over each number and calculate it's contribution to our loss""") as trk:
       self.play(Transform(hl, hl_t))
+
+    with self.voiceover(text="""This part could have been parallelized even further, but that would require introducing atomic operations,
+                        and I intend to keep my promise of not introducing anything new in this episode""") as trk:
+      pass
 
     hl_t = SurroundingRectangle(code_obj.code[8][20:-1], buff=0.03, stroke_width=2, fill_opacity=0.3)
     with self.voiceover(text="""One thing to note is the max function in the logarithm, we do the max of a very small number,
@@ -568,9 +576,51 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
                         using the code on the screen""") as trk:
       self.play(Transform(code_obj, code_obj2))
 
+
+    idx = 0
     with self.voiceover(text="""It's pretty straightforward, so I won't go into it in detail, one thing that might be
                         confusing is the sqrt function, this is just He initialization - I won't go over it as it's outside
                         of the scope for the series, but I'll leave a link in the description for those that want to read more
                         on the subject""") as trk:
       pass
 
+    self.play(Uncreate(code_obj))
+
+    with self.voiceover(text="""This will be the end for this episode, in the next one - we are going to implement the backward
+                        pass and backpropagate our error to actually teach our neural network to predict the correct digit,
+                        subscribe if you don't want to miss it - also please leave you feedback in the comments. It helps
+                        me shape the future direction of the series. See you in the next episode - bye""") as trk: 
+      nn = NeuralNetworkMobject([784, 300, 100, 10]).shift(0.1*DOWN)
+      anims = []
+      for x in nn.neurons:
+        anims.extend([Create(n) for n in x])
+      for x in nn.edges:
+        anims.extend([Create(n) for n in x])
+      self.play(*anims)
+      while idx < 3:
+        idx += 1
+        img, label, group = create_mnist(idx+1)
+        group.scale(0.7).next_to(nn.neurons[0][10], LEFT)
+        self.play(*[Create(x) for x in img])
+        anims = []
+        j = 0
+        for i, x in enumerate(img):
+          if i < 10 or i > 773:
+            anims.append(FadeOut(x, target_position=nn.neurons[0][j]))
+            j+=1
+          else:
+            j=11
+            anims.append(FadeOut(x, target_position=nn.neurons[0][10]))
+        self.play(*anims)
+        for i in range(len(nn.neurons)-1):
+          self.play(*[ShowPassingFlash(e.copy().set_color(BLUE)) for e in nn.edges[i]])
+        self.play(Indicate(nn.neurons[-1][int(label) - 1], color=RED))
+        for i in range(len(nn.edges)-1, -1, -1):
+          self.play(*[ShowPassingFlash(e.copy().set_color(RED), reverse_rate_function=True) for e in nn.edges[i]])
+      anims = []
+      for x in nn.neurons:
+        anims.extend([Uncreate(n) for n in x])
+      for x in nn.edges:
+        anims.extend([Uncreate(n) for n in x])
+      self.play(*anims)
+      self.wait(3)
