@@ -107,21 +107,59 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.play(LaggedStart(*[Create(l) for l in lines]))
 
     
-    eq = Tex("$w_{0,0}$", "$-=\\delta$", font_size=32).next_to(loss, UP, buff=LARGE_BUFF)
-    with self.voiceover(text="""And we want to take<bookmark mark='1'/> a weight of our network
-                        and subtract the <bookmark mark='2'/> error in this particular weight""") as trk:
+    eq = Tex("$w$", "$=w-\\delta_w$", font_size=32).next_to(loss, UP, buff=LARGE_BUFF)
+    eq_b = Tex("$b$", "$=b-\\delta_b$", font_size=32).next_to(eq, UP)
+    with self.voiceover(text="""And we want to take<bookmark mark='1'/> the weights and biases of our network
+                        and subtract the <bookmark mark='2'/> errors that make the loss higher""") as trk:
       self.wait_until_bookmark("1")
-      self.play(Write(eq[0]))
+      self.play(Write(eq[0]), Write(eq_b[0]))
       self.wait_until_bookmark("2")
-      self.play(Write(eq[1]))
+      self.play(Write(eq[1]), Write(eq_b[1]))
       
-    eq2 = Tex("$\\delta$", "$=\\frac{\\partial L}{\\partial w_{0,0}}$", font_size=32).next_to(eq, UP)
+    eq2 = Tex("$\\delta_w$", "$=\\frac{\\partial L}{\\partial w}$", font_size=32).next_to(eq, RIGHT)
+    eq2_b = Tex("$\\delta_b$", "$=\\frac{\\partial L}{\\partial b}$", font_size=32).next_to(eq_b, RIGHT)
     with self.voiceover(text="""And the error can be specified as the <bookmark mark='1'/> derivative of the loss with respect to our weight""") as trk:
-      self.play(Write(eq2[0]))
+      self.play(Write(eq2[0]), Write(eq2_b[0]))
       self.wait_until_bookmark("1")
-      self.play(Write(eq2[1]))
+      self.play(Write(eq2[1]), Write(eq2_b[1]))
 
     with self.voiceover(text="""Remember that the derivative tells us how changing our weight will influence our loss. Meaning that if our derivative is slightly positive, 
                         increasing our weight, will make the loss go up, and decreasing it will make the loss go down""") as trk:
       pass
 
+    with self.voiceover(text="""Now there is a problem of how to calculate the derivative with respect to each weigh""") as trk:
+      pass
+
+    chain_rule = Tex("$\\frac{\\partial L}{\\partial w}$", "$=\\frac{\\partial L}{\\partial a}$", "$*\\frac{\\partial a}{\\partial w}$").move_to(eq, aligned_edge=LEFT)
+    with self.voiceover(text="""And it turns out that it's not as hard as you might expect""") as trk:
+      self.play(Unwrite(eq), Unwrite(eq2), Unwrite(eq_b), Unwrite(eq2_b))
+
+    with self.voiceover(text="""There is an amazing mathematical tool that allows us to do this with simple functions, it's called the chain rule""") as trk:
+      self.play(Write(chain_rule))
+
+    with self.voiceover(text="""It essentially means that when we know the error in the last layer""") as trk:
+      self.play(chain_rule[1].animate.set_color(BLUE))
+
+    with self.voiceover(text="""We can calculate the error in the weights of the layer before it""") as trk:
+      self.play(chain_rule[0].animate.set_color(RED))
+
+    with self.voiceover(text="""By multiplying it's influence on the activations by that error""") as trk:
+      self.play(chain_rule[2].animate.set_color(GREEN))
+
+    
+    d1 = Tex("$\\delta^L$").next_to(rect, UP)
+    d2 = Tex("$\\delta^3$").next_to(nn.neurons[-1][0], UP)
+    deltas = []
+    for i in range(len(nn.neurons)):
+      deltas.append(Tex(f"$\\delta^{i}$").next_to(nn.neurons[i][0], UP))
+
+
+    with self.voiceover(text="""That is why we call this backpropagation, we start by calculating the error at the end, and we go backwards propagating the error through our network""") as trk:
+      self.play(Unwrite(chain_rule))
+      self.play(Write(d1))
+      self.play(*[ShowPassingFlash(e.copy().set_color(RED), reverse_rate_function=True) for e in lines])
+      self.play(Write(d2))
+      for i in range(len(nn.edges)-1, -1, -1):
+        self.play(*[ShowPassingFlash(e.copy().set_color(RED), reverse_rate_function=True) for e in nn.edges[i]])
+        self.play(Write(deltas[i]))
+    self.wait(1)
