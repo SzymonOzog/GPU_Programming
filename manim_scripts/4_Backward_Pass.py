@@ -339,20 +339,20 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     eq = MathTex("=").next_to(d_L2, RIGHT)
     self.play(Write(eq))
 
+    d_LX = Matrix([["-(p_1 - s_1*(p_1+p_2+\\cdots+p_n))"], ["-(p_2 - s_2*(p_1+p_2+\\cdots+p_n))"], ["\\vdots"], ["-(p_n - s_n*(p_1+p_2+\\cdots+p_n))"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
     with self.voiceover(text="""We can do a vector matrix multiplication to get the derivative of our loss with respect to the inputs""") as trk:
-      d_LX = Matrix([["p_1 - s_1*(p_1+p_2+\\cdots+p_n)"], ["p_2 - s_2*(p_1+p_2+\\cdots+p_n)"], ["\\vdots"], ["p_n - s_n*(p_1+p_2+\\cdots+p_n)"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
-    self.play(Create(d_LX))
+      self.play(Create(d_LX))
     self.wait(1)
     with self.voiceover(text="""Now remember, p is a probability distribution""") as trk:
       pass
 
-    d_LX2 = Matrix([["p_1 - s_1*(1)"], ["p_2 - s_2*(1)"], ["\\vdots"], ["p_n - s_n*(1)"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
+    d_LX2 = Matrix([["-(p_1 - s_1*(1))"], ["-(p_2 - s_2*(1))"], ["\\vdots"], ["-(p_n - s_n*(1))"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
     with self.voiceover(text="""So it's sum will always be equal to 1""") as trk:
       self.play(Transform(d_LX, d_LX2))
     self.wait(1)
-    d_LX2 = Matrix([["p_1 - s_1"], ["p_2 - s_2"], ["\\vdots"], ["p_n - s_n"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
+    d_LX2 = Matrix([["s_1 - p_1"], ["s_2 - p_2"], ["\\vdots"], ["s_n - p_n"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
     with self.voiceover(text="""Simplifying even further, it truns out that the derivative of our loss with respect to the inputs
-                        is simply just a vector subtraction of the true distribution and the softmaxed outputs""") as trk:
+                        is simply just a vector subtraction of the softmaxed outputs and the true distribution""") as trk:
       self.play(Transform(d_LX, d_LX2))
     self.wait(1)
 
