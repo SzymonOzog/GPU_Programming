@@ -193,9 +193,9 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
                         as it simplifies beutifully in the end""") as trk:
       pass
 
-    softmax = MathTex(r"q = \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=0}^{K} e^{x_j}}", font_size=34).next_to(eq1.get_center(), DOWN, aligned_edge=RIGHT).shift(0.5*DOWN)
+    softmax = MathTex(r"s = \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=0}^{K} e^{x_j}}", font_size=34).next_to(eq1.get_center(), DOWN, aligned_edge=RIGHT).shift(0.5*DOWN)
 
-    cross_entropy = Tex("$H(p, q) = $","$-\\sum\\limits_{i=0}^{K}$", "$\\,p(i)$", "$\\,\\log$", "$\\,q(i)$", font_size=34).next_to(softmax, RIGHT)
+    cross_entropy = Tex("$H(p, s) = $","$-\\sum\\limits_{i=0}^{K}$", "$\\,p_i$", "$\\,\\log$", "$\\,s_i$", font_size=34).next_to(softmax, RIGHT)
 
     with self.voiceover(text="""As a remainder, our final activation layer was using the softmax function""") as trk:
       self.play(Write(softmax))
@@ -300,6 +300,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
               r[-1][i].set_color(c)
         ret.append(r)
       return ret
+    mtmm = Matrix._matrix_to_mob_matrix
     Matrix._matrix_to_mob_matrix = monkeypatch
     c = [GREEN, WHITE, BLUE, WHITE, PURPLE, WHITE]
     mat = []
@@ -319,10 +320,39 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
 
     s_d2 = Matrix(mat, element_to_mobject_config={"colormap":c, "font_size": 24}, element_alignment_corner=ORIGIN).move_to(s_d)
     with self.voiceover(text="""We can plug in all of the values and arrive with this matrix of softmax derivatives""") as trk:
-      self.play(Transform(s_d, s_d2.move_to(s_d, aligned_edge=RIGHT)), d_eq3[2].animate.set_color(GREEN))
+      self.play(Transform(s_d, s_d2.move_to(s_d, aligned_edge=RIGHT), replace_mobject_with_target_in_scene=True), d_eq3[2].animate.set_color(GREEN))
 
     with self.voiceover(text="""I know that this has been a lot so pause the video and look over all the components
                         one more time to make sure that you understand where they come from""") as trk:
       pass
 
+    Matrix._matrix_to_mob_matrix = mtmm
+    d_L = Matrix([["\\frac{\\partial L}{\\partial s_1}", "\\frac{\\partial L}{\\partial s_2}", "\\vdots", "\\frac{\\partial L}{\\partial s_n}"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(s_d2, RIGHT)
+    with self.voiceover(text="""To finish with our calculations we have to calculate the derivative of our loss with respect to the activations""") as trk:
+      self.play(Unwrite(t6), Unwrite(d_ls), Unwrite(t1), Unwrite(d_eq3))
+      self.play(Create(d_L))
+
+    d_L2 = Matrix([["-\\frac{p_1}{s_1}"], ["-\\frac{p_2}{s_2}"], ["\\vdots"], ["-\\frac{p_n}{s_n}"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(s_d2, RIGHT)
+
+    with self.voiceover(text="""And it's the derivative of log of our softmax output times our true probability""") as trk:
+      self.play(Transform(d_L, d_L2, replace_mobject_with_target_in_scene=True))
+    eq = MathTex("=").next_to(d_L2, RIGHT)
+    self.play(Write(eq))
+
+    with self.voiceover(text="""We can do a vector matrix multiplication to get the derivative of our loss with respect to the inputs""") as trk:
+      d_LX = Matrix([["p_1 - s_1*(p_1+p_2+\\cdots+p_n)"], ["p_2 - s_2*(p_1+p_2+\\cdots+p_n)"], ["\\vdots"], ["p_n - s_n*(p_1+p_2+\\cdots+p_n)"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
+    self.play(Create(d_LX))
+    self.wait(1)
+    with self.voiceover(text="""Now remember, p is a probability distribution""") as trk:
+      pass
+
+    d_LX2 = Matrix([["p_1 - s_1*(1)"], ["p_2 - s_2*(1)"], ["\\vdots"], ["p_n - s_n*(1)"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
+    with self.voiceover(text="""So it's sum will always be equal to 1""") as trk:
+      self.play(Transform(d_LX, d_LX2))
+    self.wait(1)
+    d_LX2 = Matrix([["p_1 - s_1"], ["p_2 - s_2"], ["\\vdots"], ["p_n - s_n"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(eq, RIGHT)
+    with self.voiceover(text="""Simplifying even further, it truns out that the derivative of our loss with respect to the inputs
+                        is simply just a vector subtraction of the true distribution and the softmaxed outputs""") as trk:
+      self.play(Transform(d_LX, d_LX2))
+    self.wait(1)
 
