@@ -496,3 +496,51 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""And that's it, when we add this kernel to our arsenal we can stack them infinitely 
                         to backpropagate through as many layers as we want""") as trk:
       self.play(Transform(formula, code_obj, replace_mobject_with_target_in_scene=True))
+
+
+    formula = MathTex("x^{n} = ", "a^{n-1}", "W^n", " + ", "b^{n}").shift(2*UP)
+    formula_w = MathTex("\\frac{\\partial x^{n}}{\\partial w^{n}} = ", "\\frac{\\partial a^{n-1}W^n + b^{n}}{\\partial w^{n}}").shift(1.5*UP)
+    formula_b = MathTex("\\frac{\\partial x^{n}}{\\partial b^{n}} = ", "\\frac{\\partial a^{n-1}W^n + b^{n}}{\\partial b^{n}}").next_to(formula_w, DOWN, aligned_edge=LEFT)
+    with self.voiceover(text="""The final piece of the puzzle will be calculating the amout of error in our weights""") as trk:
+      pass
+
+    self.play(Uncreate(code_obj))
+
+    with self.voiceover(text="""We can do that by first using our expression for the output of a layer""") as trk:
+      self.play(Write(formula))
+
+    with self.voiceover(text="""And then taking it's derivative with respect to the weights""") as trk:
+      self.play(Transform(formula, formula_w, replace_mobject_with_target_in_scene=True))
+
+    with self.voiceover(text="""As well as the biases""") as trk:
+      self.play(Write(formula_b))
+
+    formula_w2 = MathTex("\\frac{\\partial x^{n}}{\\partial w^{n}} = ", "a^{n-1}").move_to(formula_w, aligned_edge=LEFT)
+    formula_b2 = MathTex("\\frac{\\partial x^{n}}{\\partial b^{n}} = ", "1").next_to(formula_w2, DOWN, aligned_edge=LEFT)
+    self.wait(1)
+    self.play(Transform(formula_w, formula_w2), Transform(formula_b, formula_b2))
+    self.wait(1)
+
+
+    formula_w2 = MathTex("\\frac{\\partial L}{\\partial x^{n}} \\frac{\\partial x^{n}}{\\partial w^{n}} = ", "a^{n-1}",
+                         "\\frac{\\partial L}{\\partial x^{n}}", " = \\frac{\\partial L}{\\partial w^{n}}" ).move_to(formula_w, aligned_edge=LEFT)
+    formula_b2 = MathTex("\\frac{\\partial L}{\\partial x^{n}} \\frac{\\partial x^{n}}{\\partial b^{n}} = ",
+                         "1", " * \\frac{\\partial L}{\\partial x^{n}}", " = \\frac{\\partial L}{\\partial b^{n}}").next_to(formula_w2, DOWN, aligned_edge=LEFT)
+
+    with self.voiceover(text="""We can then use our previously calculated derivative of loss with respect to the outputs of that layer,
+                        as well as the chain rule to calculate the error in our weights and biases""") as trk:
+      self.play(Transform(formula_w, formula_w2), Transform(formula_b, formula_b2))
+
+
+    eq_w = MathTex("w \\leftarrow w-\\frac{\\eta}{bs}\\frac{\\partial L}{\\partial w^{n}}").next_to(formula_b.get_center(), DOWN, buff=LARGE_BUFF, aligned_edge=RIGHT).shift(0.25*LEFT)
+    eq_b = MathTex("b \\leftarrow b-\\frac{\\eta}{bs}\\frac{\\partial L}{\\partial b^{n}}").next_to(eq_w, RIGHT).shift(0.5*RIGHT)
+
+    with self.voiceover(text="""To update our weights, we will use an algorithm called stochastic gradient descent""") as trk:
+      self.play(Write(eq_w), Write(eq_b))
+
+    eta = MathTex("\\eta = \\text{learning rate}").next_to(eq_w, DOWN, aligned_edge=LEFT)
+    bs = MathTex("bs = \\text{batch size}").next_to(eq_b, DOWN, aligned_edge=RIGHT)
+    with self.voiceover(text="""It just simply reduces our weights, by the average error in our batch, multiplied by a hyperparameter called learning
+                        rate, that tunes how big of a step in the optimization space we are taking""") as trk:
+      self.play(Write(eta), Write(bs))
+    self.wait(1)
