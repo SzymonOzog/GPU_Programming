@@ -477,3 +477,22 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
 
     with self.voiceover(text="""In order to backpropagate that, we need to multiply everything by the result of our previous step""") as trk:
       self.play(Transform(formula, formula2))
+
+    relu_backwards = \
+"""__global__ void relu_backwards(int w, int h, int ns,
+                                  float* a, float* d_l, float* b)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < w && column < h)
+  {
+    float activation = a[row*w+column];
+    b[row*w+column] = activation > 0.f ? d_l[row*w+column] : 0.f;
+  }
+}"""
+    code_obj = Code(code=relu_backwards, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""And that's it, when we add this kernel to our arsenal we can stack them infinitely 
+                        to backpropagate through as many layers as we want""") as trk:
+      self.play(Transform(formula, code_obj, replace_mobject_with_target_in_scene=True))
