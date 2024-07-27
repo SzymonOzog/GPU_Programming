@@ -373,4 +373,63 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
 
     with self.voiceover(text="""And this is the kernel that we will use to calculate it, I won't go into details on it as 
                         you should be familliar with all the patterns used""") as trk:
-      self.play(Transform(VGroup(d_LX, eq, d_L2, s_d2, softmax, cross_entropy, eq1[0], eq1[1], eq1[2]), code_obj, replace_mobject_with_target_in_scene=True))
+      self.play(Transform(VGroup(*[x for x in self.mobjects if isinstance(x, VMobject)]), code_obj, replace_mobject_with_target_in_scene=True))
+
+    nn = NeuralNetworkMobject([784, 300, 100, 10]).to_edge(DOWN, buff=0.05)
+    with self.voiceover(text="""Now that we have the first piece of the puzzle in place, let's look into how do we backpropagate through our layers""") as trk:
+      self.wait(2)
+      self.play(Uncreate(code_obj))
+
+    eq2 = MathTex("\\frac{\\partial L}{\\partial a^{n-1}}=", "\\frac{\\partial L}{\\partial a^n}",
+                  "\\frac{\\partial a^n}{\\partial x^n}", "\\frac{\\partial x^n}{\\partial a^{n-1}}", font_size=32).to_edge(UP, buff=0.05)
+    s = 0.8
+    m2 = Matrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                 ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                 ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                 ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]], element_alignment_corner=ORIGIN).scale(s).shift(0.5*RIGHT)
+    plus2 = Tex("+").next_to(m2, RIGHT)
+    b = Matrix([["b_0"], ["b_1"], ["\\vdots"], ["b_n"]], element_alignment_corner=ORIGIN).scale(s).next_to(plus2, RIGHT)
+    m1 = Matrix([["a_{0,0}", "a_{0,1}", "\\cdots", "a_{0,m}"],
+                 ["a_{1,0}", "a_{1,1}", "\\cdots", "a_{1,m}"],
+                 ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                 ["a_{b,0}", "a_{b,1}", "\\cdots", "a_{b,m}"]], element_alignment_corner=ORIGIN).scale(s).next_to(m2, LEFT)
+
+    formula = MathTex("x^{n} = ", "a^{n-1}", "W^n", " + ", "b^{n}")
+
+    with self.voiceover(text="""With our derivative of our loss with respect to the inputs of the output layer""") as trk:
+      self.play(Write(eq2[1]), Write(eq2[2]))
+
+
+    with self.voiceover(text="""We want to go a step back and calculate how the activations of the previous layer influenced our loss""") as trk:
+      self.play(Write(eq2[0]))
+
+    self.wait(1)
+
+    with self.voiceover(text="""And we can do that with the chain rule by multiplying our result by the derivative of the inputs to that layer with respect
+                        to the activations of the previous layer""") as trk:
+      self.play(Write(eq2[3]))
+    self.wait(1)
+
+    with self.voiceover(text="""Remember that our equation for the input to the next layers was a matmul with the weights and the activations
+                        of the previous layer""") as trk:
+      self.play(Create(m2), Create(plus2), Create(b), Create(m1))
+    self.wait(1)
+
+    self.play(Transform(m1, formula[1], replace_mobject_with_target_in_scene=True),
+              Transform(m2, formula[2], replace_mobject_with_target_in_scene=True),
+              Transform(plus2, formula[3], replace_mobject_with_target_in_scene=True),
+              Transform(b, formula[4], replace_mobject_with_target_in_scene=True))
+    self.play(Write(formula[0]))
+    self.wait(1)
+
+    formula2 = MathTex("\\frac{\\partial x^{n}}{\\partial a^{n-1}} = ", "\\frac{\\partial a^{n-1}W^n + b^{n}}{\\partial a^{n-1}}")
+    with self.voiceover(text="""If we take a derivative of that""") as trk:
+      self.play(Transform(formula, formula2))
+
+
+
+    formula2 = MathTex("\\frac{\\partial x^{n}}{\\partial a^{n-1}} = ", "W^i")
+    with self.voiceover(text="""we arive with just the weights of that layer""") as trk:
+      self.play(Transform(formula, formula2))
+
+    self.wait(1)
