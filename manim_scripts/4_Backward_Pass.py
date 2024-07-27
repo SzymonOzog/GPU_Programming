@@ -459,3 +459,21 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
                         and the error from the next layer""") as trk:
       self.play(Transform(VGroup(formula, eq2), code_obj, replace_mobject_with_target_in_scene=True))
 
+    formula = MathTex(r"\text{ReLU}(x) = \begin{cases} x & \text{if } x > 0 \\ 0 & \text{if } x \leq 0 \end{cases}")
+    with self.voiceover(text="""To finish our backpropagation, we now need to be able to packpropagate through our ReLU function""") as trk:
+      self.play(Uncreate(code_obj))
+      self.play(Write(formula))
+
+    formula2 = MathTex(r"\frac{\partial \text{ReLU}(x)}{\partial x} = \begin{cases} \frac{\partial x}{\partial x} & \text{if } x > 0 \\ \frac{\partial 0}{\partial x} & \text{if } x \leq 0 \end{cases}")
+    self.play(Transform(formula, formula2))
+
+    formula2 = MathTex(r"\frac{\partial \text{ReLU}(x)}{\partial x} = \begin{cases} 1 & \text{if } x > 0 \\ 0 & \text{if } x \leq 0 \end{cases}")
+
+    with self.voiceover(text="""And it's just 1 if x is greater than 0 and 0 otherwise""") as trk:
+      self.play(Transform(formula, formula2))
+
+    self.wait(1)
+    formula2 = MathTex(r"\frac{\partial L}{\partial a} \frac{\partial \text{ReLU}(x)}{\partial x} = \begin{cases} \frac{\partial L}{\partial a} & \text{if } x > 0 \\ 0 & \text{if } x \leq 0 \end{cases}")
+
+    with self.voiceover(text="""In order to backpropagate that, we need to multiply everything by the result of our previous step""") as trk:
+      self.play(Transform(formula, formula2))
