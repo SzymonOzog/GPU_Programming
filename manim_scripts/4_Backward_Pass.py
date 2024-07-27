@@ -544,3 +544,41 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
                         rate, that tunes how big of a step in the optimization space we are taking""") as trk:
       self.play(Write(eta), Write(bs))
     self.wait(1)
+
+    update_layer = \
+"""__global__ void update_layer(int w, int h, int batch_size,
+                                float lr, float* weights, float* biases,
+                                float* activations, float* d_l)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < h && column < w)
+  {
+    float dw = 0.f;
+    float db = 0.f;
+    for(int i = 0; i < batch_size; i++)
+    {
+      float act = activations[i*h + row];
+      float dl = d_l[i*w + column];
+      dw += act*dl;
+      db += dl;
+    }
+    weights[row*w + column] -= lr * dw / batch_size;
+    biases[column] -= lr * db / batch_size;
+  }
+}"""
+
+    code_obj = Code(code=update_layer, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""And this is what our last kernel will do""") as trk:
+      self.play(Transform(VGroup(eta, bs, eq_w, eq_b, formula_w, formula_b), code_obj, replace_mobject_with_target_in_scene=True))
+
+    hl = SurroundingRectangle(code_obj.code[8:17], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""It calculates the error in our weights and biases""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[17:19], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And updates them with stochastic gradient descent""") as trk:
+      self.play(Transform(hl, hl_t))
+    self.wait(1)
