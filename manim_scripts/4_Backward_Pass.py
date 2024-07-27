@@ -356,3 +356,21 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.play(Transform(d_LX, d_LX2))
     self.wait(1)
 
+    crossentropy_back = \
+"""__global__ void cross_entropy_backwards(int w, int h, 
+                                           float* preds, float* real, float* output)
+{
+  int col = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < h && col < w)
+  {
+    output[row*w + col] = preds[row*w + col] - real[row*w + col];
+  }
+}"""
+
+    code_obj = Code(code=crossentropy_back, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""And this is the kernel that we will use to calculate it, I won't go into details on it as 
+                        you should be familliar with all the patterns used""") as trk:
+      self.play(Transform(VGroup(d_LX, eq, d_L2, s_d2, softmax, cross_entropy, eq1[0], eq1[1], eq1[2]), code_obj, replace_mobject_with_target_in_scene=True))
