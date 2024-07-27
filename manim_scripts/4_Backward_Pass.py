@@ -433,3 +433,29 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.play(Transform(formula, formula2))
 
     self.wait(1)
+    backward = \
+""" __global__ void backward(int batch_size, int n, int out_w,
+                             float* weights, float* biases, float* d_l, float* out_d_l)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < batch_size && column < out_w)
+  {
+    float dl = 0.f;
+    for(int i = 0; i < n; i++)
+    {
+      float w = weights[i*out_w + column];
+      dl += w*d_l[row*n + i];
+    }
+    out_d_l[row*out_w + column] = dl;
+  }
+}"""
+
+    code_obj = Code(code=backward, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""And this is the kernel that helps us achieve this, 
+                        and it's simply performing a matrix multiplication of our weights 
+                        and the error from the next layer""") as trk:
+      self.play(Transform(VGroup(formula, eq2), code_obj, replace_mobject_with_target_in_scene=True))
+
