@@ -107,8 +107,8 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.play(LaggedStart(*[Create(l) for l in lines]))
 
     
-    eq = Tex("$w$", "$=w-\\delta_w$", font_size=32).next_to(loss, UP, buff=LARGE_BUFF)
-    eq_b = Tex("$b$", "$=b-\\delta_b$", font_size=32).next_to(eq, UP)
+    eq = Tex("$w$ ", "$\\leftarrow w-\\delta_w$", font_size=32).next_to(loss, UP, buff=LARGE_BUFF)
+    eq_b = Tex("$b$ ", "$\\leftarrow b-\\delta_b$", font_size=32).next_to(eq, UP, aligned_edge=LEFT)
     with self.voiceover(text="""And we want to take<bookmark mark='1'/> the weights and biases of our network
                         and subtract the <bookmark mark='2'/> errors that make the loss higher""") as trk:
       self.wait_until_bookmark("1")
@@ -327,7 +327,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       pass
 
     Matrix._matrix_to_mob_matrix = mtmm
-    d_L = Matrix([["\\frac{\\partial L}{\\partial s_1}", "\\frac{\\partial L}{\\partial s_2}", "\\vdots", "\\frac{\\partial L}{\\partial s_n}"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(s_d2, RIGHT)
+    d_L = Matrix([["\\frac{\\partial L}{\\partial s_1}"], ["\\frac{\\partial L}{\\partial s_2}"], ["\\vdots"], ["\\frac{\\partial L}{\\partial s_n}"]], element_to_mobject_config={"font_size":24}, element_alignment_corner=ORIGIN).next_to(s_d2, RIGHT)
     with self.voiceover(text="""To finish with our calculations we have to calculate the derivative of our loss with respect to the activations""") as trk:
       self.play(Unwrite(t6), Unwrite(d_ls), Unwrite(t1), Unwrite(d_eq3))
       self.play(Create(d_L))
@@ -358,7 +358,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
 
     crossentropy_back = \
 """__global__ void cross_entropy_backwards(int w, int h, 
-                                           float* preds, float* real, float* output)
+                                        float* preds, float* real, float* output)
 {
   int col = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
@@ -435,7 +435,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     self.wait(1)
     backward = \
 """ __global__ void backward(int batch_size, int n, int out_w,
-                             float* weights, float* biases, float* d_l, float* out_d_l)
+                          float* weights, float* biases, float* d_l, float* out_d_l)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
@@ -470,6 +470,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     formula2 = MathTex(r"\frac{\partial \text{ReLU}(x)}{\partial x} = \begin{cases} 1 & \text{if } x > 0 \\ 0 & \text{if } x \leq 0 \end{cases}")
 
     with self.voiceover(text="""And it's just 1 if x is greater than 0 and 0 otherwise""") as trk:
+      self.wait(2)
       self.play(Transform(formula, formula2))
 
     self.wait(1)
@@ -480,7 +481,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
 
     relu_backwards = \
 """__global__ void relu_backwards(int w, int h, int ns,
-                                  float* a, float* d_l, float* b)
+                               float* a, float* d_l, float* b)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
@@ -547,8 +548,8 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
 
     update_layer = \
 """__global__ void update_layer(int w, int h, int batch_size,
-                                float lr, float* weights, float* biases,
-                                float* activations, float* d_l)
+                             float lr, float* weights, float* biases,
+                             float* activations, float* d_l)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
   int row = blockIdx.y*blockDim.y + threadIdx.y;
@@ -582,3 +583,24 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     with self.voiceover(text="""And updates them with stochastic gradient descent""") as trk:
       self.play(Transform(hl, hl_t))
     self.wait(1)
+
+    with self.voiceover(text="""And this will be it for our simple neural network""") as trk:
+      self.play(Uncreate(hl))
+
+    with self.voiceover(text="""I'll leave a link in the description to the full code so that you can read
+                        it and experiment on your own""") as trk:
+      pass
+
+    with self.voiceover(text="""Subscribe if you don't want to miss the next one where we will start 
+                        diving into getting all of the performance we can out of our GPUs""") as trk:
+      pass
+
+    with self.voiceover(text="""Also leave a thums up if you liked the video, and share it with your friends.
+                        It helps me grow the channel""") as trk:
+      pass
+
+    with self.voiceover(text="""Thank you for your support and see you in the next one. Bye""") as trk:
+      pass
+
+    self.play(FadeOut(code_obj))
+    self.wait(3)
