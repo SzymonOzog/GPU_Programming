@@ -30,7 +30,7 @@ public:
   }
   ~Timer()
   {
-    std::cout<<name<<" took "<<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start_time).count()<<" ms"<<std::endl;
+    std::cout<<name<<" took "<<std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start_time).count()/(float)1e6<<" ms"<<std::endl;
   }
 private:
   std::chrono::time_point<std::chrono::system_clock> start_time;
@@ -210,16 +210,15 @@ void initLayer(float* weights, float* biases, int w, int h, int BLOCK_SIZE)
   gpuErrchk(cudaPeekAtLastError());
 }
 
-void read_mnist(const std::string filename, int length, float* x, float* y)
+void read_mnist(std::ifstream& fin, int start, int length, float* x, float* y)
 {
   constexpr int input_size = 784;
   constexpr int labels = 10;
 
-  std::ifstream fin(filename);
   std::string line;
   std::vector<char> buffer(4096);
 
-  for (int i = 0; i < length; ++i)
+  for (int i = start; i < start + length; ++i)
   {
     if (!std::getline(fin, line)) {
       throw std::runtime_error("Unexpected end of file");
@@ -255,16 +254,21 @@ int main(int argc, char** argv)
   int input_size = 784;
   int labels_size = 10;
 
+  int BLOCK_SIZE = 8;
+  int BATCH_SIZE = 16;
+  int EPOCHS = 10;
+  float LR = 0.003f;
+
   float* mnist_train_x = new float[input_size * train_length];
   float* mnist_train_y = new float[labels_size * train_length];
 
   float* mnist_test_x = new float[input_size * test_length];
   float* mnist_test_y = new float[labels_size * test_length];
-  {
-    Timer t("read mnist");
-    read_mnist("./mnist_train.csv", train_length, mnist_train_x, mnist_train_y);
-    read_mnist("./mnist_test.csv", test_length, mnist_test_x, mnist_test_y);
-  }
+  std::ifstream train_fin("./mnist_train.csv");
+  std::ifstream test_fin("./mnist_test.csv");
+
+  read_mnist(train_fin, 0, BATCH_SIZE, mnist_train_x, mnist_train_y);
+  read_mnist(test_fin, 0, BATCH_SIZE, mnist_test_x, mnist_test_y);
 
   int size1 = 300;
   float* weights1;
@@ -282,10 +286,6 @@ int main(int argc, char** argv)
   float* d_l3;
 
 
-  int BLOCK_SIZE = 8;
-  int BATCH_SIZE = 16;
-  int EPOCHS = 10;
-  float LR = 0.003f;
   dim3 dimGrid;
   dim3 dimBlock;
 
@@ -370,7 +370,38 @@ int main(int argc, char** argv)
       dimBlock = dim3(BLOCK_SIZE, 1, 1);
       cross_entropy<<<dimGrid, dimBlock>>>(size3, BATCH_SIZE, a3, labels, loss);
 
-      gpuErrchk(cudaDeviceSynchronize());
+      dimGrid = dim3(ceil(size3/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
+      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
+
+      cross_entropy_backwards<<<dimGrid, dimBlock>>>(size3, BATCH_SIZE, a3, labels, d_l3);
+      gpuErrchk(cudaPeekAtLastError());
+
+      dimGrid = dim3(ceil(size2/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
+      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
+
+      backward<<<dimGrid, dimBlock>>>(BATCH_SIZE, size3, size2, weights3, biases3, d_l3, d_l2, a2);
+      gpuErrchk(cudaPeekAtLastError());
+
+      dimGrid = dim3(ceil(size1/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
+      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
+
+      backward<<<dimGrid, dimBlock>>>(BATCH_SIZE, size2, size1, weights2, biases2, d_l2, d_l1, a1);
+      gpuErrchk(cudaPeekAtLastError());
+
+      dimGrid = dim3(ceil(size3/(float)BLOCK_SIZE), ceil(size2/(float)BLOCK_SIZE), 1);
+      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
+      update_layer<<<dimGrid, dimBlock>>>(size3, size2, BATCH_SIZE, LR, weights3, biases3, a2, d_l3);
+      dimGrid = dim3(ceil(size2/(float)BLOCK_SIZE), ceil(size1/(float)BLOCK_SIZE), 1);
+      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
+      update_layer<<<dimGrid, dimBlock>>>(size2, size1, BATCH_SIZE, LR, weights2, biases2, a1, d_l2);
+      dimGrid = dim3(ceil(size1/(float)BLOCK_SIZE), ceil(input_size/(float)BLOCK_SIZE), 1);
+      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
+      update_layer<<<dimGrid, dimBlock>>>(size1, input_size, BATCH_SIZE, LR, weights1, biases1, input, d_l1);
+
+      if (epoch == 0 && (batch+1)*BATCH_SIZE < train_length)
+      {
+        read_mnist(train_fin, (batch+1)*BATCH_SIZE, BATCH_SIZE, mnist_train_x, mnist_train_y);
+      }
 
       gpuErrchk(cudaMemcpy(out_h, a3, BATCH_SIZE*size3*sizeof(float), cudaMemcpyDeviceToHost));
       gpuErrchk(cudaMemcpy(loss_h, loss, BATCH_SIZE*sizeof(float), cudaMemcpyDeviceToHost));
@@ -399,33 +430,6 @@ int main(int argc, char** argv)
         cum_loss += loss_h[i];
       }
 
-      dimGrid = dim3(ceil(size3/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
-      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
-
-      cross_entropy_backwards<<<dimGrid, dimBlock>>>(size3, BATCH_SIZE, a3, labels, d_l3);
-      gpuErrchk(cudaPeekAtLastError());
-
-      dimGrid = dim3(ceil(size2/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
-      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
-
-      backward<<<dimGrid, dimBlock>>>(BATCH_SIZE, size3, size2, weights3, biases3, d_l3, d_l2, a2);
-      gpuErrchk(cudaPeekAtLastError());
-
-      dimGrid = dim3(ceil(size1/(float)BLOCK_SIZE), ceil(BATCH_SIZE/(float)BLOCK_SIZE), 1);
-      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
-
-      backward<<<dimGrid, dimBlock>>>(BATCH_SIZE, size2, size1, weights2, biases2, d_l2, d_l1, a1);
-      gpuErrchk(cudaPeekAtLastError());
-
-      dimGrid = dim3(ceil(size3/(float)BLOCK_SIZE), ceil(size2/(float)BLOCK_SIZE), 1);
-      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
-      update_layer<<<dimGrid, dimBlock>>>(size3, size2, BATCH_SIZE, LR, weights3, biases3, a2, d_l3);
-      dimGrid = dim3(ceil(size2/(float)BLOCK_SIZE), ceil(size1/(float)BLOCK_SIZE), 1);
-      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
-      update_layer<<<dimGrid, dimBlock>>>(size2, size1, BATCH_SIZE, LR, weights2, biases2, a1, d_l2);
-      dimGrid = dim3(ceil(size1/(float)BLOCK_SIZE), ceil(input_size/(float)BLOCK_SIZE), 1);
-      dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
-      update_layer<<<dimGrid, dimBlock>>>(size1, input_size, BATCH_SIZE, LR, weights1, biases1, input, d_l1);
     }
     float val_loss = 0.f;
     int val_correct = 0;
@@ -461,6 +465,10 @@ int main(int argc, char** argv)
       dimBlock = dim3(BLOCK_SIZE, 1, 1);
       cross_entropy<<<dimGrid, dimBlock>>>(size3, BATCH_SIZE, a3, labels, loss);
 
+      if (epoch == 0 && (batch+1)*BATCH_SIZE < test_length)
+      {
+        read_mnist(test_fin, (batch+1)*BATCH_SIZE, BATCH_SIZE, mnist_test_x, mnist_test_y);
+      }
       gpuErrchk(cudaDeviceSynchronize());
       gpuErrchk(cudaMemcpy(out_h, a3, BATCH_SIZE*size3*sizeof(float), cudaMemcpyDeviceToHost));
       gpuErrchk(cudaMemcpy(loss_h, loss, BATCH_SIZE*sizeof(float), cudaMemcpyDeviceToHost));
