@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream> 
@@ -7,6 +8,7 @@
 #include <cuda_runtime.h>
 #include <cassert>
 #include <string>
+#include <vector>
 
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -194,34 +196,35 @@ void initLayer(float* weights, float* biases, int w, int h, int BLOCK_SIZE)
 
 void read_mnist(const std::string filename, int length, float* x, float* y)
 {
-  int input_size = 784;
-  int labels = 10;
+  constexpr int input_size = 784;
+  constexpr int labels = 10;
 
-  std::fstream fin;
-  fin.open(filename);
-  std::string row;
-  constexpr char delim = ',';
-  for(int i = 0; i<length; i++)
+  std::ifstream fin(filename);
+  std::string line;
+  std::vector<char> buffer(4096);
+
+  for (int i = 0; i < length; ++i)
   {
-    fin >> row;
-    int pos = row.find(delim);
-    int label = std::stoi(row.substr(0, pos+1));
-    for(int j = 0; j<labels; j++)
-    {
-      y[labels*i + j] = (j==label);
+    if (!std::getline(fin, line)) {
+      throw std::runtime_error("Unexpected end of file");
     }
-    row.erase(0, pos+1);
-    for(int j = 0; j<input_size; j++)
-    {
-      pos = row.find(delim);
-      if (pos == std::string::npos)
-      {
-        pos = row.length() - 1;
-      }
-      x[i*input_size+j] = std::stof(row.substr(0, pos+1)) / 255; //normalize value
-      row.erase(0, pos+1);
+
+    std::istringstream ss(line);
+
+    int label;
+    if (!(ss >> label)) {
+      throw std::runtime_error("Failed to read label");
     }
-    ASSERT(row.length() == 0, "didn't parse all values in row, %d", i);
+
+    std::memset(y + labels * i, 0, labels * sizeof(float));
+    y[labels * i + label] = 1.0f;
+
+    float* x_row = x + i * input_size;
+    for (int j = 0; j < input_size; ++j)
+    {
+      ASSERT(ss.getline(&buffer[0], buffer.size(), ','), "Failed to read pixel value for entry %d, pixel %d", i, j);
+      x_row[j] = std::strtof(&buffer[0], nullptr) / 255.0f;
+    }
   }
 }
 
@@ -401,7 +404,6 @@ int main(int argc, char** argv)
       dimGrid = dim3(ceil(size1/(float)BLOCK_SIZE), ceil(input_size/(float)BLOCK_SIZE), 1);
       dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
       update_layer<<<dimGrid, dimBlock>>>(size1, input_size, BATCH_SIZE, LR, weights1, biases1, input, d_l1);
-
     }
     float val_loss = 0.f;
     int val_correct = 0;
