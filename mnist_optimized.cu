@@ -21,6 +21,22 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
+class Timer
+{
+public:
+  Timer(std::string in_name) : name(in_name)
+  {
+    start_time = std::chrono::system_clock::now();
+  }
+  ~Timer()
+  {
+    std::cout<<name<<" took "<<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start_time).count()<<" ms"<<std::endl;
+  }
+private:
+  std::chrono::time_point<std::chrono::system_clock> start_time;
+  std::string name;
+};
+
 __global__ void forward(int batch_size, int n, int out_w, float* input, float* weights, float* biases, float* output)
 {
   int column = blockIdx.x*blockDim.x + threadIdx.x;
@@ -230,6 +246,7 @@ void read_mnist(const std::string filename, int length, float* x, float* y)
 
 int main(int argc, char** argv)
 {
+  Timer full("full training");
   int test_length = 10000;
   int train_length = 60000;
 
@@ -240,11 +257,14 @@ int main(int argc, char** argv)
 
   float* mnist_train_x = new float[input_size * train_length];
   float* mnist_train_y = new float[labels_size * train_length];
-  read_mnist("./mnist_train.csv", train_length, mnist_train_x, mnist_train_y);
 
   float* mnist_test_x = new float[input_size * test_length];
   float* mnist_test_y = new float[labels_size * test_length];
-  read_mnist("./mnist_test.csv", test_length, mnist_test_x, mnist_test_y);
+  {
+    Timer t("read mnist");
+    read_mnist("./mnist_train.csv", train_length, mnist_train_x, mnist_train_y);
+    read_mnist("./mnist_test.csv", test_length, mnist_test_x, mnist_test_y);
+  }
 
   int size1 = 300;
   float* weights1;
@@ -262,53 +282,55 @@ int main(int argc, char** argv)
   float* d_l3;
 
 
-  int BLOCK_SIZE = 16;
-  int BATCH_SIZE = 64;
+  int BLOCK_SIZE = 8;
+  int BATCH_SIZE = 16;
   int EPOCHS = 10;
-  float LR = 0.05f;
+  float LR = 0.003f;
   dim3 dimGrid;
   dim3 dimBlock;
 
   float* out_h = new float[BATCH_SIZE*size3];
   float* loss_h = new float[BATCH_SIZE];
 
-
-  gpuErrchk(cudaMalloc((void**) &input, input_size*BATCH_SIZE*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &labels, labels_size*BATCH_SIZE*sizeof(float)));
-
-  gpuErrchk(cudaMalloc((void**) &weights1, size1*input_size*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &biases1, size1*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &d_l1, size1*BATCH_SIZE*sizeof(float)));
-  initLayer(weights1, biases1, size1, input_size, BLOCK_SIZE);
-
-  gpuErrchk(cudaMalloc((void**) &weights2, size2*size1*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &biases2, size2*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &d_l2, size2*BATCH_SIZE*sizeof(float)));
-  initLayer(weights2, biases2, size2, size1, BLOCK_SIZE);
-
-
-  gpuErrchk(cudaMalloc((void**) &weights3, size3*size2*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &biases3, size3*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &d_l3, size3*BATCH_SIZE*sizeof(float)));
-  initLayer(weights3, biases3, size3, size2, BLOCK_SIZE);
-
   float *x1;
   float *a1;
-  gpuErrchk(cudaMalloc((void**) &x1, size1*BATCH_SIZE*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &a1, size1*BATCH_SIZE*sizeof(float)));
-
   float *x2;
   float *a2;
-  gpuErrchk(cudaMalloc((void**) &x2, size2*BATCH_SIZE*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &a2, size2*BATCH_SIZE*sizeof(float)));
-
   float *x3;
   float *a3;
-  gpuErrchk(cudaMalloc((void**) &x3, size3*BATCH_SIZE*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &a3, size3*BATCH_SIZE*sizeof(float)));
-      
   float* loss;
-  gpuErrchk(cudaMalloc((void**) &loss, BATCH_SIZE*sizeof(float)));
+  {
+    Timer init("initialization");
+    gpuErrchk(cudaMalloc((void**) &input, input_size*BATCH_SIZE*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &labels, labels_size*BATCH_SIZE*sizeof(float)));
+
+    gpuErrchk(cudaMalloc((void**) &weights1, size1*input_size*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &biases1, size1*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &d_l1, size1*BATCH_SIZE*sizeof(float)));
+    initLayer(weights1, biases1, size1, input_size, BLOCK_SIZE);
+
+    gpuErrchk(cudaMalloc((void**) &weights2, size2*size1*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &biases2, size2*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &d_l2, size2*BATCH_SIZE*sizeof(float)));
+    initLayer(weights2, biases2, size2, size1, BLOCK_SIZE);
+
+
+    gpuErrchk(cudaMalloc((void**) &weights3, size3*size2*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &biases3, size3*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &d_l3, size3*BATCH_SIZE*sizeof(float)));
+    initLayer(weights3, biases3, size3, size2, BLOCK_SIZE);
+
+    gpuErrchk(cudaMalloc((void**) &x1, size1*BATCH_SIZE*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &a1, size1*BATCH_SIZE*sizeof(float)));
+
+    gpuErrchk(cudaMalloc((void**) &x2, size2*BATCH_SIZE*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &a2, size2*BATCH_SIZE*sizeof(float)));
+
+    gpuErrchk(cudaMalloc((void**) &x3, size3*BATCH_SIZE*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &a3, size3*BATCH_SIZE*sizeof(float)));
+
+    gpuErrchk(cudaMalloc((void**) &loss, BATCH_SIZE*sizeof(float)));
+  }
 
   float total_time = 0.f;
   for(int epoch = 0; epoch<EPOCHS; epoch++)
