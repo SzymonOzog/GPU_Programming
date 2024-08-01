@@ -148,3 +148,166 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
                         schedules gpu kernels and copies data into memory""") as trk:
       self.play(Write(Text("1+ ms", font_size=fs).set_color(color_grad).move_to(combined)))
     self.wait(1)
+    training_code = """load_full_dataset();
+for(int epoch = 0; epoch<EPOCHS; epoch++)
+{
+  for(int batch = 0; batch<train_length/BATCH_SIZE; batch++)
+  {
+    forward<<<dimGrid, dimBlock>>>(...);
+    relu<<<dimGrid, dimBlock>>>(...);
+    forward<<<dimGrid, dimBlock>>>(...);
+    relu<<<dimGrid, dimBlock>>>(...);
+    forward<<<dimGrid, dimBlock>>>(...);
+    softmax<<<dimGrid, dimBlock>>>(...);
+    cross_entropy<<<dimGrid, dimBlock>>>(...);
+
+    cudaMemcpy(out_h, out_d, out_size, cudaMemcpyDeviceToHost);
+    check_accuracy(...);
+
+    cross_entropy_backwards<<<dimGrid, dimBlock>>>(...);
+    backward<<<dimGrid, dimBlock>>>(...);
+    relu_backwards<<<dimGrid, dimBlock>>>(...);
+    backward<<<dimGrid, dimBlock>>>(...);
+    relu_backwards<<<dimGrid, dimBlock>>>(...);
+
+    update_layer<<<dimGrid, dimBlock>>>(...);
+    update_layer<<<dimGrid, dimBlock>>>(...);
+    update_layer<<<dimGrid, dimBlock>>>(...);
+  }
+}
+"""
+    code_obj = Code(code=training_code, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""Right now our training code looks somewhat like this, I've omitted some parts for better readablity""") as trk:
+      self.play(Transform(VGroup(*[x for x in self.mobjects if isinstance(x, VMobject)]), code_obj, replace_mobject_with_target_in_scene=True))
+    self.wait(1)
+
+    hl = SurroundingRectangle(code_obj.code[0], buff=0.03, stroke_width=2, fill_opacity=0.3)
+
+    with self.voiceover(text="""We load the full dataset before stepping int the training loop""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[1:4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Then in each epoch, we go through our dataset by batches""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[5:12], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We run our forward pass""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[13], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Copy the results to the cpu""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[14], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Check our accuracy""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[16:21], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We then run our backward pass""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[22:25], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And update our weights and biases""") as trk:
+      self.play(Transform(hl, hl_t))
+    self.wait(1)
+
+    with self.voiceover(text="""And we don't actually need to do much to get our dataset to load in parallel""") as trk:
+      self.play(Uncreate(hl))
+
+    hl = SurroundingRectangle(code_obj.code[5], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""By design, cuda does not run synchronously,<bookmark mark='1'/> so when we run our kernel""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[5:12], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""The cpu will not wait for the kernel to finish, <bookmark mark='1'/>and calling other kernels will 
+                        add it to the queue which the driver will manage for us""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[13], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And when we call some synchronous function,<bookmark mark='1'/> in our case cudaMemcpy - it will wait for the kernels
+                        to finish executing""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Transform(hl, hl_t))
+
+    training_code = """load_full_dataset();
+for(int epoch = 0; epoch<EPOCHS; epoch++)
+{
+  for(int batch = 0; batch<train_length/BATCH_SIZE; batch++)
+  {
+    forward<<<dimGrid, dimBlock>>>(...);
+    relu<<<dimGrid, dimBlock>>>(...);
+    forward<<<dimGrid, dimBlock>>>(...);
+    relu<<<dimGrid, dimBlock>>>(...);
+    forward<<<dimGrid, dimBlock>>>(...);
+    softmax<<<dimGrid, dimBlock>>>(...);
+    cross_entropy<<<dimGrid, dimBlock>>>(...);
+
+    cross_entropy_backwards<<<dimGrid, dimBlock>>>(...);
+    backward<<<dimGrid, dimBlock>>>(...);
+    relu_backwards<<<dimGrid, dimBlock>>>(...);
+    backward<<<dimGrid, dimBlock>>>(...);
+    relu_backwards<<<dimGrid, dimBlock>>>(...);
+
+    update_layer<<<dimGrid, dimBlock>>>(...);
+    update_layer<<<dimGrid, dimBlock>>>(...);
+    update_layer<<<dimGrid, dimBlock>>>(...);
+
+    cudaMemcpy(out_h, out_d, out_size, cudaMemcpyDeviceToHost);
+    check_accuracy(...);
+  }
+}
+"""
+    code_obj_t = Code(code=training_code, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+
+    with self.voiceover(text="""The first thing to do is to schedule all of our kernels before running our synchronous call,<bookmark mark='1'/>
+                        that way we can keep the gpu busy while loading our batch""") as trk:
+      self.play(Uncreate(hl))
+      self.wait_until_bookmark("1")
+      self.play(Transform(code_obj, code_obj_t))
+
+    training_code = """load_next_batch();
+for(int epoch = 0; epoch<EPOCHS; epoch++)
+{
+  for(int batch = 0; batch<train_length/BATCH_SIZE; batch++)
+  {
+    forward<<<dimGrid, dimBlock>>>(...);
+    relu<<<dimGrid, dimBlock>>>(...);
+    forward<<<dimGrid, dimBlock>>>(...);
+    relu<<<dimGrid, dimBlock>>>(...);
+    forward<<<dimGrid, dimBlock>>>(...);
+    softmax<<<dimGrid, dimBlock>>>(...);
+    cross_entropy<<<dimGrid, dimBlock>>>(...);
+
+    cross_entropy_backwards<<<dimGrid, dimBlock>>>(...);
+    backward<<<dimGrid, dimBlock>>>(...);
+    relu_backwards<<<dimGrid, dimBlock>>>(...);
+    backward<<<dimGrid, dimBlock>>>(...);
+    relu_backwards<<<dimGrid, dimBlock>>>(...);
+
+    update_layer<<<dimGrid, dimBlock>>>(...);
+    update_layer<<<dimGrid, dimBlock>>>(...);
+    update_layer<<<dimGrid, dimBlock>>>(...);
+
+    if (epoch == 0)
+    {
+      load_next_batch();
+    }
+
+    cudaMemcpy(out_h, out_d, out_size, cudaMemcpyDeviceToHost);
+    check_accuracy(...);
+  }
+}
+"""
+    code_obj_t = Code(code=training_code, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+
+    with self.voiceover(text="""And now we can just create a function that loads one batch at a time,<bookmark mark='1'/>
+                        and place it just before our synchronization point""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Transform(code_obj, code_obj_t))
+    self.wait(1)
