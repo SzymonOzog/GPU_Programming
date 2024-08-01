@@ -8,7 +8,7 @@ from NN import NeuralNetworkMobject
 
 mnist = np.loadtxt("mnist_train.csv", delimiter=",")
 
-class NeuralNetwork(VoiceoverScene, ThreeDScene):
+class PerformanceCharacteristics(VoiceoverScene, ThreeDScene):
   def construct(self):
     self.set_speech_service(
         GTTSService(transcription_model="base")
@@ -20,7 +20,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.play(Write(title))
 
 
-    subtitle = Text("Roofline Model", font_size=48).next_to(title, DOWN)
+    subtitle = Text("Performance Characteristics", font_size=48).next_to(title, DOWN)
     with self.voiceover(text="""In this episode we are going to discuss some performance characteristics, and main factors
                         that influence the performance of the GPU, we'll also introduce the roofline model for assessing
                         our code's performance with regards to the hardware possibilities""") as trk:
@@ -119,17 +119,15 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     overhead_r.add(overhead_t)
     with self.voiceover(text="""So we can execute the cpu and gpu code in parallel, where the gpu already starts training our network on the first batch
                         as the cpu loads the next one in the background""") as trk:
-      self.play(overhead_r.animate.next_to(epochs[0], DOWN, aligned_edge=LEFT, buff=0.02))
+      self.play(overhead_r.animate.next_to(epochs[0], DOWN, aligned_edge=RIGHT, buff=0.02))
       group = VGroup(overhead_r, epochs[0], epoch_times[0])
       self.play(group.animate.next_to(epochs[1], LEFT, buff=0.02))
     self.wait(1)
     
     training_time=3
-    e2 = Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5).move_to(epochs[0], aligned_edge=LEFT)
     epochs_2 = VGroup(*[Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5) for i in range(10)]).arrange(RIGHT, buff=0.02).next_to(group, RIGHT, buff=0.02).shift(0.3*LEFT)
     anims = []
     anims.extend([Unwrite(x) for x in epoch_times])
-    anims.append(Transform(epochs[0], e2))
     for i in range(1, 10):
       anims.append(Transform(epochs[i], epochs_2[i]))
 
@@ -336,6 +334,7 @@ for(int epoch = 0; epoch<EPOCHS; epoch++)
     throughput = Text("82.58 TFLOPS", font_size=24, color=GREEN).next_to(comp_bound, RIGHT)
     with self.voiceover(text="""our compute time is bound directly by the throughput of the datatype that we are using on our gpu, for example
                         a 4090 <bookmark mark='1'/>, has 82.58 TFLOPS throughput for 32 bit floating point numbers""") as trk:
+      self.wait_until_bookmark("1")
       self.play(Write(throughput))
 
     flops = Text("FLOPS = Floating point operations / s", font_size=24).next_to(throughput, UP, aligned_edge=LEFT)
@@ -595,7 +594,7 @@ for(int epoch = 0; epoch<EPOCHS; epoch++)
     epoch_times = VGroup(*[Text("0.95 s", font_size=fs, color=GREEN).move_to(epochs[i]) for i in range(10)])
 
     with self.voiceover(text="""And with those changes we managed to get from our initial timings, of 2 seconds od data loading, and 0.95 seconds per epoch totalling in 11.5 seconds for full training""") as trk:
-      self.play(Transform(code_obj3, VGroup(overhead_t, epochs, epoch_times), replace_mobject_with_target_in_scene=True))
+      self.play(Transform(code_obj3, VGroup(overhead_r, overhead_t, epochs, epoch_times), replace_mobject_with_target_in_scene=True))
     self.wait(1)
 
     training_time=4
@@ -659,3 +658,10 @@ for(int epoch = 0; epoch<EPOCHS; epoch++)
 
     with self.voiceover(text="""Thank you for your support and see you in the next episode, bye""") as trk:
       pass
+    
+    self.wait(1)
+    anims = [] 
+    for obj in self.mobjects:
+      anims.append(FadeOut(obj))
+    self.play(*anims)
+    self.wait(3)
