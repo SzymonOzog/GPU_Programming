@@ -352,8 +352,84 @@ for(int epoch = 0; epoch<EPOCHS; epoch++)
       pass
 
     comp_int = Text("Computational Intensity = FLOP/B", color=YELLOW, font_size=24).next_to(m_to_g).align_to(bandwidth, LEFT)
-    with self.voiceover(text="""and this introduces another very important metric for our kernels which is <bookmark mark='1'/>
+    with self.voiceover(text="""this introduces another very important metric for our kernels which is <bookmark mark='1'/>
                         how many floating point operations we are doing per each byte of memory access""") as trk:
       self.play(Write(comp_int))
 
+    axes = Axes(x_range=[0, 10, 1], y_range=[0, 7, 1], x_length=7, y_length=5, axis_config={"include_tip": False})
+    
+    x_text = VGroup(VGroup(MathTex("Computational"), MathTex("Intensity")).arrange(DOWN), MathTex("[\\frac{FLOP}{B}]")).arrange(RIGHT)
+    y_text = VGroup(VGroup(MathTex("Attainable"), MathTex("Performance")).arrange(DOWN), MathTex("[FLOPS]")).arrange(RIGHT)
+    x_label = axes.get_x_axis_label(x_text, edge=UP, direction=DOWN, buff=MED_SMALL_BUFF)
+    y_label = axes.get_y_axis_label(y_text.rotate(PI/2), edge=LEFT, direction=LEFT)
 
+    bandwidth_line = Line(start=axes.c2p(0, 0), end=axes.c2p(7, 7), color=RED_E).set_opacity(0.7)
+    bandwidth_label = Tex("Bandwitdth limit", color=RED_E, font_size=40).rotate(PI/4).move_to(bandwidth_line.get_center() + LEFT + 0.5*DOWN)
+
+    throughput_line = Line(start=axes.c2p(0, 5), end=axes.c2p(10, 5), color=GREEN_E).set_opacity(0.7)
+    throughput_label = Tex("Throughput limit", color=GREEN_E, font_size=40).next_to(throughput_line, UP, buff=0.1)
+
+    bandwidth_bound = Polygon(
+        axes.c2p(0, 0), axes.c2p(5, 5), axes.c2p(5, 0),
+        color=RED, fill_opacity=0.5, stroke_width=0
+    )
+    
+    compute_bound = Polygon(
+        axes.c2p(5, 0), axes.c2p(5, 5), axes.c2p(10, 5), axes.c2p(10, 0),
+        color=GREEN, fill_opacity=0.5, stroke_width=0
+    )
+    mem_text = VGroup(Tex("Memory"), Tex("bound")).arrange(DOWN).move_to(bandwidth_bound).shift(0.7*(DOWN+RIGHT))
+    compute_text = VGroup(Tex("Compute"), Tex("bound")).arrange(DOWN).move_to(compute_bound)
+
+    graph = VGroup(axes, x_label, y_label, bandwidth_line, bandwidth_label,
+                   throughput_line, throughput_label, bandwidth_bound, compute_bound, mem_text, compute_text)
+
+    title = Text("Roofline Model", font_size=60).next_to(axes, UP)
+    with self.voiceover(text="""And our computational intensity metric brings us straight into the <bookmark mark='1'/>roofline model,
+                        which is a great way of visualising our performance bottleneck""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Write(title))
+      self.play(Transform(VGroup(mem_bound, mem_bound_t, comp_bound, comp_bound_t, gpu, gpu_t, memory, mem_t, m_to_g),
+                          axes, replace_mobject_with_target_in_scene=True))
+      self.play(Transform(comp_int, x_label, replace_mobject_with_target_in_scene=True),
+                Transform(flops, y_label, replace_mobject_with_target_in_scene=True))
+
+    self.wait(1)
+
+
+    with self.voiceover(text="""We can put our maximal througput and bandwith on a graph to visualise, what is the maximum performance
+                        that we can get based on our computational intensity""") as trk:
+      self.play(Transform(throughput, throughput_line, replace_mobject_with_target_in_scene=True),
+                Transform(bandwidth, bandwidth_line, replace_mobject_with_target_in_scene=True))
+      self.play(Write(bandwidth_label), Write(throughput_label))
+
+    with self.voiceover(text="""If we are on the right side of the graph, that means that we are compute bound - the GPU is working at full power
+                        and not waiting for anything. And that is usually the place where we want to be""") as trk:
+      self.play(Create(compute_bound))
+
+    with self.voiceover(text="""Although there are a few things that we can do, to name a few examles, we can change our datatype to a more performant one that allows more FLOPS""") as trk:
+      pass
+
+    with self.voiceover(text="""We can try to improve our algorithms to require less computation""") as trk:
+      pass
+
+    with self.voiceover(text="""Or we can use more specialized hardware such as Tensor Cores that allow higher throughput""") as trk:
+      pass
+
+    with self.voiceover(text="""Finally, we can make nvidia shareholders happy and just buy more GPU's - if they aren't sold out yet""") as trk:
+      pass
+
+    self.wait(1)
+
+    with self.voiceover(text="""And if we are on the left side on this graph we are in a bad spot, our gpu is bored and is not doing any work
+                        because it's waiting for the data to arrive from memory""") as trk:
+      self.play(Create(bandwidth_bound))
+
+    with self.voiceover(text="""The good news is, that there are a lot of things we can do to get ourselves out of this situation""") as trk:
+      pass
+
+    with self.voiceover(text="""We can use differend kinds of memory - but that will be the topic for the next video""") as trk:
+      pass
+
+    with self.voiceover(text="""Or we can do something called kernel fusion""") as trk:
+      pass
