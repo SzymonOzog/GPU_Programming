@@ -103,28 +103,6 @@ __global__ void update_layer(int w, int h, int batch_size, float lr, float* weig
   }
 }
 
-__global__ void relu(int w, int h, float* a, float* b)
-{
-  int column = blockIdx.x*blockDim.x + threadIdx.x;
-  int row = blockIdx.y*blockDim.y + threadIdx.y;
-  if (row < w && column < h)
-  {
-    float activation = a[row*w+column];
-    b[row*w+column] =  activation > 0.f ? activation : 0.f;
-  }
-}
-
-__global__ void relu_backwards(int w, int h, int ns, float* a, float* d_l, float* b)
-{
-  int column = blockIdx.x*blockDim.x + threadIdx.x;
-  int row = blockIdx.y*blockDim.y + threadIdx.y;
-  if (row < w && column < h)
-  {
-    float activation = a[row*w+column];
-    b[row*w+column] = activation > 0.f ? d_l[row*w+column] : 0.f;
-  }
-}
-
 __global__ void softmax(int w, int h, float* a, float* b)
 {
   int col = blockIdx.x*blockDim.x + threadIdx.x;
@@ -254,7 +232,7 @@ int main(int argc, char** argv)
   int input_size = 784;
   int labels_size = 10;
 
-  int BLOCK_SIZE = 8;
+  int BLOCK_SIZE = 16;
   int BATCH_SIZE = 16;
   int EPOCHS = 10;
   float LR = 0.003f;
