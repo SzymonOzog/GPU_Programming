@@ -87,7 +87,7 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
     training_time = 9.5
     overhead_r = Rectangle(height=0.5, width=overhead_time/w_scale, color=BLUE, fill_color=BLUE, fill_opacity=0.5)
     training_r = Rectangle(height=0.5, width=training_time/w_scale, color=GREEN, fill_color=GREEN, fill_opacity=0.5)
-    perf = VGroup(overhead_r, training_r).arrange(RIGHT,buff=0.02)
+    throughput = VGroup(overhead_r, training_r).arrange(RIGHT,buff=0.02)
     with self.voiceover(text="""Let's first look into our overhead, in our case it is the time that we spend loading the dataset from disk""") as trk:
       self.play(Transform(VGroup(cpu, cpu_t, overhead, overhead_t, c_to_m, c_to_g), overhead_r, replace_mobject_with_target_in_scene=True),
                 Transform(VGroup(gpu, gpu_t, memory, mem_t, mem_bound, mem_bound_t, comp_bound, comp_bound_t, m_to_g), training_r, replace_mobject_with_target_in_scene=True))
@@ -310,4 +310,50 @@ for(int epoch = 0; epoch<EPOCHS; epoch++)
                         and place it just before our synchronization point""") as trk:
       self.wait_until_bookmark("1")
       self.play(Transform(code_obj, code_obj_t))
-    self.wait(1)
+    self.wait(3)
+
+    gpu = Rectangle(height=2, width=3, color=GREEN, fill_color=GREEN, fill_opacity=0.5).shift(2*LEFT+UP)
+    gpu_t = Text("GPU", color=GREEN).move_to(gpu)
+    memory = Rectangle(height=2, width=3, color=RED, fill_color=RED, fill_opacity=0.5)
+    memory.next_to(gpu, DOWN, aligned_edge=LEFT, buff=0).shift(DOWN)
+    mem_t = Text("HBM", color=RED).move_to(memory)
+    m_to_g = DoubleArrow(gpu.get_corner(DOWN), memory.get_corner(UP), buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1)
+    with self.voiceover(text="""Let's now get into the real juice which is evaluating and improving the performance of the code that runs on the gpu""") as trk:
+      self.play(Transform(code_obj, VGroup(gpu, gpu_t, memory, mem_t, m_to_g), replace_mobject_with_target_in_scene=True))
+    
+    mem_bound = SurroundingRectangle(memory, color=RED_E).scale(1.1)
+    mem_bound_t = Text("Memory Access Latency", color=RED_E, font_size=24).next_to(mem_bound, DOWN)
+    comp_bound = SurroundingRectangle(gpu, color=GREEN_E).scale(1.1)
+    comp_bound_t = Text("Compute Time", color=GREEN_E, font_size=24).next_to(comp_bound, UP)
+
+    with self.voiceover(text="""And as I'me mentioned in the beginning, we can have 2 kinds of performance issues with our gpu,
+                        <bookmark mark='1'/> time spend doing the compute, <bookmark mark='2'/>and time spent accessing memory""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Create(comp_bound), Write(comp_bound_t))
+      self.wait_until_bookmark("2")
+      self.play(Create(mem_bound), Write(mem_bound_t))
+
+    throughput = Text("82.58 TFLOPS", font_size=24, color=GREEN).next_to(comp_bound, RIGHT)
+    with self.voiceover(text="""our compute time is bound directly by the throughput of the datatype that we are using on our gpu, for example
+                        a 4090 <bookmark mark='1'/>, has 82.58 TFLOPS throughput for 32 bit floating point numbers""") as trk:
+      self.play(Write(throughput))
+
+    flops = Text("FLOPS = Floating point operations / s", font_size=24).next_to(throughput, UP, aligned_edge=LEFT)
+    with self.voiceover(text="""FLOPS is just how many floating point operations we can do in a second""") as trk:
+      self.play(Write(flops))
+
+    bandwidth = Text("1.01 TB/s", font_size=24, color=RED).next_to(mem_bound, RIGHT)
+    with self.voiceover(text="""And our memory is bound by bandwidth, which for a 4090 is <bookmark mark='1'/> 1.01 TB/s""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Write(bandwidth))
+
+
+    with self.voiceover(text="""As you can see, we can load our data from memory much slower than we can actually do the computation""") as trk:
+      pass
+
+    comp_int = Text("Computational Intensity = FLOP/B", color=YELLOW, font_size=24).next_to(m_to_g).align_to(bandwidth, LEFT)
+    with self.voiceover(text="""and this introduces another very important metric for our kernels which is <bookmark mark='1'/>
+                        how many floating point operations we are doing per each byte of memory access""") as trk:
+      self.play(Write(comp_int))
+
+
