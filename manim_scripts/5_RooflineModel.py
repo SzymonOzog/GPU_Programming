@@ -92,9 +92,9 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.play(Transform(VGroup(cpu, cpu_t, overhead, overhead_t, c_to_m, c_to_g), overhead_r, replace_mobject_with_target_in_scene=True),
                 Transform(VGroup(gpu, gpu_t, memory, mem_t, mem_bound, mem_bound_t, comp_bound, comp_bound_t, m_to_g), training_r, replace_mobject_with_target_in_scene=True))
     fs = 20
-    overhead_t = Text("2 ms", font_size=fs, color=BLUE).move_to(overhead_r)
-    training_t = Text("9.5 ms", font_size=fs, color=GREEN).move_to(training_r)
-    with self.voiceover(text="""And it takes around 2 miliseconds to do that, while our 10 epochs of training <bookmark mark='1'/>take around 9.5 miliseconds in total""") as trk:
+    overhead_t = Text("2 s", font_size=fs, color=BLUE).move_to(overhead_r)
+    training_t = Text("9.5 s", font_size=fs, color=GREEN).move_to(training_r)
+    with self.voiceover(text="""And it takes around 2 seconds to do that, while our 10 epochs of training <bookmark mark='1'/>take around 9.5 seconds in total""") as trk:
       self.play(Write(overhead_t))
       self.wait_until_bookmark("1")
       self.play(Write(training_t))
@@ -104,12 +104,12 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       pass
     self.wait(1)
 
-    with self.voiceover(text="""I managed to get it down to 1 milisecond, by using some more optimized string parsing functions""") as trk:
-      self.play(Transform(overhead_r, trans), Transform(overhead_t, Text("1 ms", font_size=fs, color=BLUE).move_to(trans)))
+    with self.voiceover(text="""I managed to get it down to 1 second, by using some more optimized string parsing functions""") as trk:
+      self.play(Transform(overhead_r, trans), Transform(overhead_t, Text("1 s", font_size=fs, color=BLUE).move_to(trans)))
     self.wait(1)
 
     epochs = VGroup(*[Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5) for i in range(10)]).arrange(RIGHT, buff=0.02).move_to(training_r, aligned_edge=LEFT)
-    epoch_times = VGroup(*[Text("0.95 ms", font_size=fs, color=GREEN).move_to(epochs[i]) for i in range(10)])
+    epoch_times = VGroup(*[Text("0.95 s", font_size=fs, color=GREEN).move_to(epochs[i]) for i in range(10)])
 
     with self.voiceover(text="""But we want to mitigate our overhead even further, and one thing that you can notice is that we do not need the full
                         dataset at the start of the first epoch, we only need the data that we will be working on""") as trk:
