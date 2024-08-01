@@ -233,9 +233,9 @@ int main(int argc, char** argv)
   int labels_size = 10;
 
   int BLOCK_SIZE = 16;
-  int BATCH_SIZE = 16;
+  int BATCH_SIZE = 64;
   int EPOCHS = 10;
-  float LR = 0.003f;
+  float LR = 0.03f;
 
   float* mnist_train_x = new float[input_size * train_length];
   float* mnist_train_y = new float[labels_size * train_length];
@@ -376,7 +376,7 @@ int main(int argc, char** argv)
       dimBlock = dim3(BLOCK_SIZE, BLOCK_SIZE, 1);
       update_layer<<<dimGrid, dimBlock>>>(size1, input_size, BATCH_SIZE, LR, weights1, biases1, input, d_l1);
 
-      if (epoch == 0 && (batch+1)*BATCH_SIZE < train_length)
+      if (epoch == 0 && (batch+2)*BATCH_SIZE < train_length)
       {
         read_mnist(train_fin, (batch+1)*BATCH_SIZE, BATCH_SIZE, mnist_train_x, mnist_train_y);
       }
@@ -443,7 +443,7 @@ int main(int argc, char** argv)
       dimBlock = dim3(BLOCK_SIZE, 1, 1);
       cross_entropy<<<dimGrid, dimBlock>>>(size3, BATCH_SIZE, a3, labels, loss);
 
-      if (epoch == 0 && (batch+1)*BATCH_SIZE < test_length)
+      if (epoch == 0 && (batch+2)*BATCH_SIZE < test_length)
       {
         read_mnist(test_fin, (batch+1)*BATCH_SIZE, BATCH_SIZE, mnist_test_x, mnist_test_y);
       }
