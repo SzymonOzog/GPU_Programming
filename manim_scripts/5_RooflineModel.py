@@ -82,4 +82,69 @@ class NeuralNetwork(VoiceoverScene, ThreeDScene):
       self.play(Create(comp_bound))
       self.play(Write(comp_bound_t))
 
+    w_scale = 1 
+    overhead_time = 2
+    training_time = 9.5
+    overhead_r = Rectangle(height=0.5, width=overhead_time/w_scale, color=BLUE, fill_color=BLUE, fill_opacity=0.5)
+    training_r = Rectangle(height=0.5, width=training_time/w_scale, color=GREEN, fill_color=GREEN, fill_opacity=0.5)
+    perf = VGroup(overhead_r, training_r).arrange(RIGHT,buff=0.02)
+    with self.voiceover(text="""Let's first look into our overhead, in our case it is the time that we spend loading the dataset from disk""") as trk:
+      self.play(Transform(VGroup(cpu, cpu_t, overhead, overhead_t, c_to_m, c_to_g), overhead_r, replace_mobject_with_target_in_scene=True),
+                Transform(VGroup(gpu, gpu_t, memory, mem_t, mem_bound, mem_bound_t, comp_bound, comp_bound_t, m_to_g), training_r, replace_mobject_with_target_in_scene=True))
+    fs = 20
+    overhead_t = Text("2 ms", font_size=fs, color=BLUE).move_to(overhead_r)
+    training_t = Text("9.5 ms", font_size=fs, color=GREEN).move_to(training_r)
+    with self.voiceover(text="""And it takes around 2 miliseconds to do that, while our 10 epochs of training <bookmark mark='1'/>take around 9.5 miliseconds in total""") as trk:
+      self.play(Write(overhead_t))
+      self.wait_until_bookmark("1")
+      self.play(Write(training_t))
 
+    trans = Rectangle(height=0.5, width=1/w_scale, color=BLUE, fill_color=BLUE, fill_opacity=0.5).move_to(overhead_r, aligned_edge=RIGHT)
+    with self.voiceover(text="""The first obvious thing that we can do is to optimize our cpu code""") as trk:
+      pass
+    self.wait(1)
+
+    with self.voiceover(text="""I managed to get it down to 1 milisecond, by using some more optimized string parsing functions""") as trk:
+      self.play(Transform(overhead_r, trans), Transform(overhead_t, Text("1 ms", font_size=fs, color=BLUE).move_to(trans)))
+    self.wait(1)
+
+    epochs = VGroup(*[Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5) for i in range(10)]).arrange(RIGHT, buff=0.02).move_to(training_r, aligned_edge=LEFT)
+    epoch_times = VGroup(*[Text("0.95 ms", font_size=fs, color=GREEN).move_to(epochs[i]) for i in range(10)])
+
+    with self.voiceover(text="""But we want to mitigate our overhead even further, and one thing that you can notice is that we do not need the full
+                        dataset at the start of the first epoch, we only need the data that we will be working on""") as trk:
+      self.play(Transform(training_r, epochs, replace_mobject_with_target_in_scene=True),
+                Transform(training_t, epoch_times, replace_mobject_with_target_in_scene=True))
+    self.wait(1)
+    overhead_r.add(overhead_t)
+    with self.voiceover(text="""So we can execute the cpu and gpu code in parallel, where the gpu already starts training our network on the first batch
+                        as the cpu loads the next one in the background""") as trk:
+      self.play(overhead_r.animate.next_to(epochs[0], DOWN, aligned_edge=LEFT, buff=0.02))
+      group = VGroup(overhead_r, epochs[0], epoch_times[0])
+      self.play(group.animate.next_to(epochs[1], LEFT, buff=0.02))
+    self.wait(1)
+    
+    training_time=3
+    e2 = Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5).move_to(epochs[0], aligned_edge=LEFT)
+    epochs_2 = VGroup(*[Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5) for i in range(10)]).arrange(RIGHT, buff=0.02).next_to(group, RIGHT, buff=0.02).shift(0.3*LEFT)
+    anims = []
+    anims.extend([Unwrite(x) for x in epoch_times])
+    anims.append(Transform(epochs[0], e2))
+    for i in range(1, 10):
+      anims.append(Transform(epochs[i], epochs_2[i]))
+
+    color_grad = color_gradient([BLUE, GREEN], 2)
+
+    with self.voiceover(text="""Now this does not eliminate our overhead, we still need to load all of our data during the first epoch, 
+                        so if we optimize our <bookmark mark='1'/>epoch time, our first epoch will still be limited by the time that it takes to load
+                        the data""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(LaggedStart(*anims))
+    combined = Rectangle(height=0.5, width=1.2/(w_scale), fill_opacity=0.5).next_to(epochs_2, LEFT, buff=0.02).set_color(color_grad).shift(0.3*RIGHT)
+    with self.voiceover(text="""We didn't actually eliminate the overhead, we just blended it into our gpu code to hide it""") as trk:
+      self.play(Transform(VGroup(overhead_r, epochs[0]), combined, replace_mobject_with_target_in_scene=True))
+
+    with self.voiceover(text="""And the limiting factor is not going to be exactly equal to our data loading time since the cpu also
+                        schedules gpu kernels and copies data into memory""") as trk:
+      self.play(Write(Text("1+ ms", font_size=fs).set_color(color_grad).move_to(combined)))
+    self.wait(1)
