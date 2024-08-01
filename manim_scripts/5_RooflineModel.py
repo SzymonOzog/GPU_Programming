@@ -433,3 +433,229 @@ for(int epoch = 0; epoch<EPOCHS; epoch++)
 
     with self.voiceover(text="""Or we can do something called kernel fusion""") as trk:
       pass
+
+
+    forward = """__global__ void forward(int batch_size, int n, int out_w,
+                        float* input, float* weights, float* biases, float* output)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < batch_size && column < out_w)
+  {
+    output[row*out_w+column] = biases[column];
+    for(int i = 0; i < n; i++)
+    {
+      output[row*out_w+column] += weights[i*out_w + column] * input[row*n + i];
+    }
+  }
+}"""
+
+    relu = """__global__ void relu(int w, int h, float* a, float* b)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < h && column < w)
+  {
+    float activation = a[row*w+column];
+    b[row*w+column] = activation > 0.f ? activation : 0.f;
+  }
+}"""
+
+    code_obj = Code(code=forward, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    code_obj2 = Code(code=relu, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+    
+    with self.voiceover(text="""To show an example of kernel fusion, let's look at our biggest bottleneck - ReLU""") as trk:
+      self.play(Transform(VGroup(*[x for x in self.mobjects if isinstance(x, VMobject)]), code_obj2, replace_mobject_with_target_in_scene=True))
+
+    hl = SurroundingRectangle(code_obj2.code[6][16:], buff=0.03, stroke_width=2, fill_opacity=0.3, color=RED)
+    hl_t = SurroundingRectangle(code_obj2.code[7][:15], buff=0.03, stroke_width=2, fill_opacity=0.3, color=RED)
+    with self.voiceover(text="""We are doing 2 memory accesses, <bookmark mark='1'/>one read, and one <bookmark mark='2'/>write,
+                        both of size 4 bytes so that's 8 bytes of memory loaded""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Create(hl))
+      self.wait_until_bookmark("2")
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj2.code[7][16:30], buff=0.03, stroke_width=2, fill_opacity=0.3, color=GREEN)
+    hl_t2 = SurroundingRectangle(code_obj2.code[7][15:], buff=0.03, stroke_width=2, fill_opacity=0.3, color=GREEN)
+    with self.voiceover(text="""And we are only doing 2 operations, <bookmark mark='1'/>one comparison, and one <bookmark mark='2'/>assignment""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Transform(hl, hl_t))
+      self.wait_until_bookmark("2")
+      self.play(Transform(hl, hl_t2))
+
+    self.wait(1)
+    comp_intensity = MathTex("0.25 \\frac{FLOP}{B}").next_to(code_obj2, DOWN)
+    with self.voiceover(text="""This gives us just 0.25 floating point operations per one byte of memory""") as trk:
+      self.play(Uncreate(hl))
+      self.play(Write(comp_intensity))
+
+    with self.voiceover(text="""So what we can do is to take our forward pass kernel""") as trk:
+      self.play(Unwrite(comp_intensity))
+      self.play(Create(code_obj2.to_edge(DOWN)))
+      self.play(Create(code_obj.to_edge(UP)))
+
+    forward_relu="""__global__ void forward_relu(int batch_size, int n, int out_w,
+                             float* input, float* weights, float* biases, float* output)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < batch_size && column < out_w)
+  {
+    float out = biases[column];
+    for(int i = 0; i < n; i++)
+    {
+      out += weights[i*out_w + column] * input[row*n + i];
+    }
+    output[row*out_w+column] = out > 0.f ? out : 0.f;
+  }
+}"""
+
+    code_obj3 = Code(code=forward_relu, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj3.code = remove_invisible_chars(code_obj3.code)
+    with self.voiceover(text="""And fuse them together, completly eliminating the 2 memory accessed that relu kernel introduced""") as trk:
+      self.play(Transform(VGroup(code_obj, code_obj2), code_obj3, replace_mobject_with_target_in_scene=True))
+
+    relu_backwards = """__global__ void relu_backwards(int w, int h, float* a, float* d_l, float* b)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < h && column < w)
+  {
+    float activation = a[row*w+column];
+    b[row*w+column] = activation > 0.f ? d_l[row*w+column] : 0.f;
+  }
+}"""
+
+    backwards = """__global__ void backward(int batch_size, int n, int out_w,
+                         float* weights, float* biases, float* d_l, float* out_d_l)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < batch_size && column < out_w)
+  {
+    float dl = 0.f;
+    for(int i = 0; i < n; i++)
+    {
+      float w = weights[i*out_w + column];
+      dl += w*d_l[row*n + i];
+    }
+    out_d_l[row*out_w + column] = dl;
+  }
+}"""
+
+
+    code_obj = Code(code=backwards, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1).to_edge(UP)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    code_obj2 = Code(code=relu_backwards, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1).to_edge(DOWN)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+
+    back_group = VGroup(code_obj2, code_obj)
+    self.wait(2)
+    with self.voiceover(text="""And if we look at the backward pass we have the exact same situation""") as trk:
+      self.play(Transform(code_obj3, back_group, replace_mobject_with_target_in_scene=True))
+
+
+    backwards_relu="""__global__ void backward(int batch_size, int n, int out_w, float* weights,
+                         float* biases, float* d_l, float* out_d_l, float* activations)
+{
+  int column = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < batch_size && column < out_w)
+  {
+    float dl = 0.f;
+    for(int i = 0; i < n; i++)
+    {
+      float w = weights[i*out_w + column];
+      dl += w*d_l[row*n + i];
+    }
+    float activation = activations[row*out_w+column];
+    out_d_l[row*out_w + column] = activation > 0.f ? dl : 0.f;
+  }
+}"""
+
+    code_obj3 = Code(code=backwards_relu, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    code_obj3.code = remove_invisible_chars(code_obj3.code)
+    with self.voiceover(text="""So there is nothing holding us back from fusing those kernels too""") as trk:
+      self.play(Transform(back_group, code_obj3, replace_mobject_with_target_in_scene=True))
+      
+    self.wait(1)
+
+    training_time=9.5
+    overhead_r = Rectangle(height=0.5, width=overhead_time/w_scale, color=BLUE, fill_color=BLUE, fill_opacity=0.5)
+    training_r = Rectangle(height=0.5, width=training_time/w_scale, color=GREEN, fill_color=GREEN, fill_opacity=0.5)
+    throughput = VGroup(overhead_r, training_r).arrange(RIGHT,buff=0.02)
+    overhead_t = Text("2 s", font_size=fs, color=BLUE).move_to(overhead_r)
+    training_t = Text("9.5 s", font_size=fs, color=GREEN).move_to(training_r)
+    epochs = VGroup(*[Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5) for i in range(10)]).arrange(RIGHT, buff=0.02).move_to(training_r, aligned_edge=LEFT)
+    epoch_times = VGroup(*[Text("0.95 s", font_size=fs, color=GREEN).move_to(epochs[i]) for i in range(10)])
+
+    with self.voiceover(text="""And with those changes we managed to get from our initial timings, of 2 seconds od data loading, and 0.95 seconds per epoch totalling in 11.5 seconds for full training""") as trk:
+      self.play(Transform(code_obj3, VGroup(overhead_t, epochs, epoch_times), replace_mobject_with_target_in_scene=True))
+    self.wait(1)
+
+    training_time=4
+    epochs_2 = VGroup(*[Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5) for i in range(10)]).arrange(RIGHT, buff=0.02).next_to(group, RIGHT, buff=0.02).shift(0.3*LEFT)
+    anims = []
+    anims.extend([Unwrite(x) for x in epoch_times])
+    anims.append(Unwrite(overhead_t))
+    for i in range(1, 10):
+      anims.append(Transform(epochs[i], epochs_2[i]))
+
+    color_grad = color_gradient([BLUE, GREEN], 2)
+
+    combined = Rectangle(height=0.5, width=1.2/(w_scale), fill_opacity=0.5).next_to(epochs_2, LEFT, buff=0.02).set_color(color_grad).shift(0.4*RIGHT)
+    anims.append(Transform(VGroup(overhead_r, epochs[0]), combined, replace_mobject_with_target_in_scene=True))
+    anims.append(Write(Text("1.1 s", font_size=fs).set_color(color_grad).move_to(combined)))
+    b = Brace(epochs_2[-1], color=GREEN)
+    time = Text("400 ms", color=GREEN, font_size=fs).next_to(b, DOWN)
+    anims.append(Create(b))
+    anims.append(Write(time))
+    with self.voiceover(text="""To a first epoch taking 1.1 seconds of work and dataloading, and the rest taking 400 miliseconds, giving us a total training time of around 5 seconds,
+                        reducing our total training time by more than a half""") as trk:
+      self.play(LaggedStart(*anims))
+    self.wait(1)
+
+    with self.voiceover(text="""But wait, there's more""") as trk:
+      pass
+
+    with self.voiceover(text="""Since our data and network is very small it's currently highly underutilized, because the kernels are not even filling all of the possible threads""") as trk:
+      pass
+
+    with self.voiceover(text="""This is a bit like cheating, but if we increase our batch size from 16 to 64 we can parallelize our calculations even further""") as trk:
+      pass
+    training_time=1.2
+    epochs_3 = VGroup(*[Rectangle(height=0.5, width=training_time/(10*w_scale), color=GREEN, fill_color=GREEN, fill_opacity=0.5) for i in range(10)]).arrange(RIGHT, buff=0.02).next_to(combined, RIGHT, buff=0.02).shift(0.12*LEFT)
+    anims = []
+    for i in range(1, 10):
+      anims.append(Transform(epochs[i], epochs_3[i]))
+
+    b2 = Brace(epochs_3[-1], color=GREEN)
+    time2 = Text("120 ms", color=GREEN, font_size=fs).next_to(b2, DOWN)
+    anims.append(Transform(b, b2))
+    anims.append(Transform(time, time2))
+    with self.voiceover(text="""And get to just 120 miliseconds per epoch, leaving us with a final improvement of 5x over the original code""") as trk:
+      self.play(LaggedStart(*anims))
+    self.wait(1)
+
+    with self.voiceover(text="""With this it's time to end the episode, with no magic at all, just simple kernel fusion and parallelization we managed to 
+                        improve our performance significantly""") as trk:
+      pass
+
+    with self.voiceover(text="""This was just a toy example - operating on very small data. In the next episodes we are going to look more in depth into 
+                        memory organization of CUDA and how to leavrage it to get maximum performance""") as trk:
+      pass
+    
+    with self.voiceover(text="""Subscribe if you don't want to miss it. Also leave your feedback in the comments, like the video and share it with your friends""") as trk:
+      pass
+
+    with self.voiceover(text="""As always, I'll link the code in the description so that you can play around with it.
+                        I bet that you could squeeze out even more performance out of it, and if you do - share your changes in the comments""") as trk:
+      pass
+
+    with self.voiceover(text="""Thank you for your support and see you in the next episode, bye""") as trk:
+      pass
