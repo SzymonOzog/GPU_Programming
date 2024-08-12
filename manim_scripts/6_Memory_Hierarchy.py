@@ -181,6 +181,7 @@ class MemoryHierarchy(VoiceoverScene):
 
     with self.voiceover(text="""The next type of memory that we have been using so far are registers""") as trk:
       self.play(*[Create(r) for r in rects if r.color == GREEN], *[Write(t) for t in texts if t.color == GREEN])
+      self.play(*[Create(arrows[i]) for i in [0, 2, 6, 8]])
 
     with self.voiceover(text="""They are local to each thread, and extremely fast""") as trk:
       pass
@@ -188,3 +189,33 @@ class MemoryHierarchy(VoiceoverScene):
     reg = Code(code="float reg = pointer[i];", tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
     with self.voiceover(text="""Every time that we create a local variable inside our kernel, it gets stored inside our registers""") as trk:
       self.play(Create(reg))
+
+    target = VGroup(*[r.copy() for r in rects if r.color == GREEN])
+    self.play(Transform(reg, target, replace_mobject_with_target_in_scene=True))
+    self.remove(target)
+
+    with self.voiceover(text="""We can check how much registers we are using by adding a compilation flag 
+                        for increased verbosity in ptxas""") as trk:
+      pass
+
+
+    with self.voiceover(text="""We can also use cuobjdump to check how are our registers accessed in PTX, and SASS assembly""") as trk:
+      pass
+
+    with self.voiceover(text="""Don't worry if those look like black magic - we will go over what PTX and SASS are in later episodes""") as trk:
+      pass
+
+    with self.voiceover(text="""There are some performance considerations when using our registers""") as trk:
+      pass
+
+    with self.voiceover(text="""First would be that using too much registers can cause reduced occupancy. We will go over occupancy in later
+                        episodes as it deserves some more explanation, but for now just think about it as not having enough resources to run new thread
+                        groups""") as trk:
+      pass
+
+    with self.voiceover(text="""The second one occurs when we use too much registers and the compiler determines that there is no more register
+                        space to hold our variables""") as trk:
+      pass
+
+    with self.voiceover(text="""in this case, our variables get spilled into another kind of memory, which is local memory""") as trk:
+      pass
