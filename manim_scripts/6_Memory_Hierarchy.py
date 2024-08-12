@@ -61,9 +61,9 @@ class MemoryHierarchy(VoiceoverScene):
       registers.add(texts[-1])
       rects.append(registers)
 
-      local = Rectangle(height=0.5, width=1.0, color=GREEN).next_to(thread, UP, aligned_edge=RIGHT, buff=0.5)
-      l = Text("Local", font_size=15, color=GREEN)
-      m = Text("Memory", font_size=15, color=GREEN)
+      local = Rectangle(height=0.5, width=1.0, color=GREEN_A).next_to(thread, UP, aligned_edge=RIGHT, buff=0.5)
+      l = Text("Local", font_size=15, color=GREEN_A)
+      m = Text("Memory", font_size=15, color=GREEN_A)
       VGroup(l, m).arrange(DOWN, buff=0.05).move_to(local.get_center())
       texts.append(l)
       texts.append(m)
@@ -161,4 +161,30 @@ class MemoryHierarchy(VoiceoverScene):
     with self.voiceover(text="""Each thread can read and write to global memory""") as trk:
       self.play(*[Create(arrows[i]) for i in [13, 15, 17, 19]])
 
+    
+    with self.voiceover(text="""Global memory is our largest but also slowest memory space - it is the VRAM of our GPU.""") as trk:
+      pass
 
+    malloc = Code(code="cudaMalloc((void**) &pointer, size);", tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    global_var = Code(code="__device__ int GlobalVariable = 0;", tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1).next_to(malloc, DOWN)
+
+    with self.voiceover(text="""Every time that we call <bookmark mark='1'/>a malloc function or create a<bookmark mark='2'/>
+                        global variable, it gets stored inside global memory""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Create(malloc))
+      self.wait_until_bookmark("2")
+      self.play(Create(global_var))
+
+    target = VGroup(*[r.copy() for r in rects if r.color == RED])
+    self.play(Transform(VGroup(malloc, global_var), target, replace_mobject_with_target_in_scene=True))
+    self.remove(target)
+
+    with self.voiceover(text="""The next type of memory that we have been using so far are registers""") as trk:
+      self.play(*[Create(r) for r in rects if r.color == GREEN], *[Write(t) for t in texts if t.color == GREEN])
+
+    with self.voiceover(text="""They are local to each thread, and extremely fast""") as trk:
+      pass
+
+    reg = Code(code="float reg = pointer[i];", tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+    with self.voiceover(text="""Every time that we create a local variable inside our kernel, it gets stored inside our registers""") as trk:
+      self.play(Create(reg))
