@@ -101,8 +101,8 @@ class MemoryHierarchy(VoiceoverScene):
 
     blocks = VGroup(make_block(0), make_block(1)).arrange(RIGHT).shift(UP)
 
-    constant = Rectangle(width=blocks.width, height=1, color=YELLOW).next_to(blocks, DOWN)
-    texts.append(Text("Constant Memory", font_size=30, color=YELLOW).move_to(constant.get_center()))
+    constant = Rectangle(width=blocks.width, height=1, color=RED_B).next_to(blocks, DOWN)
+    texts.append(Text("Constant Memory", font_size=30, color=RED_B).move_to(constant.get_center()))
     rects.append(constant)
 
     gmem = Rectangle(width=blocks.width, height=1, color=RED).next_to(constant, DOWN)
@@ -236,4 +236,24 @@ class MemoryHierarchy(VoiceoverScene):
 
     self.wait(1)
 
+    with self.voiceover(text="""Another kind of memory that we can use is Constant Memory""") as trk:
+      self.play(*[Create(r) for r in rects if r.color == RED_B], *[Write(t) for t in texts if t.color == RED_B])
+      self.play(*[Create(arrows[i]) for i in [12, 14, 16, 18]])
 
+    with self.voiceover(text="""It is a special kind of memory, it lives in the same space as global and local memory but it's cached and read-only""") as trk:
+      pass
+
+    with self.voiceover(text="""It is limited to only 64KB""") as trk:
+      pass
+
+    with self.voiceover(text="""and accesses to different addresses by threads within a warp are serialized - that means that if we access the same memory
+                        address by multiple threads we can get better performance than when using global memory""") as trk:
+      pass
+
+    const_mem = """__constant__ float const_mem[size];
+cudaMemcpyToSymbol(const_mem, const_mem_h, size*sizeof(float));"""
+    const_mem_code = Code(code=const_mem, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+
+    with self.voiceover(text="""To use constnt memory we have to use the __constant__ derivative when declaring our array,
+                        we then have to use cudaMemcpyToSymbol to move our data from the cpu to const memory""") as trk:
+      self.play(Create(const_mem_code))
