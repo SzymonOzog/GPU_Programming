@@ -257,3 +257,30 @@ cudaMemcpyToSymbol(const_mem, const_mem_h, size*sizeof(float));"""
     with self.voiceover(text="""To use constnt memory we have to use the __constant__ derivative when declaring our array,
                         we then have to use cudaMemcpyToSymbol to move our data from the cpu to const memory""") as trk:
       self.play(Create(const_mem_code))
+
+    self.play(Uncreate(const_mem_code))
+    with self.voiceover(text="""The final type of memory is shared memory""") as trk:
+      self.play(*[Create(r) for r in rects if r.color == YELLOW], *[Write(t) for t in texts if t.color == YELLOW])
+      self.play(*[Create(arrows[i]) for i in [4, 5, 10, 11]])
+
+    with self.voiceover(text="""As the name suggests, it's shared between the threads in a block""") as trk:
+      pass
+
+    with self.voiceover(text="""And what that means is that if one thread in a <bookmark mark='1'/>block writes to shared memory, all the other threads in a block <bookmark mark='2'/>can read
+                        the value written by that thread""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(ShowPassingFlash(Arrow(start=arrows[4].get_start(), end=arrows[4].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      self.wait_until_bookmark("2")
+      self.play(ShowPassingFlash(Arrow(start=arrows[5].get_end(), end=arrows[5].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+
+    with self.voiceover(text="""moreover, shared memory lives on chip - meaning that accessing it is much faster than accessing global memory. 
+                        That is why it is very often used in order to increase performence when multiple threads access the same memory address""") as trk:
+      pass
+
+    shared_mem = "__shared__ float shared_mem[size];"
+    shared_mem_code = Code(code=shared_mem, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
+
+    with self.voiceover(text="""To allocate an array in shared memory we just have to add a __shared__ keyword when declaring our variable""") as trk:
+      self.play(Create(shared_mem_code))
+
+    self.play(Uncreate(shared_mem_code))
