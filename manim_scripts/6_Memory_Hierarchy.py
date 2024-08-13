@@ -61,9 +61,9 @@ class MemoryHierarchy(VoiceoverScene):
       registers.add(texts[-1])
       rects.append(registers)
 
-      local = Rectangle(height=0.5, width=1.0, color=GREEN_A).next_to(thread, UP, aligned_edge=RIGHT, buff=0.5)
-      l = Text("Local", font_size=15, color=GREEN_A)
-      m = Text("Memory", font_size=15, color=GREEN_A)
+      local = Rectangle(height=0.5, width=1.0, color=RED_A).next_to(thread, UP, aligned_edge=RIGHT, buff=0.5)
+      l = Text("Local", font_size=15, color=RED_A)
+      m = Text("Memory", font_size=15, color=RED_A)
       VGroup(l, m).arrange(DOWN, buff=0.05).move_to(local.get_center())
       texts.append(l)
       texts.append(m)
@@ -218,4 +218,22 @@ class MemoryHierarchy(VoiceoverScene):
       pass
 
     with self.voiceover(text="""in this case, our variables get spilled into another kind of memory, which is local memory""") as trk:
+      self.play(*[Create(r) for r in rects if r.color == RED_A], *[Write(t) for t in texts if t.color == RED_A])
+      self.play(*[Create(arrows[i]) for i in [1, 3, 7, 9]])
+
+    with self.voiceover(text="""And the name might be a bit confusing - it's called local not because of it's physical location but because it's local to a thread""") as trk:
       pass
+
+    with self.voiceover(text="""it lives in the same space as global memory - therefore accessing it is very slow and we want to avoid doing it""") as trk:
+      pass
+
+    with self.voiceover(text="""When compiling with increased verbosity we can also look into how much of our memory access is to local memory""") as trk:
+      pass
+
+    with self.voiceover(text="""I've made a kernel using a lot of variables and as you can see, after using 255 registers they started spilling into local memory,
+                        resulting in 2040 bytes read and written to local memory""") as trk:
+      pass
+
+    self.wait(1)
+
+
