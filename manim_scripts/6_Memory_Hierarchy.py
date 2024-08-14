@@ -18,10 +18,44 @@ class MemoryHierarchy(VoiceoverScene):
       self.play(Write(title))
 
     subtitle = Text("Memory Hierarchy", font_size=48).next_to(title, DOWN)
-    with self.voiceover(text="""In this episode, we are going to go over the memory hierarchy of our gpu as understanding
+    with self.voiceover(text="""In this episode, we are going to briefly go over the memory hierarchy of our gpu as understanding
                         it will be crucial to getting the best performence our of our hardware""") as trk:
       self.play(Write(subtitle))
-    self.play(Unwrite(title), Unwrite(subtitle))
+
+    with self.voiceover(text="""The purpose of this episode is to give you a quick overview of how memory in cuda works
+                        befor we dive deeper into each kind of memory in future episodes""") as trk:
+      pass
+
+
+    pcb = ImageMobject("./PCB.jpg").scale(0.2)
+
+    with self.voiceover(text="""When talking about memory we will ofter refer to some particular kind of memory as being on or off chip""") as trk:
+      self.play(Unwrite(title), Unwrite(subtitle))
+
+    with self.voiceover(text="""It might be confusing if you are not familliar with how the gpu internals look like""") as trk:
+      self.play(FadeIn(pcb))
+
+    with self.voiceover(text="""When you open up your gpu, you can see that it's actually like a small computer inside your computer""") as trk:
+      pass
+
+    chip = Rectangle(width=2, height=2, fill_color=GREEN, fill_opacity=0.5, color=GREEN).shift(0.5*UP)
+    chip_text = Text("Chip", color=GREEN, font_size=36).next_to(chip, DOWN)
+    with self.voiceover(text="""There is a chip that does the actuall computation""") as trk:
+      self.play(Create(chip))
+      self.play(Write(chip_text))
+
+    offchip1 = Rectangle(width=0.7, height=2, fill_color=RED, fill_opacity=0.5, color=RED).shift(1.5*LEFT+0.5*UP)
+    offchip2 = Rectangle(width=0.7, height=2, fill_color=RED, fill_opacity=0.5, color=RED).shift(1.3*RIGHT+0.5*UP)
+    offchip3 = Rectangle(width=1.45, height=0.65, fill_color=RED, fill_opacity=0.5, color=RED).shift(1.95*UP)
+    offchip_text = Text("Memory", color=RED, font_size=36).next_to(offchip3, UP)
+    with self.voiceover(text="""And it's connected to VRAM that resides on the PCB""") as trk:
+      self.play(Create(offchip1), Create(offchip2), Create(offchip3))
+      self.play(Write(offchip_text))
+
+    with self.voiceover(text="""but some of the memory resides in the actuall chip making it much faster to access""") as trk:
+      pass
+
+    self.play(*[Uncreate(x) for x in [chip, offchip1, offchip2, offchip3]], Unwrite(chip_text), Unwrite(offchip_text))
 
     def join(r1, r2, start, double=True):
       nonlocal arrows
@@ -150,6 +184,7 @@ class MemoryHierarchy(VoiceoverScene):
 
     with self.voiceover(text="""When speaking about memory hierarchy we have to take each unit into consideration, that is <bookmark mark='1'/>our blocks
                         <bookmark mark='2'/> and the threads that run inside our blocks.""") as trk:
+      self.play(FadeOut(pcb))
       self.wait_until_bookmark("1")
       self.play(*[Create(r) for r in rects if r.color == PURPLE], *[Write(t) for t in texts if t.color == PURPLE])
       self.wait_until_bookmark("2")
@@ -162,7 +197,7 @@ class MemoryHierarchy(VoiceoverScene):
       self.play(*[Create(arrows[i]) for i in [13, 15, 17, 19]])
 
     
-    with self.voiceover(text="""Global memory is our largest but also slowest memory space - it is the VRAM of our GPU.""") as trk:
+    with self.voiceover(text="""Global memory is our largest but also slowest memory space - it is the VRAM of our GPU and it resides off chip.""") as trk:
       pass
 
     malloc = Code(code="cudaMalloc((void**) &pointer, size);", tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
@@ -183,7 +218,7 @@ class MemoryHierarchy(VoiceoverScene):
       self.play(*[Create(r) for r in rects if r.color == GREEN], *[Write(t) for t in texts if t.color == GREEN])
       self.play(*[Create(arrows[i]) for i in [0, 2, 6, 8]])
 
-    with self.voiceover(text="""They are local to each thread, and extremely fast""") as trk:
+    with self.voiceover(text="""They are local to each thread, and extremely fast as they reside on chip""") as trk:
       pass
 
     reg = Code(code="float reg = pointer[i];", tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
@@ -224,7 +259,7 @@ class MemoryHierarchy(VoiceoverScene):
     with self.voiceover(text="""And the name might be a bit confusing - it's called local not because of it's physical location but because it's local to a thread""") as trk:
       pass
 
-    with self.voiceover(text="""it lives in the same space as global memory - therefore accessing it is very slow and we want to avoid doing it""") as trk:
+    with self.voiceover(text="""it lives off chip - therefore accessing it is very slow and we want to avoid doing it""") as trk:
       pass
 
     with self.voiceover(text="""When compiling with increased verbosity we can also look into how much of our memory access is to local memory""") as trk:
@@ -240,7 +275,7 @@ class MemoryHierarchy(VoiceoverScene):
       self.play(*[Create(r) for r in rects if r.color == RED_B], *[Write(t) for t in texts if t.color == RED_B])
       self.play(*[Create(arrows[i]) for i in [12, 14, 16, 18]])
 
-    with self.voiceover(text="""It is a special kind of memory, it lives in the same space as global and local memory but it's cached and read-only""") as trk:
+    with self.voiceover(text="""It is a special kind of memory, it resides off chip as global and local memory but it's cached and read-only""") as trk:
       pass
 
     with self.voiceover(text="""It is limited to only 64KB""") as trk:
