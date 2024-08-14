@@ -319,3 +319,60 @@ cudaMemcpyToSymbol(const_mem, const_mem_h, size*sizeof(float));"""
       self.play(Create(shared_mem_code))
 
     self.play(Uncreate(shared_mem_code))
+
+    with self.voiceover(text="""So to recap everything we've learned so far""") as trk:
+      self.play(*[Uncreate(r) for r in rects + arrows], *[Unwrite(t) for t in texts])
+
+    summary = Table([
+      ["On", "R/W", "Thread", "Thread"],
+      ["On", "R/W", "Block", "Block"],
+      ["Off", "R/W", "Thread", "Thread"],
+      ["Off", "R/W", "Global", "Host Controlled"],
+      ["Off", "R", "Global", "Host Controlled"]],
+                    row_labels=[Text(t) for t in ["Registers", "Shared", "Local", "Global", "Constant"]],
+                    col_labels=[Text(t) for t in ["On/Off Chip", "Access", "Scope", "Lifetime"]]).scale(0.5)
+    
+    with self.voiceover(text="""We have five kinds of memory that we can use in our CUDA code""") as trk:
+      self.play(*[Create(x) for x in summary.get_vertical_lines()])
+      self.play(*[Write(x) for x in summary.get_col_labels()])
+
+    def create_row(i):
+      nonlocal summary
+      self.play(Create(summary.get_horizontal_lines()[i]))
+      self.play(LaggedStart(Write(summary.get_row_labels()[i]), *[Write(x) for x in summary.get_entries_without_labels()[i*4:(i+1)*4]]))
+
+
+    with self.voiceover(text="""Register memory that lives on chip, can be read and written to and has a scope and a lifetime of our thread""") as trk:
+      create_row(0)
+
+    with self.voiceover(text="""Shared memory that also lives on chip, can be read and written to and has a scope and a lifetime of one block""") as trk:
+      create_row(1)
+
+    with self.voiceover(text="""Local memory that resides off chip, can be read and written to and has a scope and a lifetime of a thread""") as trk:
+      create_row(2)
+
+    with self.voiceover(text="""Global memory that resides off chip, can be read and written that can be accessed anywhere in our code and it's lifetime is controlled
+                        by the host that decides when to deallocate it""") as trk:
+      create_row(3)
+
+    with self.voiceover(text="""And constant memory that also resides off chip, is read only, globally accessed and it's lifetime is also controlled by the host""") as trk:
+      create_row(4)
+
+    self.wait(1)
+
+    with self.voiceover(text="""This will be it for our introduction to memory in CUDA, in the upcoming episodes we will dive deeper into
+                        how we can use each kind of memory to improve the performance of our code""") as trk:
+      pass
+
+    
+    with self.voiceover(text="""Subscribe not to miss it, leave a like, comment your feedback and do anything that helps the algorithm.
+                        And I'll see you in the next episode - bye.""") as trk:
+      pass
+
+    anims = [] 
+    for obj in self.mobjects:
+      anims.append(FadeOut(obj))
+    self.play(*anims)
+    self.wait(3)
+
+
