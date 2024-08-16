@@ -4,6 +4,7 @@ from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.recorder import RecorderService
 from manim_voiceover.services.gtts import GTTSService
 import numpy as np
+import math
 
 
 class Tiling(VoiceoverScene):
@@ -47,7 +48,7 @@ class Tiling(VoiceoverScene):
   }
 }"""
 
-    matmul_obj = Code(code=matmul, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0.1, corner_radius=0.1).shift(3*LEFT)
+    matmul_obj = Code(code=matmul, tab_width=2, language="c", font_size=18, background="rectangle", line_no_buff=0.1, corner_radius=0.1)
     with self.voiceover(text="""As a reminder, this is what our matrix multiplication code from episode 2 looked like""") as trk:
       self.play(Create(matmul_obj))
     self.wait(1)
@@ -58,6 +59,7 @@ class Tiling(VoiceoverScene):
 
     i1 = SurroundingRectangle(m1.get_entries()[:4], color=BLUE)
     i2 = SurroundingRectangle(VGroup(*[m2.get_entries()[i*4] for i in range(4)]), color=BLUE)
+    i3 = SurroundingRectangle(m3.get_entries()[0])
     pos = m2.get_center().copy()
     pos[0] = m1.get_center()[0]
     registers = Rectangle(height=1, width=3, color=GREEN, fill_color=GREEN, fill_opacity=0.5).move_to(pos)
@@ -66,7 +68,7 @@ class Tiling(VoiceoverScene):
     
     with self.voiceover(text="""The first thread takes the first row of matrix A, an the first column of matrix B <bookmark mark='1'/>
                         and loads them into the registers""") as trk:
-      self.play(Create(i1), Create(i2))
+      self.play(Create(i1), Create(i2), Create(i3))
       self.wait_until_bookmark("1")
       self.play(Create(registers), Write(registers_text))
       self.play(LaggedStart(*[FadeOut(m1.get_entries()[i].copy(), target_position=registers) for i in range(4)],
@@ -80,10 +82,11 @@ class Tiling(VoiceoverScene):
 
 
     def do_calc(row, col, run_time=1):
-      nonlocal i1, i2, c1, c2, count1, count2, fs, registers
+      nonlocal i1, i2, i3, c1, c2, count1, count2, fs, registers
 
       self.play(Transform(i1, SurroundingRectangle(m1.get_entries()[row*4:row*4 + 4], color=BLUE), run_time=run_time/3),
-                Transform(i2, SurroundingRectangle(VGroup(*[m2.get_entries()[i*4 + col] for i in range(4)]), color=BLUE), run_time=run_time/3))
+                Transform(i2, SurroundingRectangle(VGroup(*[m2.get_entries()[i*4 + col] for i in range(4)]), color=BLUE), run_time=run_time/3),
+                Transform(i3, SurroundingRectangle(m3.get_entries()[row*4 + col]), run_time=run_time/3))
 
       self.play(LaggedStart(*[FadeOut(m1.get_entries()[row*4 + i].copy(), target_position=registers, run_time=run_time/3) for i in range(4)],
                             *[FadeOut(m2.get_entries()[i*4 + col].copy(), target_position=registers, run_time=run_time/3) for i in range(4)]))
@@ -101,5 +104,5 @@ class Tiling(VoiceoverScene):
       for row in range(4):
         for col in range(4):
           if row == 0 and col == 0: continue
-          do_calc(row, col, run_time=2.5/(row*4+col))
+          do_calc(row, col, run_time=math.log(trk.duration)/(row*4+col))
     self.wait(1)
