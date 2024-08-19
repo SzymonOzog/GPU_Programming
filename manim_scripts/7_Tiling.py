@@ -25,9 +25,10 @@ class Tiling(VoiceoverScene):
 
     self.play(Unwrite(subtitle), Unwrite(title))
 
-    m3 = Matrix([[f"c_{{{j},{i}}}" for i in range(4)] for j in range(4)]).shift(2.8*RIGHT + 1.6*DOWN)
-    m1 = Matrix([[f"a_{{{j},{i}}}" for i in range(4)] for j in range(4)]).next_to(m3, LEFT)
-    m2 = Matrix([[f"b_{{{j},{i}}}" for i in range(4)] for j in range(4)]).next_to(m3, UP)
+    N = 4
+    m3 = Matrix([[f"c_{{{j},{i}}}" for i in range(N)] for j in range(N)]).shift(2.8*RIGHT + 1.6*DOWN)
+    m1 = Matrix([[f"a_{{{j},{i}}}" for i in range(N)] for j in range(N)]).next_to(m3, LEFT)
+    m2 = Matrix([[f"b_{{{j},{i}}}" for i in range(N)] for j in range(N)]).next_to(m3, UP)
 
     def create_matrix(m):
       return LaggedStart(Create(m.get_brackets()[0]), Create(m.get_brackets()[1]), *[Write(e) for e in m.get_entries()])
@@ -57,8 +58,8 @@ class Tiling(VoiceoverScene):
     with self.voiceover(text="""Let's look at how memory is accessed in our kernel""") as trk:
       self.play(create_matrix(m3), create_matrix(m1), create_matrix(m2))
 
-    i1 = SurroundingRectangle(m1.get_entries()[:4], color=BLUE)
-    i2 = SurroundingRectangle(VGroup(*[m2.get_entries()[i*4] for i in range(4)]), color=BLUE)
+    i1 = SurroundingRectangle(m1.get_entries()[:N], color=BLUE)
+    i2 = SurroundingRectangle(VGroup(*[m2.get_entries()[i*N] for i in range(N)]), color=BLUE)
     i3 = SurroundingRectangle(m3.get_entries()[0])
     pos = m2.get_center().copy()
     pos[0] = m1.get_center()[0]
@@ -71,28 +72,28 @@ class Tiling(VoiceoverScene):
       self.play(Create(i1), Create(i2), Create(i3))
       self.wait_until_bookmark("1")
       self.play(Create(registers), Write(registers_text))
-      self.play(LaggedStart(*[FadeOut(m1.get_entries()[i].copy(), target_position=registers) for i in range(4)],
-                            *[FadeOut(m2.get_entries()[i*4].copy(), target_position=registers) for i in range(4)]))
+      self.play(LaggedStart(*[FadeOut(m1.get_entries()[i].copy(), target_position=registers) for i in range(N)],
+                            *[FadeOut(m2.get_entries()[i*N].copy(), target_position=registers) for i in range(N)]))
 
     fs = 36
     c1 = [1, 0, 0, 0]
     c2 = [1, 0, 0, 0]
-    count1 = [Tex(str(c1[i]), font_size=fs, color=BLUE).next_to(m1.get_entries()[i*4], LEFT, buff=1) for i in range(4)]
-    count2 = [Tex(str(c2[i]), font_size=fs, color=BLUE).next_to(m2.get_entries()[i], UP) for i in range(4)]
+    count1 = [Tex(str(c1[i]), font_size=fs, color=BLUE).next_to(m1.get_entries()[i*N], LEFT, buff=1) for i in range(N)]
+    count2 = [Tex(str(c2[i]), font_size=fs, color=BLUE).next_to(m2.get_entries()[i], UP) for i in range(N)]
 
 
     def do_calc(row, col, run_time=1):
       nonlocal i1, i2, i3, c1, c2, count1, count2, fs, registers
 
-      self.play(Transform(i1, SurroundingRectangle(m1.get_entries()[row*4:row*4 + 4], color=BLUE), run_time=run_time/3),
-                Transform(i2, SurroundingRectangle(VGroup(*[m2.get_entries()[i*4 + col] for i in range(4)]), color=BLUE), run_time=run_time/3),
-                Transform(i3, SurroundingRectangle(m3.get_entries()[row*4 + col]), run_time=run_time/3))
+      self.play(Transform(i1, SurroundingRectangle(m1.get_entries()[row*N:row*N + N], color=BLUE), run_time=run_time/3),
+                Transform(i2, SurroundingRectangle(VGroup(*[m2.get_entries()[i*N + col] for i in range(N)]), color=BLUE), run_time=run_time/3),
+                Transform(i3, SurroundingRectangle(m3.get_entries()[row*N + col]), run_time=run_time/3))
 
-      self.play(LaggedStart(*[FadeOut(m1.get_entries()[row*4 + i].copy(), target_position=registers, run_time=run_time/3) for i in range(4)],
-                            *[FadeOut(m2.get_entries()[i*4 + col].copy(), target_position=registers, run_time=run_time/3) for i in range(4)]))
+      self.play(LaggedStart(*[FadeOut(m1.get_entries()[row*N + i].copy(), target_position=registers, run_time=run_time/3) for i in range(N)],
+                            *[FadeOut(m2.get_entries()[i*N + col].copy(), target_position=registers, run_time=run_time/3) for i in range(N)]))
       c1[row]+=1
       c2[col]+=1
-      self.play(Transform(count1[row], Tex(str(c1[row]), font_size=fs, color=BLUE).next_to(m1.get_entries()[row*4], LEFT, buff=1), run_time=run_time/3),
+      self.play(Transform(count1[row], Tex(str(c1[row]), font_size=fs, color=BLUE).next_to(m1.get_entries()[row*N], LEFT, buff=1), run_time=run_time/3),
                 Transform(count2[col], Tex(str(c2[col]), font_size=fs, color=BLUE).next_to(m2.get_entries()[col], UP)), run_time=run_time/3)
 
 
@@ -101,8 +102,8 @@ class Tiling(VoiceoverScene):
                         we can see that we are actually reading them multiple times, and more precisely the number of accesses
                         is equal to the length of the side of our matrix""") as trk:
       self.play(LaggedStart(*[Write(c) for c in count1+count2]))
-      for row in range(4):
-        for col in range(4):
+      for row in range(N):
+        for col in range(N):
           if row == 0 and col == 0: continue
-          do_calc(row, col, run_time=math.log(trk.duration)/(row*4+col))
+          do_calc(row, col, run_time=math.log(trk.duration)/(row*N+col))
     self.wait(1)
