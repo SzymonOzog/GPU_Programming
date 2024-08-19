@@ -26,6 +26,7 @@ class Tiling(VoiceoverScene):
     self.play(Unwrite(subtitle), Unwrite(title))
 
     N = 4
+    tile_size=2
     m3 = Matrix([[f"c_{{{j},{i}}}" for i in range(N)] for j in range(N)]).shift(2.8*RIGHT + 1.6*DOWN)
     m1 = Matrix([[f"a_{{{j},{i}}}" for i in range(N)] for j in range(N)]).next_to(m3, LEFT)
     m2 = Matrix([[f"b_{{{j},{i}}}" for i in range(N)] for j in range(N)]).next_to(m3, UP)
@@ -72,6 +73,7 @@ class Tiling(VoiceoverScene):
       self.play(Create(i1), Create(i2), Create(i3))
       self.wait_until_bookmark("1")
       self.play(Create(registers), Write(registers_text))
+      registers.add(registers_text)
       self.play(LaggedStart(*[FadeOut(m1.get_entries()[i].copy(), target_position=registers) for i in range(N)],
                             *[FadeOut(m2.get_entries()[i*N].copy(), target_position=registers) for i in range(N)]))
 
@@ -107,3 +109,136 @@ class Tiling(VoiceoverScene):
           if row == 0 and col == 0: continue
           do_calc(row, col, run_time=math.log(trk.duration)/(row*N+col))
     self.wait(1)
+
+
+    shared = Rectangle(height=1, width=N, color=YELLOW, fill_color=YELLOW, fill_opacity=0.5)
+    shared_text = Text("Shared memory", font_size=32, color=YELLOW)
+    fs = 36
+    c1 = [0, 0, 0, 0]
+    c2 = [0, 0, 0, 0]
+    count_s1 = [Tex(str(c1[i]), font_size=fs, color=BLUE).next_to(m1.get_entries()[i*N], LEFT, buff=1) for i in range(N)]
+    count_s2 = [Tex(str(c2[i]), font_size=fs, color=BLUE).next_to(m2.get_entries()[i], UP) for i in range(N)]
+    with self.voiceover(text="""And to reduce our global memory workload we can utilize shared memory""") as trk:
+      self.play(Uncreate(i1), Uncreate(i2), Uncreate(i3))
+      self.play(registers.animate.shift(0.6*UP))
+      shared.next_to(registers, DOWN)
+      shared_text.move_to(shared)
+      self.play(LaggedStart(*[Transform(c, cs, replace_mobject_with_target_in_scene=True) for (c,cs) in zip(count1+count2, count_s1+count_s2)]))
+      self.play(Create(shared), Write(shared_text))
+
+
+    shared_args = {"buff": MED_SMALL_BUFF, "color": PURPLE}
+    i1s = SurroundingRectangle(VGroup(*[m1.get_entries()[i*N + j] for i in range(tile_size) for j in range(tile_size)]), **shared_args)
+    i2s = SurroundingRectangle(VGroup(*[m2.get_entries()[i*N + j] for i in range(tile_size) for j in range(tile_size)]), **shared_args)
+    i3s = SurroundingRectangle(VGroup(*[m3.get_entries()[i*N + j] for i in range(tile_size) for j in range(tile_size)]), **shared_args)
+
+    with self.voiceover(text="""This is a next big step in our cuda journey as this time, we have to start thinking about what our whole
+                        blocks(indicated with a purple color here) will be doing instead of just individual threads""") as trk:
+      self.play( Create(i3s))
+
+
+    with self.voiceover(text="""We start by splitting our input matrices into tiles that are the same shape as our blocks""") as trk:
+      self.play(Create(i1s), Create(i2s))
+
+    rt = 0.5 
+    anims = []
+    row=0
+    col=0
+    with self.voiceover(text="""Each thread in the block then loads the corresponding value in each input matrix into shared memory""") as trk:
+      step=0
+      e1 = [m1.get_entries()[(i + row*tile_size)*N + j + step*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+      e2 = [m2.get_entries()[(i + step*tile_size)*N + j + col*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+      e3 = [m3.get_entries()[(i + row*tile_size)*N + j + col*tile_size].copy()for i in range(tile_size) for j in range(tile_size)]
+      self.play(Transform(i1s, SurroundingRectangle(VGroup(*e1), **shared_args), run_time=rt),
+                Transform(i2s, SurroundingRectangle(VGroup(*e2), **shared_args), run_time=rt),
+                Transform(i3s, SurroundingRectangle(VGroup(*e3), **shared_args), run_time=rt), 
+                *anims)
+      self.play(LaggedStart(*[FadeOut(e.copy(), target_position=shared, run_time=rt) for e in e1],
+                            *[FadeOut(e.copy(), target_position=shared, run_time=rt) for e in e2]))
+
+    with self.voiceover(text="""And proceeds with calculating a partial dot product, but instead of reading the values
+                        from slow global memory, we read from fast shared memory instead""") as trk:
+      for x in range(tile_size):
+        for y in range(tile_size):
+          if x == 0 and y == 0:
+            self.play(Create(i1:=SurroundingRectangle(VGroup(*e1[y*tile_size:y*tile_size + tile_size]), color=BLUE), run_time=rt),
+                      Create(i2:=SurroundingRectangle(VGroup(*[e2[i*tile_size + x] for i in range(tile_size)]), color=BLUE), run_time=rt),
+                      Create(i3:=SurroundingRectangle(e3[y*tile_size + x]), run_time=rt))
+          else:
+            self.play(Transform(i1, SurroundingRectangle(VGroup(*e1[y*tile_size:y*tile_size + tile_size]), color=BLUE), run_time=rt),
+                      Transform(i2, SurroundingRectangle(VGroup(*[e2[i*tile_size + x] for i in range(tile_size)]), color=BLUE), run_time=rt),
+                      Transform(i3, SurroundingRectangle(e3[y*tile_size + x]), run_time=rt))
+          self.play(*[FadeIn(e.set_color(YELLOW), run_time=rt, target_position=shared) for e in e1], *[FadeIn(e.set_color(YELLOW), run_time=rt, target_position=shared) for e in e2])
+          self.wait(rt)
+          self.play(*[FadeOut(e, run_time=rt, target_position=registers) for e in e1], *[FadeOut(e, run_time=rt, target_position=registers) for e in e2])
+    anims = [Uncreate(i1, run_time=rt), Uncreate(i2, run_time=rt), Uncreate(i3, run_time=rt)]
+
+    with self.voiceover(text="""When we are done, we move our tiles and do the same thing to finalize calculating the dot product corresponding
+                        to each entry in the output matrix""") as trk:
+      step=1
+      e1 = [m1.get_entries()[(i + row*tile_size)*N + j + step*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+      e2 = [m2.get_entries()[(i + step*tile_size)*N + j + col*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+      e3 = [m3.get_entries()[(i + row*tile_size)*N + j + col*tile_size].copy()for i in range(tile_size) for j in range(tile_size)]
+      self.play(Transform(i1s, SurroundingRectangle(VGroup(*e1), **shared_args), run_time=rt),
+                Transform(i2s, SurroundingRectangle(VGroup(*e2), **shared_args), run_time=rt),
+                Transform(i3s, SurroundingRectangle(VGroup(*e3), **shared_args), run_time=rt), 
+                *anims)
+      self.play(LaggedStart(*[FadeOut(e.copy(), target_position=shared, run_time=rt) for e in e1],
+                            *[FadeOut(e.copy(), target_position=shared, run_time=rt) for e in e2]))
+      for x in range(tile_size):
+        for y in range(tile_size):
+          if x == 0 and y == 0:
+            self.play(Create(i1:=SurroundingRectangle(VGroup(*e1[y*tile_size:y*tile_size + tile_size]), color=BLUE), run_time=rt),
+                      Create(i2:=SurroundingRectangle(VGroup(*[e2[i*tile_size + x] for i in range(tile_size)]), color=BLUE), run_time=rt),
+                      Create(i3:=SurroundingRectangle(e3[y*tile_size + x]), run_time=rt))
+          else:
+            self.play(Transform(i1, SurroundingRectangle(VGroup(*e1[y*tile_size:y*tile_size + tile_size]), color=BLUE), run_time=rt),
+                      Transform(i2, SurroundingRectangle(VGroup(*[e2[i*tile_size + x] for i in range(tile_size)]), color=BLUE), run_time=rt),
+                      Transform(i3, SurroundingRectangle(e3[y*tile_size + x]), run_time=rt))
+          self.play(*[FadeIn(e.set_color(YELLOW), run_time=rt, target_position=shared) for e in e1], *[FadeIn(e.set_color(YELLOW), run_time=rt, target_position=shared) for e in e2])
+          self.wait(rt)
+          self.play(*[FadeOut(e, run_time=rt, target_position=registers) for e in e1], *[FadeOut(e, run_time=rt, target_position=registers) for e in e2])
+      anims = [Uncreate(i1, run_time=rt), Uncreate(i2, run_time=rt), Uncreate(i3, run_time=rt)]
+      for i in range(tile_size):
+        c1[row*tile_size+i]+=1
+        c2[col*tile_size+i]+=1
+        anims.append(Transform(count_s1[row*tile_size+i], Tex(str(c1[row*tile_size+i]), font_size=fs, color=BLUE).next_to(m1.get_entries()[(row*tile_size+i)*N], LEFT, buff=1), run_time=rt))
+        anims.append(Transform(count_s2[col*tile_size+i], Tex(str(c2[col*tile_size+i]), font_size=fs, color=BLUE).next_to(m2.get_entries()[col*tile_size+i], UP), run_time=rt))
+      self.play(*anims)
+
+    with self.voiceover(text="""And this runs for each part of the output matrix""") as trk:
+      for row in range(N//tile_size):
+        for col in range(N//tile_size):
+          if row == 0 and col == 0: continue
+          rt = 0.5/(1 + row*N//tile_size + col)
+          anims = []
+          for step in range(N//tile_size):
+            e1 = [m1.get_entries()[(i + row*tile_size)*N + j + step*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+            e2 = [m2.get_entries()[(i + step*tile_size)*N + j + col*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+            e3 = [m3.get_entries()[(i + row*tile_size)*N + j + col*tile_size].copy()for i in range(tile_size) for j in range(tile_size)]
+            self.play(Transform(i1s, SurroundingRectangle(VGroup(*e1), **shared_args), run_time=rt),
+                      Transform(i2s, SurroundingRectangle(VGroup(*e2), **shared_args), run_time=rt),
+                      Transform(i3s, SurroundingRectangle(VGroup(*e3), **shared_args), run_time=rt), 
+                      *anims)
+            self.play(LaggedStart(*[FadeOut(e.copy(), target_position=shared, run_time=rt) for e in e1],
+                                  *[FadeOut(e.copy(), target_position=shared, run_time=rt) for e in e2]))
+            for x in range(tile_size):
+              for y in range(tile_size):
+                if x == 0 and y == 0:
+                  self.play(Create(i1:=SurroundingRectangle(VGroup(*e1[y*tile_size:y*tile_size + tile_size]), color=BLUE), run_time=rt),
+                            Create(i2:=SurroundingRectangle(VGroup(*[e2[i*tile_size + x] for i in range(tile_size)]), color=BLUE), run_time=rt),
+                            Create(i3:=SurroundingRectangle(e3[y*tile_size + x]), run_time=rt))
+                else:
+                  self.play(Transform(i1, SurroundingRectangle(VGroup(*e1[y*tile_size:y*tile_size + tile_size]), color=BLUE), run_time=rt),
+                            Transform(i2, SurroundingRectangle(VGroup(*[e2[i*tile_size + x] for i in range(tile_size)]), color=BLUE), run_time=rt),
+                            Transform(i3, SurroundingRectangle(e3[y*tile_size + x]), run_time=rt))
+                self.play(*[FadeIn(e.set_color(YELLOW), run_time=rt, target_position=shared) for e in e1], *[FadeIn(e.set_color(YELLOW), run_time=rt, target_position=shared) for e in e2])
+                self.play(*[FadeOut(e, run_time=rt, target_position=registers) for e in e1], *[FadeOut(e, run_time=rt, target_position=registers) for e in e2])
+            anims = [Uncreate(i1, run_time=rt), Uncreate(i2, run_time=rt), Uncreate(i3, run_time=rt)]
+
+          for i in range(tile_size):
+            c1[row*tile_size+i]+=1
+            c2[col*tile_size+i]+=1
+            anims.append(Transform(count_s1[row*tile_size+i], Tex(str(c1[row*tile_size+i]), font_size=fs, color=BLUE).next_to(m1.get_entries()[(row*tile_size+i)*N], LEFT, buff=1), run_time=rt))
+            anims.append(Transform(count_s2[col*tile_size+i], Tex(str(c2[col*tile_size+i]), font_size=fs, color=BLUE).next_to(m2.get_entries()[col*tile_size+i], UP), run_time=rt))
+          self.play(*anims)
