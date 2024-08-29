@@ -255,7 +255,6 @@ for (int tile_offset = 0; tile_offset<n; tile_offset+=TILE_WIDTH)
 {
   int a_chk = tile_offset+tx < n && row < n;
   a_tile[ty][tx] = a_chk ? a[row*n + tile_offset+tx] : 0.f;
-
   int b_chk = (tile_offset+ty) < n && column < n;
   b_tile[ty][tx] = b_chk ? b[(tile_offset+ty)*n + column] : 0.f;
 
@@ -278,3 +277,95 @@ if (row < n && column < n)
       self.play(self.camera.frame.animate.scale(1.3).shift(UP+LEFT))
       self.play(Transform(VGroup(*count_s1, *count_s2, i1s, i2s, i3s, shared, shared_text, registers),
                           code_obj, replace_mobject_with_target_in_scene=True))
+
+    hl = SurroundingRectangle(code_obj.code[:2], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    i1s = SurroundingRectangle(VGroup(*[m1.get_entries()[i*N + j] for i in range(tile_size) for j in range(tile_size)]), **shared_args)
+    i2s = SurroundingRectangle(VGroup(*[m2.get_entries()[i*N + j] for i in range(tile_size) for j in range(tile_size)]), **shared_args)
+    with self.voiceover(text="""We need to initialize our tiles in shared memory""") as trk:
+      self.play(Create(hl))
+      self.play(Create(i1s), Create(i2s))
+
+    hl_t = SurroundingRectangle(code_obj.code[3:5], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""then we can calculate the row and column of the output element associated with the current thread""") as trk:
+      self.play(Transform(hl, hl_t))
+      self.play(Create(i3:=SurroundingRectangle(m3.get_entries()[0]), run_time=rt))
+
+    hl_t = SurroundingRectangle(code_obj.code[5:7], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We save the thread indices to variables for ease of access later""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[7], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And we create a variable that will store our dot product""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[9], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We then divide our output to tiles""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    rt = 1
+    step = 0
+    row = 0
+    col = 0
+    e1 = [m1.get_entries()[(i + row*tile_size)*N + j + step*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+    e2 = [m2.get_entries()[(i + step*tile_size)*N + j + col*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+    anims = [e.animate.set_color(YELLOW) for e in e1 + e2]
+    hl_t = SurroundingRectangle(code_obj.code[11:15], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And we load the tiles from global to shared memory, while performing a boundary check on them""") as trk:
+      self.play(Transform(hl, hl_t))
+      self.play(LaggedStart(*anims))
+
+    hl_t = SurroundingRectangle(code_obj.code[16], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Now, we have to synchronize our threads, since they are not guaranteed to execute all at the same time.
+                        the call to syncthreads tells CUDA to wait until all threads in a block hit this
+                        synchronization point untill we proceed with the next instruction""") as trk:
+      self.play(Transform(hl, hl_t))
+    anims = [e.animate.set_color(WHITE) for e in e1 + e2]
+
+    hl_t = SurroundingRectangle(code_obj.code[17:21], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""After we are sure that all of the variables are inside shared memory, we use them to calculate the part 
+                        of out dot product for the output element""") as trk:
+      self.play(Transform(hl, hl_t))
+      for i in range(tile_size):
+        if i == 0:
+          self.play(Create(i1:=SurroundingRectangle(e1[i], color=BLUE), run_time=rt),
+                    Create(i2:=SurroundingRectangle(e2[i*tile_size], color=BLUE), run_time=rt))
+                    
+        else:
+          self.play(Transform(i1, SurroundingRectangle(e1[i], color=BLUE), run_time=rt),
+                    Transform(i2, SurroundingRectangle(e2[i*tile_size], color=BLUE), run_time=rt))
+    hl_t = SurroundingRectangle(code_obj.code[21], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    anims += [Uncreate(i1, run_time=rt), Uncreate(i2, run_time=rt)]
+    with self.voiceover(text="""And we synchronize our threads again so that we don't override any variables inside our threads while we are still 
+                        working on them""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[9], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""After we finish we proceed with calculating the next tiles, doing that until we have gone through
+                        all of the tiles inside our matrices""") as trk:
+      self.play(Transform(hl, hl_t))
+      step = 1
+      e1 = [m1.get_entries()[(i + row*tile_size)*N + j + step*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+      e2 = [m2.get_entries()[(i + step*tile_size)*N + j + col*tile_size].copy() for i in range(tile_size) for j in range(tile_size)]
+      self.play(Transform(i1s, SurroundingRectangle(VGroup(*e1), **shared_args), run_time=rt),
+                Transform(i2s, SurroundingRectangle(VGroup(*e2), **shared_args), run_time=rt),
+                *anims)
+
+      anims = [e.animate.set_color(YELLOW) for e in e1 + e2]
+      hl_t = SurroundingRectangle(code_obj.code[11:15], buff=0.03, stroke_width=2, fill_opacity=0.3)
+      self.play(Transform(hl, hl_t))
+      self.play(LaggedStart(*anims))
+      anims = [e.animate.set_color(WHITE) for e in e1 + e2]
+
+      hl_t = SurroundingRectangle(code_obj.code[17:21], buff=0.03, stroke_width=2, fill_opacity=0.3)
+      self.play(Transform(hl, hl_t))
+      for i in range(tile_size):
+        if i == 0:
+          self.play(Create(i1:=SurroundingRectangle(e1[i], color=BLUE), run_time=rt),
+                    Create(i2:=SurroundingRectangle(e2[i*tile_size], color=BLUE), run_time=rt))
+        else:
+          self.play(Transform(i1, SurroundingRectangle(e1[i], color=BLUE), run_time=rt),
+                    Transform(i2, SurroundingRectangle(e2[i*tile_size], color=BLUE), run_time=rt))
+
+    hl_t = SurroundingRectangle(code_obj.code[26], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Finally, we save the result in our output matrix""") as trk:
+      self.play(Transform(hl, hl_t))
