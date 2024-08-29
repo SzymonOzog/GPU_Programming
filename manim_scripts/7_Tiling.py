@@ -139,7 +139,7 @@ class Tiling(VoiceoverScene, MovingCameraScene):
     with self.voiceover(text="""We start by splitting our input matrices into tiles that are the same shape as our blocks""") as trk:
       self.play(Create(i1s), Create(i2s))
 
-    rt = 0.5 
+    rt = 0.8 
     anims = []
     row=0
     col=0
@@ -205,7 +205,8 @@ class Tiling(VoiceoverScene, MovingCameraScene):
         anims.append(Transform(count_s2[col*tile_size+i], Tex(str(c2[col*tile_size+i]), font_size=fs, color=BLUE).next_to(m2.get_entries()[col*tile_size+i], UP), run_time=rt))
       self.play(*anims)
 
-    with self.voiceover(text="""And this runs for each part of the output matrix""") as trk:
+    with self.voiceover(text="""And this runs for each part of the output matrix, in the end we have a significant reduction in loads from global memory.
+                        In our case we halved it, but it highly depends on the shape of our matrices and the size of our tiles""") as trk:
       for row in range(N//tile_size):
         for col in range(N//tile_size):
           if row == 0 and col == 0: continue
