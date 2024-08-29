@@ -7,11 +7,10 @@ import numpy as np
 import math
 
 
-class Tiling(VoiceoverScene):
+class Tiling(VoiceoverScene, MovingCameraScene):
   def construct(self):
     self.set_speech_service(
-        GTTSService(transcription_model="base")
-        # RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None)
+        GTTSService(transcription_model="base") # RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model=None)
         )
 
     title = Text("GPU Programming", font_size=72)
@@ -50,11 +49,11 @@ class Tiling(VoiceoverScene):
   }
 }"""
 
-    matmul_obj = Code(code=matmul, tab_width=2, language="c", font_size=18, background="rectangle", line_no_buff=0.1, corner_radius=0.1)
+    code_obj = Code(code=matmul, tab_width=2, language="c", font_size=18, background="rectangle", line_no_buff=0.1, corner_radius=0.1)
     with self.voiceover(text="""As a reminder, this is what our matrix multiplication code from episode 2 looked like""") as trk:
-      self.play(Create(matmul_obj))
+      self.play(Create(code_obj))
     self.wait(1)
-    self.play(Uncreate(matmul_obj))
+    self.play(Uncreate(code_obj))
     
     with self.voiceover(text="""Let's look at how memory is accessed in our kernel""") as trk:
       self.play(create_matrix(m3), create_matrix(m1), create_matrix(m2))
@@ -242,3 +241,40 @@ class Tiling(VoiceoverScene):
             anims.append(Transform(count_s1[row*tile_size+i], Tex(str(c1[row*tile_size+i]), font_size=fs, color=BLUE).next_to(m1.get_entries()[(row*tile_size+i)*N], LEFT, buff=1), run_time=rt))
             anims.append(Transform(count_s2[col*tile_size+i], Tex(str(c2[col*tile_size+i]), font_size=fs, color=BLUE).next_to(m2.get_entries()[col*tile_size+i], UP), run_time=rt))
           self.play(*anims)
+
+    tiled_mm = """__shared__ float a_tile[TILE_WIDTH][TILE_WIDTH];
+__shared__ float b_tile[TILE_WIDTH][TILE_WIDTH];
+
+int column = blockIdx.x*TILE_WIDTH + threadIdx.x;
+int row = blockIdx.y*TILE_WIDTH + threadIdx.y;
+int tx = threadIdx.x;
+int ty = threadIdx.y;
+float dot_prod = 0.f;
+
+for (int tile_offset = 0; tile_offset<n; tile_offset+=TILE_WIDTH)
+{
+  int a_chk = tile_offset+tx < n && row < n;
+  a_tile[ty][tx] = a_chk ? a[row*n + tile_offset+tx] : 0.f;
+
+  int b_chk = (tile_offset+ty) < n && column < n;
+  b_tile[ty][tx] = b_chk ? b[(tile_offset+ty)*n + column] : 0.f;
+
+  __syncthreads();
+  for(int i = 0; i < TILE_WIDTH; i++)
+  {
+    dot_prod += a_tile[ty][i] * b_tile[i][tx];
+  }
+  __syncthreads();
+}
+
+if (row < n && column < n)
+{
+  c[row*n+column] = dot_prod;
+}"""
+    code_obj = Code(code=tiled_mm, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1).scale(0.8).next_to(m1, UP, aligned_edge=RIGHT)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    
+    with self.voiceover(text="""The code that we will use for achieving this introduces some new concepts""") as trk:
+      self.play(self.camera.frame.animate.scale(1.3).shift(UP+LEFT))
+      self.play(Transform(VGroup(*count_s1, *count_s2, i1s, i2s, i3s, shared, shared_text, registers),
+                          code_obj, replace_mobject_with_target_in_scene=True))
