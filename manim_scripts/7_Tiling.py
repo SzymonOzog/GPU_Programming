@@ -370,3 +370,155 @@ if (row < n && column < n)
     hl_t = SurroundingRectangle(code_obj.code[26], buff=0.03, stroke_width=2, fill_opacity=0.3)
     with self.voiceover(text="""Finally, we save the result in our output matrix""") as trk:
       self.play(Transform(hl, hl_t))
+
+    normal_t = [ 2.22134e+07, 2.5364e+07, 4.93471e+07, 2.75395e+08, 2.06553e+09, 1.63572e+10, ]
+    tiled_t = [2.14308e+07, 2.39982e+07, 4.54705e+07, 2.26634e+08, 1.67623e+09, 1.30427e+10, ]
+    cpu_t = [2.29954e+09 , 1.79308e+10 , 7.07751e+11]
+    
+    ps = list(range(10, 11+len(tiled_t)))
+
+    n = [2**p for p in ps] 
+    log_normal_t = [math.log10(t) for t in normal_t]
+    log_tiled_t = [math.log10(t) for t in tiled_t]
+    log_cpu_t = [math.log10(t) for t in cpu_t]
+
+    ax = Axes(
+        x_range=[ps[0] , ps[-1], 2],
+        y_range=[log_tiled_t[0] , log_normal_t[-1], 1],
+        x_axis_config={"scaling": LogBase(2)},
+        y_axis_config={"scaling": LogBase()},
+        axis_config={"include_numbers": True})
+
+    labels = ax.get_axis_labels(x_label="n", y_label="Time[ns]")
+
+    normal_graph = ax.plot_line_graph(
+        x_values=n,
+        y_values=normal_t,
+        line_color=BLUE,
+        add_vertex_dots=False
+    )
+
+    tiled_graph = ax.plot_line_graph(
+        x_values=n,
+        y_values=tiled_t,
+        line_color=GREEN,
+        add_vertex_dots=False
+    )
+    tiled_label = Text("Tiled Matmul", font_size=32, color=GREEN).next_to(labels[1], DOWN).shift(0.3*RIGHT+0.2*DOWN)
+    normal_label = Text("Standard Matmul", font_size=32, color=BLUE).next_to(tiled_label, DOWN, aligned_edge=LEFT)
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+
+    with self.voiceover(text="""We can now run our tiled multiplication matrix, and compare the performance with the standard matrix multiplication""") as trk:
+      self.play(Create(ax), Write(labels))
+      self.play(Create(normal_graph), Create(tiled_graph))
+      self.play(Write(tiled_label), Write(normal_label))
+
+    with self.voiceover(text="""Notice that the scales are logarithmic so the real differences are actually much higher than they appear on the graph""") as trk:
+      pass
+
+    ax2 = Axes(
+        x_range=[ps[0] , ps[-1], 2],
+        y_range=[log_tiled_t[0] , log_cpu_t[-1]+2, 1],
+        x_axis_config={"scaling": LogBase(2)},
+        y_axis_config={"scaling": LogBase()},
+        axis_config={"include_numbers": True})
+
+    cpu_graph = ax2.plot_line_graph(
+        x_values=n,
+        y_values=cpu_t,
+        line_color=RED,
+        add_vertex_dots=False
+    )
+    cpu_label = Text("CPU Matmul", font_size=32, color=RED).next_to(normal_label, DOWN, aligned_edge=LEFT)
+
+    cpu_matmul = """void cpu_matmul(int n, float* a, float* b, float*c)
+{
+  for (int i = 0; i<n; i++)
+  {
+    for (int j = 0; j<n; j++)
+    {
+      float dot_product = 0.f;
+      for (int k = 0; k<n; k++)
+      {
+        dot_product += a[i*n + k] * b[k*n + j];
+      }
+      c[i*n+j] = dot_product; 
+    }
+  }
+}"""
+    code_obj = Code(code=cpu_matmul, tab_width=2, language="c", font_size=18, background="rectangle", line_no_buff=0.1, corner_radius=0.1)
+    with self.voiceover(text="""And as a fun comparison I decided to also profile the times it takes for the naive CPU version of matrix multiplication""") as trk:
+      self.play(Create(code_obj))
+
+    with self.voiceover(text="""It does not any advanced techniques such as multithreading and SIMD operations, but it can give you 
+                        an overwiew of the scale that we are seeing with this algorithm""") as trk:
+      self.play(Transform(ax, ax2),
+                Transform(normal_graph, ax2.plot_line_graph(
+                  x_values=n,
+                  y_values=normal_t,
+                  line_color=BLUE,
+                  add_vertex_dots=False)),
+                Transform(tiled_graph, ax2.plot_line_graph(
+                  x_values=n,
+                  y_values=tiled_t,
+                  line_color=GREEN,
+                  add_vertex_dots=False)),
+                Transform(code_obj, cpu_graph, replace_mobject_with_target_in_scene=True),
+                Write(cpu_label))
+
+    ratio = [c/g for c,g in zip(normal_t, tiled_t)]
+    ax2 = Axes(
+        x_range=[ps[0], ps[-1], 2],
+        y_range=[ratio[0], ratio[-1]+0.2, 0.1],
+        x_axis_config={"scaling": LogBase(2)},
+        y_axis_config={},
+        axis_config={"include_numbers": True})
+
+    labels2 = ax.get_axis_labels(x_label="n", y_label="\\frac{Standard}{Tiled}")
+    
+    ratio_graph = ax2.plot_line_graph(
+        x_values=n,
+        y_values=ratio,
+        line_color=BLUE,
+        add_vertex_dots=False
+    )
+    with self.voiceover(text="""If we were to just compare the ratios, standart matmul is around 20% slower than our tiled version""") as trk:
+      self.play(Transform(ax, ax2), Transform(labels, labels2), Transform(VGroup(tiled_label, normal_label, cpu_label, tiled_graph, normal_graph, cpu_graph), ratio_graph, replace_mobject_with_target_in_scene=True))
+    self.wait(1)
+
+    ratio = [c/g for c,g in zip(cpu_t, tiled_t)]
+    print(ratio[0], ratio[-1])
+    ax2 = Axes(
+        x_range=[ps[0], ps[-1], 2],
+        y_range=[0, 16001, 2000],
+        x_axis_config={"scaling": LogBase(2)},
+        y_axis_config={},
+        axis_config={"include_numbers": True})
+
+    labels2 = ax.get_axis_labels(x_label="n", y_label="\\frac{CPU}{Tiled}")
+    
+    ratio_graph2 = ax2.plot_line_graph(
+        x_values=n,
+        y_values=ratio,
+        line_color=RED,
+        add_vertex_dots=False
+    )
+    with self.voiceover(text="""And the cpu version is well, up to 15K times slower, and it's still profiled for the smallest matrices""") as trk:
+      self.play(Transform(ax, ax2), Transform(labels, labels2), Transform(ratio_graph, ratio_graph2))
+
+    self.wait(2)
+    with self.voiceover(text="""This will be it for our introduction to shared memory, I hope you enjoyed this episode""") as trk:
+      pass
+
+    with self.voiceover(text="""If you did, consider subscribing, leaving a like and commenting for the love of the algorithm""") as trk:
+      pass
+
+    with self.voiceover(text="""And if you didn't - let me know why""") as trk:
+      pass
+
+    with self.voiceover(text="""See you in the next episode, bye""") as trk:
+      pass
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    self.wait(2)
