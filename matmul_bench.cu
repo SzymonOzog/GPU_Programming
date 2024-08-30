@@ -4,9 +4,9 @@
 #include <random>
 
 #define TILE_WIDTH 32
-#define BENCH_STEPS 4
-#define TIMINGS 14
-#define START 2
+#define BENCH_STEPS 3
+#define TIMINGS 8
+#define START 8
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
@@ -75,10 +75,27 @@ float get_random()
     return dis(e);
 }
 
+void cpu_matmul(int n, float* a, float* b, float*c)
+{
+  for (int i = 0; i<n; i++)
+  {
+    for (int j = 0; j<n; j++)
+    {
+      float dot_product = 0.f;
+      for (int k = 0; k<n; k++)
+      {
+        dot_product += a[i*n + k] * b[k*n + j];
+      }
+      c[i*n+j] = dot_product; 
+    }
+  }
+}
+
 int main()
 {
   float mt[TIMINGS];
   float tt[TIMINGS];
+  float ct[TIMINGS];
   float* a_d;
   float* b_d;
   float* c_d;
@@ -89,6 +106,11 @@ int main()
   cudaMalloc((void**) &b_d, max_N*max_N*sizeof(float));
   cudaMalloc((void**) &c_d, max_N*max_N*sizeof(float));
   cudaMalloc((void**) &d_d, max_N*max_N*sizeof(float));
+
+  float* a = new float[max_N * max_N];
+  float* b = new float[max_N * max_N];
+  float* c = new float[max_N * max_N];
+
   for (int p = START; p<START+TIMINGS; p++)
   {
     long N = std::pow<long, long>(2, p);
@@ -137,10 +159,27 @@ int main()
         tiled_time += final_time;
       }
     }
-    std::cout<<"n = "<<N<<" matmul time: "<<matmul_time/BENCH_STEPS<<" tiled time: "<<tiled_time/BENCH_STEPS<<std::endl;
+
+    double cpu_time=0.0;
+    for (int i = -1; i<BENCH_STEPS; i++)
+    {
+      // CLEAR CACHE
+      memset(a, 1, max_N*max_N*sizeof(float));
+      memset(b, 1, max_N*max_N*sizeof(float));
+      memset(c, 1, max_N*max_N*sizeof(float));
+      auto start_time = std::chrono::system_clock::now();
+      cpu_matmul(N, a, b, c);
+      double final_time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start_time).count();
+      if (i != -1) // one warmup run
+      {
+        cpu_time += final_time;
+      }
+    }
+    std::cout<<"n = "<<N<<" matmul time: "<<matmul_time/BENCH_STEPS<<" tiled time: "<<tiled_time/BENCH_STEPS<<" cpu time: "<<cpu_time/BENCH_STEPS<<std::endl;
 
     mt[p-START] = matmul_time/BENCH_STEPS;
     tt[p-START] = tiled_time/BENCH_STEPS;
+    ct[p-START] = cpu_time/BENCH_STEPS;
   }
   float* c_h = new float[max_N*max_N];
   float* d_h = new float[max_N*max_N];
@@ -149,7 +188,7 @@ int main()
   float tolerance = 1e-6;
   for (int i = 0; i < max_N*max_N; i++)
   {
-    ASSERT(abs(c_h[i] - d_h[i]) < tolerance, "failed at %d, %f, %f\n", i, c_h[i], d_h[i]);
+    ASSERT(abs(c[i] - d_h[i]) < tolerance, "failed at %d, %f, %f\n", i, c[i], d_h[i]);
   }
   cudaFree(a_d);
   cudaFree(b_d);
@@ -167,6 +206,13 @@ int main()
   for (int i = 0; i<TIMINGS; i++)
   {
     std::cout<<tt[i]<<", ";
+  }
+  std::cout<<"]"<<std::endl;
+
+  std::cout<<"cpu_times = [";
+  for (int i = 0; i<TIMINGS; i++)
+  {
+    std::cout<<ct[i]<<", ";
   }
   std::cout<<"]"<<std::endl;
   return 0;
