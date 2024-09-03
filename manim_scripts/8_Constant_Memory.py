@@ -29,10 +29,103 @@ class ConstantMemory(VoiceoverScene):
                         to show when to use it and when not to""") as trk:
       pass
 
+    code_vars = """constexpr unsigned int N{64U * 1024U / sizeof(float)};
+__constant__ float const_values[N];
+constexpr unsigned int magic_number{1357U};"""
+
+    code_const = """__global__ void add_constant(float* sums, float* inputs,
+                             int num_sums, Access access)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int index = 0;
+  switch (access)
+  {
+    case AccessPattern::OneAccessPerBlock:
+      index = blockIdx.x % N;
+      break;
+    case AccessPattern::OneAccessPerThread:
+      index = i % N;
+      break;
+    case AccessPattern::PseudoRandom:
+      index = (i * magic_number) % N;
+      break;
+  }
+
+  if (i < num_sums)
+  {
+    sums[i] = inputs[i] + const_values[index];
+  }
+}"""
+    code_global = """__global__ void add_global(float* sums, float* inputs, float* values,
+                           int num_sums, Access access)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int index{0U};
+  switch (access)
+  {
+    case AccessPattern::OneAccessPerBlock:
+      index = blockIdx.x % N;
+      break;
+    case AccessPattern::OneAccessPerThread:
+      index = i % N;
+      break;
+    case AccessPattern::PseudoRandom:
+      index = (i * magic_number) % N;
+      break;
+  }
+
+  if (i < num_sums)
+  {
+    sums[i] = inputs[i] + values[index];
+  }
+}"""
+    code_obj = Code(code=code_const, tab_width=2, language="c", font_size=12, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    code_obj2 = Code(code=code_vars, tab_width=2, language="c", font_size=12, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).next_to(code_obj, UP)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+    with self.voiceover(text="""It checks the timings for three different access patterns""") as trk:
+      self.play(Create(code_obj))
+      self.play(Create(code_obj2))
+
+    hl = SurroundingRectangle(code_obj.code[7:10], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""One where each block acesses only one memory address""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[10:13], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""One where each thread in a block accessess a consecutive memory address""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[13:16], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And the last one where each thread accesses a random memory address""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[20], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Finally, we add the number to some input vector residing in global memory""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    with self.voiceover(text="""We run the experiment twice """) as trk:
+      self.play(Uncreate(hl), code_obj.animate.to_edge(LEFT))
+      code_obj3 = Code(code=code_global, tab_width=2, language="c", font_size=12, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).to_edge(RIGHT)
+      code_obj3.code = remove_invisible_chars(code_obj3.code)
+      self.play(Create(code_obj3))
+
+    hl = SurroundingRectangle(code_obj2.code[1], BLUE, fill_color=BLUE, buff=0.03, stroke_width=2, fill_opacity=0.3)
+    hl2 = SurroundingRectangle(code_obj.code[20][-20:], BLUE, fill_color=BLUE, buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Once when the second vector resides in constant memory""") as trk:
+      self.play(Create(hl), Create(hl2))
+
+    hl3 = SurroundingRectangle(code_obj3.code[20][-14:], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    hl4 = SurroundingRectangle(code_obj3.code[0][-13:-1], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And once when it resides in the global memory""") as trk:
+      self.play(Create(hl3), Create(hl4))
+
+    self.wait(1)
+
     header = Text("Modifications", font_size=72).shift(UP)
     modifications = BulletedList("Change datatype to float",  "Clear L2 cache", "Multiple input sizes", font_size=48).next_to(header, DOWN)
     with self.voiceover(text="""Inspired by this I expanded the work by changing the datatype from int to float as GPU's 
                         are optimized for floating point operations""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
       self.play(Write(header))
       self.play(Write(modifications[0]))
 
