@@ -191,6 +191,7 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
         if isinstance(x, Rectangle):
           x.stroke_width*=10
       all.scale(10)
+      self.camera.auto_zoom(gpcs[0], animate=False)
       self.play(self.camera.auto_zoom(tpcs[0]))
 
     pm = Rectangle(width=2.5, height=0.5, fill_opacity=0.5).move_to(tpcs[0]).shift(2.2*UP)
@@ -207,5 +208,51 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
     with self.voiceover(text="""But more importantly to our use cases, it contains 2 streaming multiprocessors""") as trk:
       self.play(Create(sm), Create(sm2), Write(sm_t), Write(sm2_t))
 
+    with self.voiceover(text="""Let's zoom in on our SM's""") as trk:
+      self.play(FadeOut(sm_t), Transform(sm, Rectangle(width=2.5, height=2, color=MAROON).move_to(sm)))
+      all = VGroup(*[x for x in self.mobjects if isinstance(x, Rectangle) or isinstance(x, Text)])
+      for x in self.mobjects:
+        if isinstance(x, Rectangle):
+          x.stroke_width*=3
+      all.scale(3)
+      self.camera.auto_zoom(tpcs[0], animate=False)
+      self.play(self.camera.auto_zoom(sm))
+
+    rt = Rectangle(width=2.5, height=0.7, fill_opacity=0.5).move_to(sm).shift(2.4*DOWN + 2.25*RIGHT)
+    rt_t = Text("RT Core", font_size=32).move_to(rt)
+    with self.voiceover(text="""It contains a Ray Tracing Core - a dedicated hardware unit for ray tracing operations""") as trk:
+      self.play(Create(rt), Write(rt_t))
+
+    texs = []
+    tex_ts = []
+    for i in range(4):
+      if i == 0:
+        texs.append(Rectangle(height=0.7, width=1, color=BLUE_E, fill_color=BLUE_E, fill_opacity=0.5).move_to(sm).shift(2.4*DOWN + 3*LEFT))
+      else:
+        texs.append(Rectangle(height=0.7, width=1, color=BLUE_E, fill_color=BLUE_E, fill_opacity=0.5).next_to(texs[-1], RIGHT, buff=0.1))
+      tex_ts.append(Text("TEX", font_size=32, color=BLUE_E).move_to(texs[-1]))
+
+    with self.voiceover(text="""#TODO""") as trk:
+      self.play(LaggedStart(*[Create(tex) for tex in texs], *[Write(t) for t in tex_ts]))
+
+    l1 = Rectangle(height=0.5, width=7, color=GOLD_A, fill_color=GOLD_A, fill_opacity=0.5).move_to(sm).shift(1.7*DOWN)
+    l1_t = Text("128KB L1 Cache / Shared Memory", color=GOLD_A, font_size=28).move_to(l1)
+    with self.voiceover(text="""128KB of memory divided into L1 cache and shared memory""") as trk:
+      self.play(Create(l1), Write(l1_t))
+
+    with self.voiceover(text="""The fact that this memory is shared is very important for us, it tells us that the more shared memory we use
+                        the less L1 cache we have available""") as trk:
+      pass
+    ps = []
+    p_ts = []
 
 
+    for i in range(4):
+      if i == 0:
+        ps.append(Rectangle(height=4, width=1.7, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.5).move_to(sm).shift(2.7*LEFT + 0.7*UP))
+      else:
+        ps.append(Rectangle(height=4, width=1.7, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.5).next_to(ps[-1], RIGHT, buff=0.1))
+      p_ts.append(Text("Processing Block", font_size=32, color=GREEN_A).move_to(ps[-1]).rotate(PI/2))
+
+    with self.voiceover(text="""And it also contains 4 Processing Blocks""") as trk:
+      self.play(LaggedStart(*[Create(p) for p in ps], *[Write(t) for t in p_ts]))
