@@ -184,10 +184,28 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
       self.wait_until_bookmark("2")
       self.play(Create(rop), Write(rop_t), Create(rop2), Write(rop_t2))
 
+    with self.voiceover(text="""Going further down a level into our Texture Processing Cluster""") as trk:
       self.play(FadeOut(tpc_ts[0]), Transform(tpcs[0], Rectangle(height=0.55, width=0.33, color=ORANGE, stroke_width=2).move_to(tpcs[0])))
       all = VGroup(*[x for x in self.mobjects if isinstance(x, Rectangle) or isinstance(x, Text)])
       for x in self.mobjects:
         if isinstance(x, Rectangle):
           x.stroke_width*=10
       all.scale(10)
+      self.play(self.camera.auto_zoom(tpcs[0]))
+
+    pm = Rectangle(width=2.5, height=0.5, fill_opacity=0.5).move_to(tpcs[0]).shift(2.2*UP)
+    pm_t = Text("PolyMorph Engine", font_size=40).scale(0.5).move_to(pm)
+    with self.voiceover(text="""We can see that it's composed of a PolyMorph Engine - another component used for computer graphics.
+                        It handles things like Vertex Fetch, Tessellation, Viewport Transform, Attribute Setup, and Stream Output""") as trk:
+      self.play(Create(pm), Write(pm_t))
+
+    sm = Rectangle(width=2.5, height=2, color=MAROON, fill_color=MAROON, fill_opacity=0.5).move_to(tpcs[0]).shift(0.7*UP)
+    sm_t = Text("SM", font_size=48, color=MAROON).move_to(sm)
+    
+    sm2 = Rectangle(width=2.5, height=2, color=MAROON, fill_color=MAROON, fill_opacity=0.5).move_to(tpcs[0]).shift(1.5*DOWN)
+    sm2_t = Text("SM", font_size=48, color=MAROON).move_to(sm2)
+    with self.voiceover(text="""But more importantly to our use cases, it contains 2 streaming multiprocessors""") as trk:
+      self.play(Create(sm), Create(sm2), Write(sm_t), Write(sm2_t))
+
+
 
