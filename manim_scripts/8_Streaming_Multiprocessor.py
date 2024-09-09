@@ -252,13 +252,90 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
     ps = []
     p_ts = []
 
-
     for i in range(4):
       if i == 0:
-        ps.append(Rectangle(height=4, width=1.7, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.5).move_to(sm).shift(2.7*LEFT + 0.7*UP))
+        ps.append(Rectangle(height=3.6, width=1.675, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.5).move_to(sm).shift(2.65*LEFT + 1.05*UP))
       else:
-        ps.append(Rectangle(height=4, width=1.7, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.5).next_to(ps[-1], RIGHT, buff=0.1))
+        ps.append(Rectangle(height=3.6, width=1.675, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.5).next_to(ps[-1], RIGHT, buff=0.093))
       p_ts.append(Text("Processing Block", font_size=32, color=GREEN_A).move_to(ps[-1]).rotate(PI/2))
 
     with self.voiceover(text="""And it also contains 4 Processing Blocks""") as trk:
       self.play(LaggedStart(*[Create(p) for p in ps], *[Write(t) for t in p_ts]))
+
+    with self.voiceover(text="""Inside our Processing blocks we can indentify the smallest components""") as trk:
+      self.play(FadeOut(p_ts[0]), Transform(ps[0], Rectangle(height=3.6, width=1.675, color=GREEN_A).move_to(ps[0])))
+      all = VGroup(*[x for x in self.mobjects if isinstance(x, Rectangle) or isinstance(x, Text)])
+      for x in self.mobjects:
+        if isinstance(x, Rectangle):
+          x.stroke_width*=2
+      all.scale(2)
+      self.play(self.camera.auto_zoom(ps[0]))
+
+    ws = Rectangle(width=3, height=0.5, color=YELLOW_A, fill_color=YELLOW_A, fill_opacity=0.5).move_to(ps[0]).shift(3.15*UP)
+    ws_t = Text("Warp Scheduler", color=YELLOW_A, font_size=32).scale(0.6).move_to(ws)
+
+    ic = Rectangle(width=3, height=0.5, color=YELLOW_C, fill_color=YELLOW_C, fill_opacity=0.5).next_to(ws, DOWN, buff=0.2)
+    ic_t = Text("L0 Instruction Cache", color=YELLOW_C, font_size=32).scale(0.6).move_to(ic)
+
+    du = Rectangle(width=3, height=0.5, color=YELLOW_E, fill_color=YELLOW_E, fill_opacity=0.5).next_to(ic, DOWN, buff=0.2)
+    du_t = Text("Dispatch Unit", color=YELLOW_E, font_size=32).scale(0.6).move_to(du)
+
+    rf = Rectangle(width=3, height=0.66, color=BLUE_A, fill_color=BLUE_A, fill_opacity=0.5).next_to(du, DOWN, buff=0.2)
+    rf_t = Text("64KB Register File", color=BLUE_A, font_size=32).scale(0.7).move_to(rf)
+
+    tc = Rectangle(width=3, height=0.5, color=GREEN_B, fill_color=GREEN_B, fill_opacity=0.5).next_to(rf, DOWN, buff=0.2)
+    tc_t = Text("Tensor Core", color=GREEN_B, font_size=32).scale(0.7).move_to(tc)
+    
+    fpcs = []
+    for i in range(2):
+      for j in range(8):
+        fpc = Rectangle(width=0.33, height=0.33, color=GREEN_C, fill_color=GREEN_C, fill_opacity=0.5, stroke_width=1)
+        if j == 0:
+          if i == 0:
+            fpc.next_to(tc, DOWN, aligned_edge=LEFT, buff=0.2)
+          else:
+            fpc.next_to(fpcs[0], DOWN, aligned_edge=LEFT, buff=0.05)
+        else:
+          fpc.next_to(fpcs[-1], RIGHT, buff=0.05)
+        fpcs.append(fpc)
+    fpc_t = Text("FP32", font_size=32, color=GREEN_C).move_to(VGroup(*fpcs))
+
+
+    fpcis = []
+    for i in range(2):
+      for j in range(8):
+        fpci = Rectangle(width=0.33, height=0.33, color=GREEN_E, fill_color=GREEN_E, fill_opacity=0.5, stroke_width=1)
+        if j == 0:
+          if i == 0:
+            fpci.next_to(fpcs[8], DOWN, aligned_edge=LEFT, buff=0.2)
+          else:
+            fpci.next_to(fpcis[0], DOWN, aligned_edge=LEFT, buff=0.05)
+        else:
+          fpci.next_to(fpcis[-1], RIGHT, buff=0.05)
+        fpcis.append(fpci)
+    fpci_t = Text("FP32/I32", font_size=32, color=GREEN_E).move_to(VGroup(*fpcis))
+
+
+    lsus = []
+    lsu_ts = []
+    for i in range(4):
+      lsu = Rectangle(width=0.68, height=0.55, color=RED_A, fill_color=RED_A, fill_opacity=0.5, stroke_width=2)
+      if i == 0:
+        lsu.next_to(fpcis[8], DOWN, aligned_edge=LEFT, buff=0.2)
+      else:
+        lsu.next_to(lsus[-1], RIGHT, buff=0.1)
+      lsus.append(lsu)
+      lsu_ts.append(Text("LD/ST", font_size=32, color=RED_A).scale(0.5).move_to(lsus[-1]))
+
+
+    sfus = []
+    sfu_ts = []
+    for i in range(4):
+      sfu = Rectangle(width=0.68, height=0.55, color=RED_C, fill_color=RED_C, fill_opacity=0.5, stroke_width=2)
+      if i == 0:
+        sfu.next_to(lsus[0], DOWN, aligned_edge=LEFT, buff=0.2)
+      else:
+        sfu.next_to(sfus[-1], RIGHT, buff=0.1)
+      sfus.append(sfu)
+      sfu_ts.append(Text("SFU", font_size=32, color=RED_C).scale(0.5).move_to(sfus[-1]))
+
