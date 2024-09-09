@@ -237,8 +237,14 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
 
     l1 = Rectangle(height=0.5, width=7, color=GOLD_A, fill_color=GOLD_A, fill_opacity=0.5).move_to(sm).shift(1.7*DOWN)
     l1_t = Text("128KB L1 Cache / Shared Memory", color=GOLD_A, font_size=28).move_to(l1)
+
     with self.voiceover(text="""128KB of memory divided into L1 cache and shared memory""") as trk:
       self.play(Create(l1), Write(l1_t))
+
+    cc = Rectangle(height=0.5, width=7, color=GOLD_E, fill_color=GOLD_E, fill_opacity=0.5).next_to(l1, UP, buff=0.1)
+    cc_t = Text("8KB Constant Cache", color=GOLD_E, font_size=28).move_to(cc)
+    with self.voiceover(text="""8KB of special cache for accesses to constant memory""") as trk:
+      self.play(Create(cc), Write(cc_t))
 
     with self.voiceover(text="""The fact that this memory is shared is very important for us, it tells us that the more shared memory we use
                         the less L1 cache we have available""") as trk:
