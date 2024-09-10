@@ -232,7 +232,7 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
         texs.append(Rectangle(height=0.7, width=1, color=BLUE_E, fill_color=BLUE_E, fill_opacity=0.5).next_to(texs[-1], RIGHT, buff=0.1))
       tex_ts.append(Text("TEX", font_size=32, color=BLUE_E).move_to(texs[-1]))
 
-    with self.voiceover(text="""#TODO""") as trk:
+    with self.voiceover(text="""We also have 4 Texture Units that perform operations on Texturesk""") as trk:
       self.play(LaggedStart(*[Create(tex) for tex in texs], *[Write(t) for t in tex_ts]))
 
     l1 = Rectangle(height=0.5, width=7, color=GOLD_A, fill_color=GOLD_A, fill_opacity=0.5).move_to(sm).shift(1.7*DOWN)
@@ -241,14 +241,15 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
     with self.voiceover(text="""128KB of memory divided into L1 cache and shared memory""") as trk:
       self.play(Create(l1), Write(l1_t))
 
+    with self.voiceover(text="""The fact that this memory is shared is very important for us, it tells us that the more shared memory we use
+                        the less L1 cache we have available""") as trk:
+      pass
+
     cc = Rectangle(height=0.5, width=7, color=GOLD_E, fill_color=GOLD_E, fill_opacity=0.5).next_to(l1, UP, buff=0.1)
     cc_t = Text("8KB Constant Cache", color=GOLD_E, font_size=28).move_to(cc)
     with self.voiceover(text="""8KB of special cache for accesses to constant memory""") as trk:
       self.play(Create(cc), Write(cc_t))
 
-    with self.voiceover(text="""The fact that this memory is shared is very important for us, it tells us that the more shared memory we use
-                        the less L1 cache we have available""") as trk:
-      pass
     ps = []
     p_ts = []
 
@@ -262,7 +263,7 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
     with self.voiceover(text="""And it also contains 4 Processing Blocks""") as trk:
       self.play(LaggedStart(*[Create(p) for p in ps], *[Write(t) for t in p_ts]))
 
-    with self.voiceover(text="""Inside our Processing blocks we can indentify the smallest components""") as trk:
+    with self.voiceover(text="""Inside our Processing blocks we can indentify the smallest components, that execute our instructions""") as trk:
       self.play(FadeOut(p_ts[0]), Transform(ps[0], Rectangle(height=3.6, width=1.675, color=GREEN_A).move_to(ps[0])))
       all = VGroup(*[x for x in self.mobjects if isinstance(x, Rectangle) or isinstance(x, Text)])
       for x in self.mobjects:
@@ -274,13 +275,13 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
     ws = Rectangle(width=3, height=0.5, color=YELLOW_A, fill_color=YELLOW_A, fill_opacity=0.5).move_to(ps[0]).shift(3.15*UP)
     ws_t = Text("Warp Scheduler", color=YELLOW_A, font_size=32).scale(0.6).move_to(ws)
 
-    ic = Rectangle(width=3, height=0.5, color=YELLOW_C, fill_color=YELLOW_C, fill_opacity=0.5).next_to(ws, DOWN, buff=0.2)
+    du = Rectangle(width=3, height=0.5, color=YELLOW_B, fill_color=YELLOW_B, fill_opacity=0.5).next_to(ws, DOWN, buff=0.2)
+    du_t = Text("Dispatch Unit", color=YELLOW_B, font_size=32).scale(0.6).move_to(du)
+
+    ic = Rectangle(width=3, height=0.5, color=YELLOW_C, fill_color=YELLOW_C, fill_opacity=0.5).next_to(du, DOWN, buff=0.2)
     ic_t = Text("L0 Instruction Cache", color=YELLOW_C, font_size=32).scale(0.6).move_to(ic)
 
-    du = Rectangle(width=3, height=0.5, color=YELLOW_E, fill_color=YELLOW_E, fill_opacity=0.5).next_to(ic, DOWN, buff=0.2)
-    du_t = Text("Dispatch Unit", color=YELLOW_E, font_size=32).scale(0.6).move_to(du)
-
-    rf = Rectangle(width=3, height=0.66, color=BLUE_A, fill_color=BLUE_A, fill_opacity=0.5).next_to(du, DOWN, buff=0.2)
+    rf = Rectangle(width=3, height=0.66, color=BLUE_A, fill_color=BLUE_A, fill_opacity=0.5).next_to(ic, DOWN, buff=0.2)
     rf_t = Text("64KB Register File", color=BLUE_A, font_size=32).scale(0.7).move_to(rf)
 
     tc = Rectangle(width=3, height=0.5, color=GREEN_B, fill_color=GREEN_B, fill_opacity=0.5).next_to(rf, DOWN, buff=0.2)
@@ -339,3 +340,68 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
       sfus.append(sfu)
       sfu_ts.append(Text("SFU", font_size=32, color=RED_C).scale(0.5).move_to(sfus[-1]))
 
+    with self.voiceover(text="""We have 16 cuda cores per processing blocks that are capable of running FP32 operations""") as trk:
+      self.play(LaggedStart(*[Create(x) for x in fpcs]), Write(fpc_t))
+    with self.voiceover(text="""Another 16 cores that can execute either FP32 or INT32 instructions""") as trk:
+      self.play(LaggedStart(*[Create(x) for x in fpcis]), Write(fpci_t))
+    with self.voiceover(text="""It also contains a Tensor Core - this is a specialized unit for performing matrix multiplication and acummulation""") as trk:
+      self.play(Create(tc), Write(tc_t))
+    with self.voiceover(text="""CUDA Programming Guide as well as some architectural whitepapers also mention that there are 2 FP64 cores per SM 
+                        I'm not outlining them here because it's not really clear where they reside. I doubt that they are outside Processing Blocks.
+                        But there are more Processing Blocks than there are FP64 Cores mentioned. Are not all Processing Blocks the same size? Do some have FP64
+                        Cores disabled? It's reallly impossible to tell without doing some photon screening of the chip""") as trk:
+      pass
+
+    with self.voiceover(text="""So we have 32 CUDA cores available for computation, this brings us to an idea of a warp""") as trk:
+      pass
+
+    with self.voiceover(text="""When we actually launch our kernel grid, all of the blocks inside are further divided into collections of 32
+                        threads that our Processing Blocks can execute, this thread collections are called warps""") as trk:
+      pass
+
+    with self.voiceover(text="""And that takes us to 2 control components that is the <bookmark mark='1'/>Warp Scheduler, and a <bookmark mark='2'/> Dispatch Unit""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Create(ws), Write(ws_t))
+      self.wait_until_bookmark("2")
+      self.play(Create(du), Write(du_t))
+
+    with self.voiceover(text="""The information on this is stiched together from different blog posts, forum threads and wikipedia articles so I might be wrong on some of the details
+                        But as I read the literature the Warp Scheduler manages warps that are executed by a Processing Block""") as trk:
+      pass
+    with self.voiceover(text="""So for example when one warp is waiting for a data fetch from global memory, the warp scheduler might perform a context switch 
+                        and transfer control to another warp untill the first one is ready to resume execution. This further hides latency and speeds up execution.""") as trk:
+      pass
+      
+    with self.voiceover(text="""And the Dispatch Unit dispatches the instructions that our warps will execute""") as trk:
+      pass
+
+    with self.voiceover(text="""Another control component inside our Processing Block is an instruction cache, that works similarly to our data cache but it caches the next instructions to be executed""") as trk:
+      self.play(Create(ic), Write(ic_t))
+
+    with self.voiceover(text="""A 64 KB register file to hold our data inside our registers""") as trk:
+      self.play(Create(rf), Write(rf_t))
+    with self.voiceover(text="""4 Load/Store units that controll our memory access instructions""") as trk:
+      self.play(LaggedStart(*[Create(x) for x in lsus]), LaggedStart(*[Write(x) for x in lsu_ts]))
+    with self.voiceover(text="""And I'm going to go with 4 Special Function Units - they perform functions for graphics interpolation as well as trigonometric and transcendental operations""") as trk:
+      self.play(LaggedStart(*[Create(x) for x in sfus]), LaggedStart(*[Write(x) for x in sfu_ts]))
+    with self.voiceover(text="""So functions like for example a Logarithm Function, sine, cosine etc..""") as trk:
+      pass
+    whitepaper_t = ImageMobject("./Whitepaper_T.png").move_to(ps[0]).scale(1.7)
+    whitepaper_f = ImageMobject("./Whitepaper_F.png").move_to(ps[0]).scale(1.5)
+    pg = ImageMobject("./ProgrammingGuide.png").move_to(ps[0]).scale(1.3)
+    with self.voiceover(text="""You might have also notice that I've said I'm going to go with 4 SFUs, that's because there
+                        is a bit of an ambiguity in this area""") as trk:
+      pass
+
+    with self.voiceover(text="""Because if you look at the Programming Guide from NVIDIA, they mention 16 SFU's per SM so 4 per Processing Block""") as trk:
+      self.play(FadeIn(pg))
+
+    with self.voiceover(text="""But the official Ada architecture whitepaper claims one""") as trk:
+      self.play(FadeOut(pg))
+      self.play(FadeIn(whitepaper_t))
+
+    with self.voiceover(text="""And if you look at the figure they draw it as one SFU made out of 4 elements.
+                        Again a lot of architectural stuff is obfuscated and barely mentioned so we have to take all of this with a grain of salt""") as trk:
+      self.play(FadeOut(whitepaper_t))
+      self.play(FadeIn(whitepaper_f))
+    self.play(FadeOut(whitepaper_f))
