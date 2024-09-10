@@ -6,22 +6,27 @@ from manim_voiceover.services.gtts import GTTSService
 import numpy as np
 
 
-class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
+class GPUArchitecture(VoiceoverScene, MovingCameraScene):
   def construct(self):
     self.set_speech_service(
         GTTSService(transcription_model="base")
         )
 
     title = Text("GPU programming", font_size=72)
-    with self.voiceover(text="Hello and welcome to episode 8 in the series on GPU programming") as trk:
+    with self.voiceover(text="Hello and welcome to the next episode in the series on GPU programming") as trk:
       self.play(Write(title))
 
-    subtitle = Text("Streaming Multiprocessor", font_size=48).next_to(title, DOWN)
-    with self.voiceover(text="""I started this out as an episode on constant memory, but we have to take a short
-                        detour from our memory journey to get more into the architecture of the GPU""") as trk:
+    subtitle = Text("Modern GPU Architecture", font_size=48).next_to(title, DOWN)
+    with self.voiceover(text="""I started this out as an episode on constant memory, in the middle of it I realized that explaining 
+                        the concept of a warp and a Streaming Multiprocessor will make things easier, and while trying to get to the 
+                        Streaming Multiprocessor I ended up going through the full architecture of a modern GPU""") as trk:
       pass
 
-    with self.voiceover(text="""So today we will be gettin into what are Streaming Multiprocessors or SM's for short""") as trk:
+    with self.voiceover(text="""And I do feel like that historian that wanted to tell you about Hiroshima so he starts with Julius Ceasar
+                        to give you some good context on the events leading up to it""") as trk:
+      pass
+
+    with self.voiceover(text="""Anyway this episode will be focused on the Architecture of the Modern GPU""") as trk:
       self.play(Write(subtitle))
 
     self.play(Unwrite(title), Unwrite(subtitle))
@@ -82,7 +87,9 @@ class StreamingMultiprocessor(VoiceoverScene, MovingCameraScene):
 
     gpu = Rectangle(height=6, width=12, color=GREEN)
     gpu_t = Text("GPU", color=GREEN, font_size=24).next_to(gpu, UP, buff=0.1, aligned_edge=LEFT)
-    with self.voiceover(text="""But as you might imagine, the actuall gpu architecture is much more complicated""") as trk:
+    with self.voiceover(text="""But as you might imagine, the actuall gpu architecture is much more complicated, and do take everything with a grain of salt. 
+                        A lot of the details are not released to the public, and the information is very often stiched together out of multiple blog posts, 
+                        official architectural whitepapers, nvidia forum discussions and third party microbenchmarks""") as trk:
       self.play(*[FadeOut(x) for x in self.mobjects])
       self.play(Create(gpu), Write(gpu_t))
 
