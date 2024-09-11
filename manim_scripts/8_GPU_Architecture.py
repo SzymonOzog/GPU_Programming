@@ -405,23 +405,41 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
       self.wait_until_bookmark("2")
       self.play(Create(du), Write(du_t))
 
-    with self.voiceover(text="""The information on this is stiched together from different blog posts, forum threads and wikipedia articles so I might be wrong on some of the details
-                        But as I read the literature the Warp Scheduler assigns and manages warps that are executed by a Processing Block""") as trk:
-      pass
-    with self.voiceover(text="""So for example when one warp is waiting for a data fetch from global memory, the warp scheduler might perform a context switch 
+    with self.voiceover(text="""The division of work between the two is one of those stichted together from different sources type of information so I might be wrong on some of the details
+                        All of this happens but it's not exactly clear which component does what part of the work.
+                        As I read the literature the <bookmark mark='1'/>Warp Scheduler assigns and manages warps that are executed by a Processing Block""") as trk:
+      anims = []
+      for t, c in zip(threads[:32], fpcs+fpcis):
+        t.save_state()
+        anims.append(t.animate.move_to(c))
+      self.wait_until_bookmark("1")
+      self.play(LaggedStart(*anims))
+
+    with self.voiceover(text="""So for example when one warp is waiting for a data fetch from global memory, the warp scheduler might perform a context switch <bookmark mark='1'/>
                         and transfer control to another warp untill the first one is ready to resume execution. This further hides latency and speeds up execution.""") as trk:
       pass
+      self.wait_until_bookmark("1")
+      self.play(LaggedStart(Restore(x) for x in threads[:32]))
+      anims = []
+      for t, c in zip(threads[32:64], fpcs+fpcis):
+        t.save_state()
+        anims.append(t.animate.move_to(c))
+      self.play(LaggedStart(*anims))
       
     with self.voiceover(text="""And the Dispatch Unit dispatches the instructions that our warps will execute""") as trk:
       pass
 
     with self.voiceover(text="""Another control component inside our Processing Block is an instruction cache, that works similarly to our data cache but it caches the next instructions to be executed""") as trk:
       self.play(Create(ic), Write(ic_t))
+      self.play(FadeOut(block), FadeOut(block_t), *[FadeOut(x) for x in threads], FadeOut(w1_t), FadeOut(w1), FadeOut(w2_t), FadeOut(w2), FadeOut(w3_t), FadeOut(w3))
+      self.play(*[FadeIn(x) for x in ps], [FadeIn(x) for x in p_ts], FadeIn(sm), FadeIn(tpcs[0]))
 
-    with self.voiceover(text="""A 64 KB register file to hold our data inside our registers""") as trk:
+    with self.voiceover(text="""A processing block also contains a 64 KB register file to hold our data inside our registers""") as trk:
       self.play(Create(rf), Write(rf_t))
-    with self.voiceover(text="""4 Load/Store units that controll our memory access instructions""") as trk:
+
+    with self.voiceover(text="""4 Load/Store units that control our memory access instructions""") as trk:
       self.play(LaggedStart(*[Create(x) for x in lsus]), LaggedStart(*[Write(x) for x in lsu_ts]))
+
     with self.voiceover(text="""And I'm going to go with 4 Special Function Units - they perform functions for graphics interpolation as well as trigonometric and transcendental operations""") as trk:
       self.play(LaggedStart(*[Create(x) for x in sfus]), LaggedStart(*[Write(x) for x in sfu_ts]))
 
