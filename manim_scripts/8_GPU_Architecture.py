@@ -125,15 +125,20 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
                         to architecture so keep that in mind""") as trk:
       pass
 
-    with self.voiceover(text="""So our chip contains the L2 cache that is shared between all cores""") as trk:
+    with self.voiceover(text="""So our chip contains the L2 cache that is shared between all cores, if you are not familliar with caches,
+                        they are a type of fast SRAM memory, much smaller than our main DRAM, when we access DRAM memory some of it gets stored in the fast
+                        cache so that when we want to access it later we don't have to wait for it again""") as trk:
       self.play(Create(l2), Write(l2_t))
 
+    with self.voiceover(text="""I realize that this was a brief desctiption, but cache is so complex that it would need an episode of it's own
+                        to explain in detail. If you are interested in the topic let me know in the comments and I'll might make one in the future""") as trk:
+      pass
     mc = Rectangle(height=4.5, width=0.25).shift(4.25*LEFT)
     mc_t = Text("6 x Memory Controller", font_size=14).move_to(mc).rotate(PI/2)
 
     mc2 = Rectangle(height=4.5, width=0.25).shift(5.25*RIGHT)
     mc_t2 = Text("6 x Memory Controller", font_size=14).move_to(mc2).rotate(-PI/2)
-    with self.voiceover(text="""It also contains 12 memory controllers""") as trk:
+    with self.voiceover(text="""It also contains 12 memory controllers that handle data transfer between layers of memory""") as trk:
       self.play(Create(mc), Write(mc_t), Create(mc2), Write(mc_t2))
     
     gpcs = []
@@ -183,7 +188,8 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
       tpc_ts.append(Text("TPC", font_size=12, color=ORANGE).move_to(tpcs[-1]).rotate(PI/2))
 
     with self.voiceover(text="""And each one contains, 6 Texture Processing Clusters, as well as some components for rasterization
-                         for rasterization, namely the <bookmark mark='1'/>Raster Engine and 16 Raster Operations units <bookmark mark='2'/>divided into two partitions""") as trk:
+                         namely the <bookmark mark='1'/>Raster Engine that generates pixel information from triangles
+                         and 16 Render Output Units <bookmark mark='2'/>divided into two Raster Operations Partitions""") as trk:
       self.play(FadeOut(gpc_ts[0]), Transform(gpcs[0], Rectangle(height=1.5, width=1.25, color=PURPLE).next_to(l2, UP, aligned_edge=LEFT, buff=0.25).shift(0.125*RIGHT)))
       self.play(self.camera.auto_zoom(gpcs[0]))
       self.play(LaggedStart(*[Create(tpc) for tpc in tpcs], *[Write(t) for t in tpc_ts]))
@@ -240,7 +246,7 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
         texs.append(Rectangle(height=0.7, width=1, color=BLUE_E, fill_color=BLUE_E, fill_opacity=0.5).next_to(texs[-1], RIGHT, buff=0.1))
       tex_ts.append(Text("TEX", font_size=32, color=BLUE_E).move_to(texs[-1]))
 
-    with self.voiceover(text="""We also have 4 Texture Units that perform operations on Texturesk""") as trk:
+    with self.voiceover(text="""We also have 4 Texture Units that perform operations on Textures""") as trk:
       self.play(LaggedStart(*[Create(tex) for tex in texs], *[Write(t) for t in tex_ts]))
 
     l1 = Rectangle(height=0.5, width=7, color=GOLD_A, fill_color=GOLD_A, fill_opacity=0.5).move_to(sm).shift(1.7*DOWN)
@@ -257,6 +263,13 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
     cc_t = Text("8KB Constant Cache", color=GOLD_E, font_size=28).move_to(cc)
     with self.voiceover(text="""8KB of special cache for accesses to constant memory""") as trk:
       self.play(Create(cc), Write(cc_t))
+
+
+    cc_i = ImageMobject("./constant_cache1.png").move_to(sm)
+    with self.voiceover(text="""It's worth mentioning that one group that microbenchmarked the volta architecture gpus also mentioned a 1.5 level
+                        constant cache but I'm unable to find any confirmations for it in the official sources""") as trk:
+      self.play(FadeIn(cc_i))
+    self.play(FadeOut(cc_i))
 
     ps = []
     p_ts = []
