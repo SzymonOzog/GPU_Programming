@@ -360,7 +360,7 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
       pass
 
     with self.voiceover(text="""So we have 32 CUDA cores available for computation, this brings us to an idea of a warp""") as trk:
-      pass
+      self.play(Indicate(VGroup(*fpcs, *fpcis), run_time=2))
 
     with self.voiceover(text="""When we actually launch our kernel grid, all of the blocks inside are further divided into collections of 32
                         threads that our Processing Blocks can execute, this thread collections are called warps""") as trk:
@@ -391,14 +391,20 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
       self.play(LaggedStart(*[Create(x) for x in lsus]), LaggedStart(*[Write(x) for x in lsu_ts]))
     with self.voiceover(text="""And I'm going to go with 4 Special Function Units - they perform functions for graphics interpolation as well as trigonometric and transcendental operations""") as trk:
       self.play(LaggedStart(*[Create(x) for x in sfus]), LaggedStart(*[Write(x) for x in sfu_ts]))
+
+    log = Tex("$\\log(x)$", font_size=48).next_to(rf, LEFT).shift(0.8*LEFT)
+    sin = Tex("$\\sin(x)$", font_size=48).next_to(log, DOWN)
+    cos = Tex("$\\cos(x)$", font_size=48).next_to(sin, DOWN)
     with self.voiceover(text="""So functions like for example a Logarithm Function, sine, cosine etc..""") as trk:
-      pass
+      self.play(Write(log))
+      self.play(Write(sin))
+      self.play(Write(cos))
     whitepaper_t = ImageMobject("./Whitepaper_T.png").move_to(ps[0]).scale(1.7)
     whitepaper_f = ImageMobject("./Whitepaper_F.png").move_to(ps[0]).scale(1.5)
     pg = ImageMobject("./ProgrammingGuide.png").move_to(ps[0]).scale(1.3)
     with self.voiceover(text="""You might have also notice that I've said I'm going to go with 4 SFUs, that's because there
                         is a bit of an ambiguity in this area""") as trk:
-      pass
+      self.play(LaggedStart(Unwrite(cos), Unwrite(sin), Unwrite(log), lag_ratio=0.15))
 
     with self.voiceover(text="""Because if you look at the Programming Guide from NVIDIA, they mention 16 SFU's per SM so 4 per Processing Block""") as trk:
       self.play(FadeIn(pg))
@@ -412,3 +418,4 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
       self.play(FadeOut(whitepaper_t))
       self.play(FadeIn(whitepaper_f))
     self.play(FadeOut(whitepaper_f))
+
