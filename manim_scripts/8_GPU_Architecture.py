@@ -4,6 +4,7 @@ from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.recorder import RecorderService
 from manim_voiceover.services.gtts import GTTSService
 import numpy as np
+import types
 
 
 class GPUArchitecture(VoiceoverScene, MovingCameraScene):
@@ -465,8 +466,96 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
       self.play(FadeIn(whitepaper_t))
 
     with self.voiceover(text="""And if you look at the figure they draw it as one SFU made out of 4 elements.
-                        Again a lot of architectural stuff is obfuscated and barely mentioned so we have to take all of this with a grain of salt""") as trk:
+                        Again a lot of architectural stuff and barely mentioned so we have to take all of this with a grain of salt""") as trk:
       self.play(FadeOut(whitepaper_t))
       self.play(FadeIn(whitepaper_f))
     self.play(FadeOut(whitepaper_f))
 
+    def monkey_patch(
+        self,
+        mobjects: list[Mobject],
+        margin: float = 0,
+        only_mobjects_in_frame: bool = False,
+        animate: bool = True,
+        run_time=1,
+    ):
+        scene_critical_x_left = None
+        scene_critical_x_right = None
+        scene_critical_y_up = None
+        scene_critical_y_down = None
+
+        for m in mobjects:
+            if (m == self.frame) or (
+                only_mobjects_in_frame and not self.is_in_frame(m)
+            ):
+                # detected camera frame, should not be used to calculate final position of camera
+                continue
+
+            # initialize scene critical points with first mobjects critical points
+            if scene_critical_x_left is None:
+                scene_critical_x_left = m.get_critical_point(LEFT)[0]
+                scene_critical_x_right = m.get_critical_point(RIGHT)[0]
+                scene_critical_y_up = m.get_critical_point(UP)[1]
+                scene_critical_y_down = m.get_critical_point(DOWN)[1]
+
+            else:
+                if m.get_critical_point(LEFT)[0] < scene_critical_x_left:
+                    scene_critical_x_left = m.get_critical_point(LEFT)[0]
+
+                if m.get_critical_point(RIGHT)[0] > scene_critical_x_right:
+                    scene_critical_x_right = m.get_critical_point(RIGHT)[0]
+
+                if m.get_critical_point(UP)[1] > scene_critical_y_up:
+                    scene_critical_y_up = m.get_critical_point(UP)[1]
+
+                if m.get_critical_point(DOWN)[1] < scene_critical_y_down:
+                    scene_critical_y_down = m.get_critical_point(DOWN)[1]
+
+        # calculate center x and y
+        x = (scene_critical_x_left + scene_critical_x_right) / 2
+        y = (scene_critical_y_up + scene_critical_y_down) / 2
+
+        # calculate proposed width and height of zoomed scene
+        new_width = abs(scene_critical_x_left - scene_critical_x_right)
+        new_height = abs(scene_critical_y_up - scene_critical_y_down)
+
+        m_target = self.frame.animate(run_time=run_time) if animate else self.frame
+        # zoom to fit all mobjects along the side that has the largest size
+        if new_width / self.frame.width > new_height / self.frame.height:
+            return m_target.set_x(x).set_y(y).set(width=new_width + margin)
+        else:
+            return m_target.set_x(x).set_y(y).set(height=new_height + margin)
+
+    self.camera.auto_zoom = types.MethodType(monkey_patch, self.camera)
+    with self.voiceover(text="""This is it, we coverd all the components that are mentioned, throughout the architectural whitepapers
+                        and some that are omitted.I'll repeat my self once more but, as I've said in the beginning due to competetive advantages and many other factors, not everything
+                        is described in detail and a lot of details are omitted or obfuscated so do treat it like a history lesson not as a gospel. 
+                        The key and the most important ideas are definetly there but some details get conflicting evidence""") as trk:
+      print(trk.duration, trk.get_remaining_duration())
+      self.play(self.camera.auto_zoom(sm, run_time=(trk.duration-12)/4))
+      self.wait(3)
+      self.play(self.camera.auto_zoom(tpcs[0], run_time=(trk.duration-12)/4))
+      self.wait(3)
+      self.play(self.camera.auto_zoom(gpcs[0], run_time=(trk.duration-12)/4))
+      self.wait(3)
+      self.play(self.camera.auto_zoom(gpu, margin=2, run_time=(trk.duration-12)/4))
+
+
+    bmac = Text("https://buymeacoffee.com/simonoz", font_size=48, color=YELLOW)
+    alex = Text("Alex", font_size=60).next_to(bmac, DOWN)
+    unknown = Text("Anonymous", font_size=60).next_to(alex, DOWN)
+    with self.voiceover(text="""I've recently started a buy me a coffe page for those that want to support this channel. A shoutout to Alex and one anonymous donor that supported so far""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+      self.camera.auto_zoom(VGroup(bmac, alex, unknown), margin=4, animate=False)
+      self.play(Write(bmac))
+      self.play(Write(alex))
+      self.play(Write(unknown))
+
+    with self.voiceover(text="""But you can always support me without spending a buck by subscribing, leaving a like, commenting and sharing this video with your friends""") as trk:
+      pass
+
+    with self.voiceover(text="""And as always, I'll see you in the next episode, bye""") as trk:
+      pass
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    self.wait(2)
