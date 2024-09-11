@@ -361,19 +361,52 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
 
     with self.voiceover(text="""So we have 32 CUDA cores available for computation, this brings us to an idea of a warp""") as trk:
       self.play(Indicate(VGroup(*fpcs, *fpcis), run_time=2))
+      self.play(*[FadeOut(x) for x in ps], [FadeOut(x) for x in p_ts], FadeOut(sm), FadeOut(tpcs[0]))
+    
+    block = Rectangle(width=4.3, height=6, color=BLUE).next_to(ps[0], RIGHT)
+    block_t = Text("Block", color=BLUE, font_size=40).move_to(block, aligned_edge=UP).shift(0.2*DOWN)
+
+    threads = [Rectangle(width=0.33, height=0.33, color=GREEN, fill_color=GREEN, fill_opacity=0.5) for _ in range(72)]
+    tg = VGroup(*threads).arrange_in_grid(rows=9, buff=(0.05, 0.15)).move_to(block).shift(0.1*UP)
+    tmp = VGroup(*threads[:32])
+    w1_t = Text("Warp 0", font_size=24, color=PURPLE).rotate(PI/2).next_to(tmp, LEFT, buff=0.1)
+    w1 = SurroundingRectangle(VGroup(tmp, w1_t, w1_t.copy().next_to(tmp, RIGHT, buff=0.1)), buff=0.05, color=PURPLE)
+    w1.stretch_to_fit_width(w1.width*1.05)
+
+    tmp = VGroup(*threads[32:64])
+    w2_t = Text("Warp 1", font_size=24, color=PURPLE).rotate(PI/2).next_to(tmp, LEFT, buff=0.1)
+    w2 = SurroundingRectangle(VGroup(tmp, w2_t, w2_t.copy().next_to(tmp, RIGHT, buff=0.1)), buff=0.05, color=PURPLE)
+    w2.stretch_to_fit_width(w2.width*1.05)
+
+    tmp = VGroup(*threads[64:])
+    w3_t = Text("Warp 2", font_size=24, color=PURPLE).rotate(PI/2).next_to(tmp, LEFT, aligned_edge=UP, buff=0.1)
+    w3 = SurroundingRectangle(VGroup(tmp, w3_t, w3_t.copy().next_to(tmp, RIGHT, aligned_edge=UP, buff=0.1)), buff=0.05, color=PURPLE)
+    w3.stretch_to_fit_width(w3.width*1.05)
 
     with self.voiceover(text="""When we actually launch our kernel grid, all of the blocks inside are further divided into collections of 32
                         threads that our Processing Blocks can execute, this thread collections are called warps""") as trk:
+      self.play(Create(block), Write(block_t))
+      self.play(LaggedStart(*[Create(x) for x in threads]))
+      self.play(Write(w1_t), Create(w1))
+      self.play(Write(w2_t), Create(w2))
+      self.play(Write(w3_t), Create(w3))
+
+    with self.voiceover(text="""You might have heard a mantra to always have your blocks be a multiple of 32 threads""") as trk:
       pass
 
-    with self.voiceover(text="""And that takes us to 2 control components that is the <bookmark mark='1'/>Warp Scheduler, and a <bookmark mark='2'/> Dispatch Unit""") as trk:
+    with self.voiceover(text="""This is the reason, since the blocks are divided into warps we might have a situation like this<bookmark mark='1'/>
+                        where our last warp only has 8 threads executing, leaving 24 threads idle while they could be doing some work""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Indicate(VGroup(w3, w3_t, *threads[64:])))
+
+    with self.voiceover(text="""Warps take us to 2 control components that is the <bookmark mark='1'/>Warp Scheduler, and a <bookmark mark='2'/> Dispatch Unit""") as trk:
       self.wait_until_bookmark("1")
       self.play(Create(ws), Write(ws_t))
       self.wait_until_bookmark("2")
       self.play(Create(du), Write(du_t))
 
     with self.voiceover(text="""The information on this is stiched together from different blog posts, forum threads and wikipedia articles so I might be wrong on some of the details
-                        But as I read the literature the Warp Scheduler manages warps that are executed by a Processing Block""") as trk:
+                        But as I read the literature the Warp Scheduler assigns and manages warps that are executed by a Processing Block""") as trk:
       pass
     with self.voiceover(text="""So for example when one warp is waiting for a data fetch from global memory, the warp scheduler might perform a context switch 
                         and transfer control to another warp untill the first one is ready to resume execution. This further hides latency and speeds up execution.""") as trk:
