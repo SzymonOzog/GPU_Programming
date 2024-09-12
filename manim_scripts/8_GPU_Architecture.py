@@ -88,13 +88,28 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
 
     gpu = Rectangle(height=6, width=12, color=GREEN)
     gpu_t = Text("GPU", color=GREEN, font_size=24).next_to(gpu, UP, buff=0.1, aligned_edge=LEFT)
+    die = ImageMobject("./die_shot.jpg")
+    blog_post = ImageMobject("./blogpost.png").rotate(-PI/7).scale(1.5)
+    whitepaper = ImageMobject("./ada_wp.png").rotate(PI/8).scale(1.3)
+    forum = ImageMobject("./forum.png").rotate(-PI/9)
+    microbench = ImageMobject("./microbench.png").rotate(PI/7).scale(1.2)
+
     with self.voiceover(text="""But as you might imagine, the actuall gpu architecture is much more complicated, and do take everything with a grain of salt. 
-                        A lot of the details are not released to the public, and the information is very often stiched together out of multiple blog posts, 
-                        official architectural whitepapers, nvidia forum discussions and third party microbenchmarks""") as trk:
+                        A lot of the details are not released to the public, and the information is very often stiched together out <bookmark mark='1'/>of multiple blog posts, 
+                        <bookmark mark='2'/>official architectural whitepapers, <bookmark mark='3'/>nvidia forum discussions and <bookmark mark='4'/>third party microbenchmarks. """) as trk:
       self.play(*[FadeOut(x) for x in self.mobjects])
-      self.play(Create(gpu), Write(gpu_t))
+      self.play(FadeIn(die))
+      self.wait_until_bookmark("1")
+      self.add(blog_post)
+      self.wait_until_bookmark("2")
+      self.add(whitepaper)
+      self.wait_until_bookmark("3")
+      self.add(forum)
+      self.wait_until_bookmark("4")
+      self.add(microbench)
 
-
+    with self.voiceover(text="""Most of it is true, and we do have high quality die shots like the one on the screen to confirm it, but small details might be missing or wrong""") as trk:
+      self.play(*[FadeOut(x) for x in [blog_post, whitepaper, forum, microbench]])
 
     dram = Rectangle(height=5, width=1, color=RED, fill_color=RED, fill_opacity=0.5).shift(5.25*LEFT)
     dram_t = Text("DRAM", color=RED, font_size=52).move_to(dram).rotate(PI/2)
@@ -104,6 +119,8 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
 
     with self.voiceover(text="""As I've shown in the episode on memory, on the actual PCB we have our <bookmark mark='1'/>DRAM memory
                         and a chip <bookmark mark='2'/>  that does the calculations""") as trk:
+      self.play(FadeOut(die))
+      self.play(Create(gpu), Write(gpu_t))
       self.wait_until_bookmark("1")
       self.play(Create(dram), Write(dram_t))
       self.wait_until_bookmark("2")
