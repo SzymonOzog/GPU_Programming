@@ -363,10 +363,10 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
       self.play(Create(pm), Write(pm_t))
 
     sm = Rectangle(width=2.5, height=2, color=MAROON, fill_color=MAROON, fill_opacity=0.5).move_to(tpcs[0]).shift(0.7*UP)
-    sm_t = Text("SM", font_size=48, color=MAROON).move_to(sm)
+    sm_t = Text("    Streaming\nMultiprocessor", font_size=24, color=MAROON).move_to(sm)
     
     sm2 = Rectangle(width=2.5, height=2, color=MAROON, fill_color=MAROON, fill_opacity=0.5).move_to(tpcs[0]).shift(1.5*DOWN)
-    sm2_t = Text("SM", font_size=48, color=MAROON).move_to(sm2)
+    sm2_t = Text("    Streaming\nMultiprocessor", font_size=24, color=MAROON).move_to(sm2)
     with self.voiceover(text="""But more importantly to our use cases, it contains 2 streaming multiprocessors""") as trk:
       self.play(Create(sm), Create(sm2), Write(sm_t), Write(sm2_t))
 
@@ -704,8 +704,8 @@ class GPUArchitecture(VoiceoverScene, MovingCameraScene):
 
     bmac = Text("https://buymeacoffee.com/simonoz", font_size=48, color=YELLOW)
     alex = Text("Alex", font_size=60).next_to(bmac, DOWN)
-    unknown = Text("Anonymous", font_size=60).next_to(alex, DOWN)
-    with self.voiceover(text="""I've recently started a buy me a coffe page for those that want to support this channel. A shoutout to Alex and one anonymous donor that supported so far""") as trk:
+    unknown = Text("Anonymous x2", font_size=60).next_to(alex, DOWN)
+    with self.voiceover(text="""I've recently started a buy me a coffe page for those that want to support this channel. A shoutout to Alex and two anonymous donors that supported so far""") as trk:
       self.play(*[FadeOut(x) for x in self.mobjects])
       self.camera.auto_zoom(VGroup(bmac, alex, unknown), margin=4, animate=False)
       self.play(Write(bmac))
