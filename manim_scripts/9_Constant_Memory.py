@@ -13,7 +13,7 @@ class ConstantMemory(VoiceoverScene):
         )
 
     title = Text("GPU programming", font_size=72)
-    with self.voiceover(text="Hello and welcome to episode 8 in the series on GPU programming") as trk:
+    with self.voiceover(text="Hello and welcome to another episode in the series on GPU programming") as trk:
       self.play(Write(title))
 
     subtitle = Text("Constant Memory", font_size=48).next_to(title, DOWN)
@@ -23,7 +23,165 @@ class ConstantMemory(VoiceoverScene):
 
     self.play(Unwrite(title), Unwrite(subtitle))
 
-    ## some intro on how constant mem works
+    shared_store = []
+    shared_load = []
+    register_store = []
+    register_load = []
+    local_store = []
+    local_load = []
+    global_store = []
+    global_load = []
+    constant_load = []
+
+    thread_objs = []
+    rects = []
+    texts = []
+    arrows = []
+    def make_thread(idx=0):
+      nonlocal thread_objs, rects, texts
+      thread = Rectangle(height=0.5, width=2.2, color=BLUE)
+      texts.append(Text(f"Thread {idx}", font_size=15, color=BLUE))
+      rects.append(thread)
+      thread.add(texts[-1])
+
+      registers = Rectangle(height=0.5, width=1.0, color=GREEN).next_to(thread, UP, aligned_edge=LEFT, buff=0.5)
+      texts.append(Text("Registers", font_size=15, color=GREEN).move_to(registers.get_center()))
+      registers.add(texts[-1])
+      rects.append(registers)
+
+      local = Rectangle(height=0.5, width=1.0, color=RED_A).next_to(thread, UP, aligned_edge=RIGHT, buff=0.5)
+      l = Text("Local", font_size=15, color=RED_A)
+      m = Text("Memory", font_size=15, color=RED_A)
+      VGroup(l, m).arrange(DOWN, buff=0.05).move_to(local.get_center())
+      texts.append(l)
+      texts.append(m)
+      rects.append(local)
+      local.add(l)
+      local.add(m)
+
+      t_group = VGroup(thread, registers, local)
+      t_group.add(join(registers, thread, start=registers.get_corner(DOWN)))
+      t_group.add(join(local, thread, start=local.get_corner(DOWN)))
+
+      thread_objs.append(thread)
+      return t_group
+
+    def make_block(idx=0):
+      nonlocal rects, texts
+      block = Rectangle(height=3.5, width=5.0, color=PURPLE)
+      rects.append(block)
+
+      threads = VGroup(make_thread(0), make_thread(1)).arrange(RIGHT).shift(0.8*DOWN)
+      block.add(threads)
+
+      shared_mem = Rectangle(width=4.0, height=0.5, color=YELLOW).next_to(threads, UP)
+      rects.append(shared_mem)
+      block.add(shared_mem)
+
+      texts.append(Text(f"Shared Memory", font_size=15, color=YELLOW).move_to(shared_mem.get_center()))
+      shared_mem.add(texts[-1])
+      for t in thread_objs[idx*2:]:
+        block.add(join(t, shared_mem, t.get_corner(UP)))
+      texts.append(Text(f"Block {idx}", color=PURPLE).next_to(shared_mem, UP))
+      shared_mem.add(texts[-1])
+      
+      return block
+
+    blocks = VGroup(make_block(0), make_block(1)).arrange(RIGHT).shift(UP)
+
+    constant = Rectangle(width=blocks.width, height=1, color=RED_B).next_to(blocks, DOWN)
+    texts.append(Text("Constant Memory", font_size=30, color=RED_B).move_to(constant.get_center()))
+    rects.append(constant)
+
+    gmem = Rectangle(width=blocks.width, height=1, color=RED).next_to(constant, DOWN)
+    rects.append(gmem)
+    texts.append(Text("Global Memory", font_size=30, color=RED).move_to(gmem.get_center()))
+
+    subobjects = []
+    queue = [blocks]
+    while queue:
+      o = queue.pop()
+      subobjects.append(o)
+      queue.extend(o.submobjects)
+
+
+    for mo in subobjects:
+      for so in mo.submobjects.copy():
+        if any(so in x for x in [rects, texts, arrows, thread_objs]):
+          mo.remove(so)
+
+    for t in thread_objs[:2]:
+      join(t, constant, t.get_corner(DOWN+LEFT)+RIGHT*0.2, False)
+      join(t, gmem, t.get_corner(DOWN+LEFT))
+
+    for t in thread_objs[2:]:
+      join(t, constant, t.get_corner(DOWN+RIGHT)+LEFT*0.2, False)
+      join(t, gmem, t.get_corner(DOWN+RIGHT))
+
+    for i in [1, 3, 7, 9]:
+      local_store.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      local_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    for i in [0, 2, 6, 8]:
+      register_store.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      register_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    for i in [4, 5, 10, 11]:
+      shared_store.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      shared_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    for i in [13, 15, 17, 19]:
+      global_store.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+      global_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_end(), end=arrows[i].get_start(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+    for i in [12, 14, 16, 18]:
+      constant_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
+
+    access_anims = [shared_store, shared_load, register_store, register_load, local_store, local_load, global_store, global_load, constant_load]
+
+    with self.voiceover(text="""To recap what we learned in the previous episodes, constant memory is a read only memory region that 
+                        lives in DRAM, it's also very limited, as we can only allocate 64KB for it""") as trk:
+      self.play(*[Create(r) for r in rects], *[Write(t) for t in texts], *[Create(a) for a in arrows])
+      while trk.get_remaining_duration() > 1:
+        self.play(*access_anims[random.randint(0, len(access_anims) -1)])
+
+    l1 = Rectangle(height=0.5, width=7, color=GOLD_A, fill_color=GOLD_A, fill_opacity=0.5).shift(1.7*DOWN)
+    l1_t = Text("128KB L1 Cache / Shared Memory", color=GOLD_A, font_size=28).move_to(l1)
+
+    cc = Rectangle(height=0.5, width=7, color=GOLD_E, fill_color=GOLD_E, fill_opacity=0.5).next_to(l1, UP, buff=0.1)
+    cc_t = Text("8KB Constant Cache", color=GOLD_E, font_size=28).move_to(cc)
+
+    rt = Rectangle(width=2.5, height=0.7, fill_opacity=0.5).shift(2.4*DOWN + 2.25*RIGHT)
+    rt_t = Text("RT Core", font_size=32).move_to(rt)
+
+    texs = []
+    tex_ts = []
+    for i in range(4):
+      if i == 0:
+        texs.append(Rectangle(height=0.7, width=1, color=BLUE_E, fill_color=BLUE_E, fill_opacity=0.5).shift(2.4*DOWN + 3*LEFT))
+      else:
+        texs.append(Rectangle(height=0.7, width=1, color=BLUE_E, fill_color=BLUE_E, fill_opacity=0.5).next_to(texs[-1], RIGHT, buff=0.1))
+      tex_ts.append(Text("TEX", font_size=32, color=BLUE_E).move_to(texs[-1]))
+
+    ps = []
+    p_ts = []
+
+    for i in range(4):
+      if i == 0:
+        ps.append(Rectangle(height=3.6, width=1.675, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.5).shift(2.65*LEFT + 1.05*UP))
+      else:
+        ps.append(Rectangle(height=3.6, width=1.675, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.5).next_to(ps[-1], RIGHT, buff=0.093))
+      p_ts.append(Text("Processing Block", font_size=32, color=GREEN_A).move_to(ps[-1]).rotate(PI/2))
+
+    self.play(*[Uncreate(r) for r in rects], *[Unwrite(t) for t in texts], *[Uncreate(a) for a in arrows])
+    with self.voiceover(text="""To talk about the benefits and downsides of constant memory we have to remind ourselves of the structure
+                        of a streaming multiprocessor. If you didn't want the Modern GPU Architecture episode it might be good to go through it 
+                        if you feel lost""") as trk:
+      self.play(LaggedStart(*[Create(x) for x in texs + ps + [l1, cc, rt]], *[Write(t) for t in tex_ts + p_ts + [l1_t, cc_t, rt_t]]))
+
+
+    with self.voiceover(text="""The first benefit is that it's cached in a different cache than global memory, this means that by using constant memory
+                        we are actually freeing space in our L1 for other variables""") as trk:
+      self.play(Indicate(VGroup(cc, cc_t)))
+
+    with self.voiceover(text="""And the second one is a double edged sword""") as trk:
+      pass
 
     with self.voiceover(text="""There is a wonderfull blogpost by Lei Mao that profiled the different usecases for constant memory
                         to show when to use it and when not to""") as trk:
