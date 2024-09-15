@@ -23,6 +23,18 @@ class ConstantMemory(VoiceoverScene):
 
     self.play(Unwrite(title), Unwrite(subtitle))
 
+    def join(r1, r2, start, double=True):
+      nonlocal arrows
+      e_y = r2.get_y() + (1 if r2.get_y() < start[1] else -1) * r2.height/2
+      end = np.array([start[0], e_y, 0])
+      ret = None
+      if double: 
+        ret = DoubleArrow(start, end, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1)
+      else:
+        ret = Arrow(end, start, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1)
+      arrows.append(ret)
+      return ret
+
     shared_store = []
     shared_load = []
     register_store = []
