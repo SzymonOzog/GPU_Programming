@@ -4,6 +4,8 @@ from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.recorder import RecorderService
 from manim_voiceover.services.gtts import GTTSService
 import numpy as np
+import random
+import math
 
 
 class ConstantMemory(VoiceoverScene):
