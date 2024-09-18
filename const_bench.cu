@@ -1,7 +1,6 @@
 #include <iomanip>
 #include <iostream>
 #include <cassert>
-#include <chrono>
 
 #define BLOCK_SIZE 1024 
 #define CONST_SIZE 16384 
@@ -83,6 +82,10 @@ int main()
   {
     for (int p = START; p<START+TIMINGS; p++)
     {
+      cudaEvent_t start, stop;
+      float time;
+      gpuErrchk(cudaEventCreate(&start));
+      gpuErrchk(cudaEventCreate(&stop));
       long N = std::pow<long, long>(2, p);
 
       dim3 dimGrid(ceil(N/(float)BLOCK_SIZE), 1, 1);
@@ -93,14 +96,16 @@ int main()
       {
         clear_l2();
         gpuErrchk(cudaDeviceSynchronize());
-        auto start_time = std::chrono::system_clock::now();
+        gpuErrchk(cudaEventRecord(start));
         add<<<dimGrid, dimBlock>>>(N, a_d, b_d, c_d, distance);
+        gpuErrchk(cudaEventRecord(stop));
+        gpuErrchk(cudaEventSynchronize(stop));
+        gpuErrchk(cudaEventElapsedTime(&time, start, stop));
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
-        double final_time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start_time).count();
         if (i != -1) // one warmup run
         {
-          add_time += final_time / BENCH_STEPS;
+          add_time += time / BENCH_STEPS;
         }
       }
 
@@ -109,19 +114,23 @@ int main()
       {
         clear_l2();
         gpuErrchk(cudaDeviceSynchronize());
-        auto start_time = std::chrono::system_clock::now();
+        gpuErrchk(cudaEventRecord(start));
         add_const<<<dimGrid, dimBlock>>>(N, a_d, d_d, distance);
+        gpuErrchk(cudaEventRecord(stop));
+        gpuErrchk(cudaEventSynchronize(stop));
+        gpuErrchk(cudaEventElapsedTime(&time, start, stop));
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
-        double final_time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start_time).count();
         if (i != -1) // one warmup run
         {
-          const_time += final_time / BENCH_STEPS;
+          const_time += time / BENCH_STEPS;
         }
       }
 
       mt[p-START] = add_time;
       tt[p-START] = const_time;
+      gpuErrchk(cudaEventDestroy(start));
+      gpuErrchk(cudaEventDestroy(stop));
     }
     float* c_h = new float[max_N];
     float* d_h = new float[max_N];
