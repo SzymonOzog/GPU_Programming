@@ -267,6 +267,17 @@ class ConstantMemory(VoiceoverScene):
 
     self.play(Transform(ax, ax2, replace_mobject_with_target_in_scene=True),
               Transform(block_graph, block_graph2, replace_mobject_with_target_in_scene=True))
+    
+    one_points = [[ ax2.c2p(min(nums), 1, 16), ax2.c2p(max(nums), 1, 16)],
+                   [ax2.c2p(min(nums), 1, 1), ax2.c2p(max(nums), 1, 1)]]
+
+    one_surf = Surface(lambda u, v, points=one_points: interp(u,v,points),
+                       u_range=(0, 1),
+                       v_range=(0, 1),
+                       resolution=(16, 16), 
+                       checkerboard_colors=False,
+                       fill_color=GREEN,
+                       fill_opacity=0.5)
 
     with self.voiceover(text="""There is a wonderfull blogpost by Lei Mao that profiled the different usecases for constant memory
                         to show when to use it and when not to""") as trk:
