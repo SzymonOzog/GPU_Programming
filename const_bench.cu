@@ -2,19 +2,20 @@
 #include <iostream>
 #include <cassert>
 
-#define BLOCK_SIZE 1024 
-#define CONST_SIZE 16384 
-#define BENCH_STEPS 4000
-#define TIMINGS 15
+#define BLOCK_SIZE 1024
+#define CONST_SIZE 16384
+#define BENCH_STEPS 1000
+#define TIMINGS 14
 #define START 10
- 
+#define ACCESSES 10
+
 #define access (threadIdx.x * dist) % CONST_SIZE
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
-   if (code != cudaSuccess) 
+   if (code != cudaSuccess)
    {
       fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
       if (abort) exit(code);
@@ -40,9 +41,12 @@ __global__ void add(int n , float* a, float* b, float* c, int dist)
 {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   int y = access;
-  if (i < n)
+  if (i < n-ACCESSES)
   {
-    c[i] = a[i] + b[y];
+    for(int x = 0; x<ACCESSES; x++)
+    {
+      c[i] = a[i] + b[y+x];
+    }
   }
 }
 
@@ -50,9 +54,12 @@ __global__ void add_const(int n , float* a, float* c, int dist)
 {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   int y = access;
-  if (i < n)
+  if (i < n-ACCESSES)
   {
-    c[i] = a[i] + c_mem[y];
+    for(int x = 0; x<ACCESSES; x++)
+    {
+      c[i] = a[i] + c_mem[y+x];
+    }
   }
 }
 
@@ -78,7 +85,7 @@ int main()
   cudaMemcpyToSymbol(c_mem, cmemset, CONST_SIZE*sizeof(float));
   cudaMemset(d_d, 1, max_N*sizeof(float));
 
-  for (int distance = 0; distance<17; distance++)
+  for (int distance = 1; distance<17; distance++)
   {
     for (int p = START; p<START+TIMINGS; p++)
     {
@@ -154,3 +161,4 @@ int main()
   cudaFree(d_d);
   return 0;
 }
+
