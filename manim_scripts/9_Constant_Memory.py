@@ -197,6 +197,89 @@ class ConstantMemory(VoiceoverScene):
     with self.voiceover(text="""And the second one is a double edged sword""") as trk:
       pass
 
+
+    ratios_by_access = [[0.899, 0.870, 0.856, 0.883, 0.843, 0.834, 0.846, 0.803, 0.828, 0.833, ],
+                       [0.956, 0.952, 0.901, 0.862, 0.896, 0.842, 0.835, 0.826, 0.823, 0.835, ],
+                       [0.943, 0.902, 0.892, 0.895, 0.861, 0.870, 0.782, 0.863, 0.844, 0.854, ],
+                       [0.932, 0.974, 0.947, 0.937, 0.942, 0.987, 0.914, 0.954, 0.952, 0.933, ],
+                       [1.009, 1.048, 1.005, 1.059, 1.064, 1.139, 1.022, 1.081, 1.069, 1.059, ],
+                       [1.083, 1.129, 1.174, 1.187, 1.193, 1.261, 1.164, 1.215, 1.189, 1.174, ],
+                       [1.160, 1.213, 1.272, 1.323, 1.344, 1.433, 1.318, 1.372, 1.324, 1.308, ],
+                       [1.186, 1.312, 1.366, 1.462, 1.449, 1.579, 1.457, 1.473, 1.446, 1.424, ],
+                       [1.254, 1.362, 1.500, 1.585, 1.537, 1.707, 1.600, 1.602, 1.551, 1.542, ],
+                       [1.291, 1.311, 1.553, 1.692, 1.773, 1.775, 1.749, 1.737, 1.711, 1.705, ]]
+    rng = list(range(15, 25))
+    nums = [2**x for x in rng]
+
+    ax = Axes(
+        x_range=[rng[0], rng[-1], 2],
+        y_range=[0.7, 1.5, 0.1],
+        x_axis_config={"scaling": LogBase(2)},
+        axis_config={"include_numbers": False}).scale(0.9)
+
+
+    one_access_graph = ax.plot_line_graph(
+        x_values=nums,
+        y_values=ratios_by_access[0],
+        line_color=BLUE,
+        add_vertex_dots=False
+    )
+    self.play(Create(ax))
+    self.play(Create(one_access_graph))
+
+    ax2 = ThreeDAxes(
+        x_range=[rng[0], rng[-1], 2],
+        y_range=[0.7, 2, 0.2],
+        z_range=[-16, 0, 2],
+        x_axis_config={"scaling": LogBase(2), "include_numbers": True},
+        axis_config={"include_numbers": True, "include_tip": False})
+    ax2.scale(0.6)
+    ax2.rotate(radians(-25), axis=UP)
+    ax2.rotate(radians(15), axis=RIGHT)
+    
+    def interp(u, v, r=ratios_by_access):
+      ul, ur = math.floor(u), math.ceil(u)
+      vl, vr = math.floor(v), math.ceil(v)
+      alpha = u-ul
+      start = r[vl][ul] * (1-alpha) + r[vl][ur] * alpha
+      end = r[vr][ul] * (1-alpha) + r[vr][ur] * alpha
+      alpha = v-vl
+      ret = start * (1-alpha) + end*alpha
+      return ret
+
+    points = []
+    for j, ratio in enumerate(ratios_by_access):
+      p = []
+      for i, num in enumerate(nums[:-1]):
+        p.append(ax2.c2p(num, ratio[i], -j))
+      points.append(p)
+
+    multiple_access_graph = Surface(lambda u, v, points=points: interp(u,v,points),
+                           u_range=(0,len(points[0])-1),
+                           v_range=(0,len(points)-1),
+                           fill_color=BLUE,
+                           stroke_color=BLUE,
+                           stroke_width=4,
+                           fill_opacity=0.5,
+                           stroke_opacity=0,
+                           resolution=(16,16), 
+                           checkerboard_colors=None)
+
+    self.play(Transform(ax, ax2, replace_mobject_with_target_in_scene=True),
+              Transform(one_access_graph, multiple_access_graph, replace_mobject_with_target_in_scene=True))
+    
+    one_points = [[ax2.c2p(min(nums), 1, -16), ax2.c2p(max(nums), 1, -16)],
+                   [ax2.c2p(min(nums), 1, 0), ax2.c2p(max(nums), 1, 0)]]
+
+    one_surf = Surface(lambda u, v, points=one_points: interp(u,v,points),
+                       u_range=(0, 1),
+                       v_range=(0, 1),
+                       resolution=(16, 16), 
+                       checkerboard_colors=False,
+                       fill_color=GREEN,
+                       fill_opacity=0.5)
+    self.play(Create(one_surf))
+
     ratios = [[0.898, 0.936, 0.855, 0.722, 0.890, 0.871, 0.861, 0.870, 0.878, 0.869, ],
               [3.333, 3.611, 4.627, 5.473, 5.889, 6.397, 6.574, 6.616, 6.523, 6.388, ],
               [3.351, 4.353, 5.549, 6.166, 6.698, 7.109, 7.175, 7.093, 7.046, 6.915, ],
@@ -215,17 +298,7 @@ class ConstantMemory(VoiceoverScene):
               [11.166, 13.586, 14.967, 16.140, 18.034, 18.246, 18.420, 18.412, 18.508, 18.566, ],
               [10.541, 12.836, 14.552, 15.821, 16.914, 17.017, 17.081, 16.773, 16.730, 16.680, ]]
 
-    ratios_by_acces = [[0.899, 0.570, 0.856, 0.883, 0.843, 0.834, 0.846, 0.803, 0.828, 0.833, ],
-                       [0.956, 0.952, 0.901, 0.862, 0.896, 0.842, 0.835, 0.826, 0.823, 0.835, ],
-                       [0.943, 0.902, 0.892, 0.895, 0.861, 0.870, 0.782, 0.863, 0.844, 0.854, ],
-                       [0.932, 0.974, 0.947, 0.937, 0.942, 0.987, 0.914, 0.954, 0.952, 0.933, ],
-                       [1.009, 1.048, 1.005, 1.059, 1.064, 1.139, 1.022, 1.081, 1.069, 1.059, ],
-                       [1.083, 1.129, 1.174, 1.187, 1.193, 1.261, 1.164, 1.215, 1.189, 1.174, ],
-                       [1.160, 1.213, 1.272, 1.323, 1.344, 1.433, 1.318, 1.372, 1.324, 1.308, ],
-                       [1.186, 1.312, 1.366, 1.462, 1.449, 1.579, 1.457, 1.473, 1.446, 1.424, ],
-                       [1.254, 1.362, 1.500, 1.585, 1.537, 1.707, 1.600, 1.602, 1.551, 1.542, ],
-                       [1.291, 1.311, 1.553, 1.692, 1.773, 1.775, 1.749, 1.737, 1.711, 1.705, ]]
-    rng = list(range(10, 25))
+    rng = list(range(15, 25))
     nums = [2**x for x in rng]
 
     ax = Axes(
@@ -250,16 +323,6 @@ class ConstantMemory(VoiceoverScene):
         z_range=[0,16,2],
         x_axis_config={"scaling": LogBase(2)},
         ).scale(0.5)
-    
-    def interp(u, v, r=ratios):
-      ul, ur = math.floor(u), math.ceil(u)
-      vl, vr = math.floor(v), math.ceil(v)
-      alpha = u-ul
-      start = r[vl][ul] * (1-alpha) + r[vl][ur] * alpha
-      end = r[vr][ul] * (1-alpha) + r[vr][ur] * alpha
-      alpha = v-vl
-      ret = start * (1-alpha) + end*alpha
-      return ret
 
     points = []
     for j, ratio in enumerate(ratios):
