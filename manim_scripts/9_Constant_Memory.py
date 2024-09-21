@@ -6,6 +6,7 @@ from manim_voiceover.services.gtts import GTTSService
 import numpy as np
 import random
 import math
+from math import radians
 
 
 class ConstantMemory(VoiceoverScene):
