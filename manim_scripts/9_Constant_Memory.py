@@ -197,7 +197,8 @@ class ConstantMemory(VoiceoverScene):
 
     with self.voiceover(text="""And the second one is a double edged sword""") as trk:
       pass
-
+    
+    self.play(*[FadeOut(x) for x in self.mobjects])
 
     ratios_by_access = [[0.899, 0.870, 0.856, 0.883, 0.843, 0.834, 0.846, 0.803, 0.828, 0.833, ],
                        [0.956, 0.952, 0.901, 0.862, 0.896, 0.842, 0.835, 0.826, 0.823, 0.835, ],
