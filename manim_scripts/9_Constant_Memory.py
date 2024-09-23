@@ -280,6 +280,28 @@ class ConstantMemory(VoiceoverScene):
                        fill_color=GREEN,
                        fill_opacity=0.5)
     self.play(Create(one_surf))
+    mean_r = np.mean(ratios_by_access, axis=1)
+    mean_graph = ax2.plot_line_graph(np.ones(mean_r.shape) * nums[0], mean_r, list([-x for x in range(1, 16)]), line_color=BLUE, add_vertex_dots=False)
+    one_graph = ax2.plot_line_graph([nums[0], nums[0]], [1, 1], [0, -16], line_color=GREEN, add_vertex_dots=False)
+    self.play(Transform(multiple_access_graph, mean_graph, replace_mobject_with_target_in_scene=True),
+              Transform(one_surf, one_graph, replace_mobject_with_target_in_scene=True),
+              ax2.get_x_axis().animate.scale(0.00001).move_to(ax2.c2p(nums[0], 0.7, 0)))
+
+    ax3 = Axes(
+        x_range=[1, 11, 1],
+        y_range=[0.7, 2, 0.2],
+        axis_config={"include_numbers": True}).scale(0.8)
+
+    mean_graph2 = ax3.plot_line_graph(list(range(1, 11)), mean_r, line_color=BLUE, add_vertex_dots=False)
+    one_graph2 = ax3.plot_line_graph([1, 10], [1, 1], line_color=GREEN, add_vertex_dots=False)
+    self.play(Transform(ax2.get_y_axis(), ax3.get_y_axis(), replace_mobject_with_target_in_scene=True),
+              Transform(ax2.get_z_axis(), ax3.get_x_axis(), replace_mobject_with_target_in_scene=True),
+              Transform(mean_graph, mean_graph2, replace_mobject_with_target_in_scene=True),
+              Transform(one_graph, one_graph2, replace_mobject_with_target_in_scene=True))
+
+    x_l = ax3.get_x_axis_label("\\frac{Accesses}{Warp}")
+    y_l = ax3.get_y_axis_label("\\frac{Const}{Global}")
+    self.play(Write(x_l), Write(y_l))
 
     ratios = [[0.898, 0.936, 0.855, 0.722, 0.890, 0.871, 0.861, 0.870, 0.878, 0.869, ],
               [3.333, 3.611, 4.627, 5.473, 5.889, 6.397, 6.574, 6.616, 6.523, 6.388, ],
@@ -353,6 +375,7 @@ class ConstantMemory(VoiceoverScene):
                        fill_color=GREEN,
                        fill_opacity=0.5)
 
+    return
     with self.voiceover(text="""There is a wonderfull blogpost by Lei Mao that profiled the different usecases for constant memory
                         to show when to use it and when not to""") as trk:
       pass
