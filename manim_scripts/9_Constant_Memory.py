@@ -304,8 +304,7 @@ class ConstantMemory(VoiceoverScene):
     y_l = ax3.get_y_axis_label("\\frac{Const}{Global}")
     self.play(Write(x_l), Write(y_l))
 
-    ratios = [[0.898, 0.936, 0.855, 0.722, 0.890, 0.871, 0.861, 0.870, 0.878, 0.869, ],
-              [3.333, 3.611, 4.627, 5.473, 5.889, 6.397, 6.574, 6.616, 6.523, 6.388, ],
+    ratios = [[3.333, 3.611, 4.627, 5.473, 5.889, 6.397, 6.574, 6.616, 6.523, 6.388, ],
               [3.351, 4.353, 5.549, 6.166, 6.698, 7.109, 7.175, 7.093, 7.046, 6.915, ],
               [3.460, 4.449, 5.961, 6.765, 7.545, 8.242, 8.165, 8.057, 7.978, 7.797, ],
               [4.192, 5.361, 6.408, 7.108, 7.608, 7.783, 7.776, 7.772, 7.650, 7.573, ],
@@ -321,57 +320,81 @@ class ConstantMemory(VoiceoverScene):
               [10.885, 13.043, 15.410, 17.506, 19.317, 19.537, 19.680, 19.817, 19.424, 19.467, ],
               [11.166, 13.586, 14.967, 16.140, 18.034, 18.246, 18.420, 18.412, 18.508, 18.566, ],
               [10.541, 12.836, 14.552, 15.821, 16.914, 17.017, 17.081, 16.773, 16.730, 16.680, ]]
-
     rng = list(range(15, 25))
     nums = [2**x for x in rng]
 
     ax = Axes(
         x_range=[rng[0], rng[-1], 2],
-        y_range=[0.7, 1.5, 0.1],
+        y_range=[1, 7, 1],
         x_axis_config={"scaling": LogBase(2)},
         axis_config={"include_numbers": False}).scale(0.9)
 
 
-    block_graph = ax.plot_line_graph(
+    one_access_graph = ax.plot_line_graph(
         x_values=nums,
         y_values=ratios[0],
         line_color=BLUE,
         add_vertex_dots=False
     )
     self.play(Create(ax))
-    self.play(Create(block_graph))
+    self.play(Create(one_access_graph))
 
     ax2 = ThreeDAxes(
         x_range=[rng[0], rng[-1], 2],
-        y_range=[0,16,2],
-        z_range=[0,16,2],
-        x_axis_config={"scaling": LogBase(2)},
-        ).scale(0.5)
+        y_range=[1, 22, 2],
+        z_range=[-16, 0, 2],
+        x_axis_config={"scaling": LogBase(2), "include_numbers": True},
+        axis_config={"include_numbers": True, "include_tip": False})
+    ax2.scale(0.6)
+    ax2.rotate(radians(-25), axis=UP)
+    ax2.rotate(radians(15), axis=RIGHT)
+    
+    def interp(u, v, r=ratios):
+      ul, ur = math.floor(u), math.ceil(u)
+      vl, vr = math.floor(v), math.ceil(v)
+      alpha = u-ul
+      start = r[vl][ul] * (1-alpha) + r[vl][ur] * alpha
+      end = r[vr][ul] * (1-alpha) + r[vr][ur] * alpha
+      alpha = v-vl
+      ret = start * (1-alpha) + end*alpha
+      return ret
 
     points = []
     for j, ratio in enumerate(ratios):
       p = []
       for i, num in enumerate(nums[:-1]):
-        p.append(ax2.c2p(num, ratio[i], j))
+        p.append(ax2.c2p(num, ratio[i], -j))
       points.append(p)
 
-    block_graph2 = Surface(lambda u, v, points=points: interp(u,v,points),
+    multiple_access_graph = Surface(lambda u, v, points=points: interp(u,v,points),
                            u_range=(0,len(points[0])-1),
                            v_range=(0,len(points)-1),
+                           fill_color=BLUE,
+                           stroke_color=BLUE,
+                           stroke_width=4,
+                           fill_opacity=0.5,
+                           stroke_opacity=0,
                            resolution=(16,16), 
-                           checkerboard_colors=False)
-
+                           checkerboard_colors=None)
 
     self.play(Transform(ax, ax2, replace_mobject_with_target_in_scene=True),
-              Transform(block_graph, block_graph2, replace_mobject_with_target_in_scene=True))
+              Transform(one_access_graph, multiple_access_graph, replace_mobject_with_target_in_scene=True))
     
-    one_points = [[ ax2.c2p(min(nums), 1, 16), ax2.c2p(max(nums), 1, 16)],
-                   [ax2.c2p(min(nums), 1, 1), ax2.c2p(max(nums), 1, 1)]]
+    mean_r = np.mean(ratios, axis=1)
+    mean_graph = ax2.plot_line_graph(np.ones(mean_r.shape) * nums[0], mean_r, list([-x for x in range(1, 16)]), line_color=BLUE, add_vertex_dots=False)
+    self.play(Transform(multiple_access_graph, mean_graph, replace_mobject_with_target_in_scene=True),
+              ax2.get_x_axis().animate.scale(0.00001).move_to(ax2.c2p(nums[0], 0.7, 0)))
 
-    one_surf = Surface(lambda u, v, points=one_points: interp(u,v,points),
-                       u_range=(0, 1),
-                       v_range=(0, 1),
-                       resolution=(16, 16), 
-                       checkerboard_colors=False,
-                       fill_color=GREEN,
-                       fill_opacity=0.5)
+    ax3 = Axes(
+        x_range=[1, 17, 1],
+        y_range=[1, 22, 2],
+        axis_config={"include_numbers": True}).scale(0.8)
+
+    mean_graph2 = ax3.plot_line_graph(list(range(1, 17)), mean_r, line_color=BLUE, add_vertex_dots=False)
+    self.play(Transform(ax2.get_y_axis(), ax3.get_y_axis(), replace_mobject_with_target_in_scene=True),
+              Transform(ax2.get_z_axis(), ax3.get_x_axis(), replace_mobject_with_target_in_scene=True),
+              Transform(mean_graph, mean_graph2, replace_mobject_with_target_in_scene=True))
+
+    x_l = ax3.get_x_axis_label("Distance")
+    y_l = ax3.get_y_axis_label("\\frac{Const}{Global}")
+    self.play(Write(x_l), Write(y_l))
