@@ -195,6 +195,50 @@ class ConstantMemory(VoiceoverScene):
                         we are actually freeing space in our L1 for other variables""") as trk:
       self.play(Indicate(VGroup(cc, cc_t)))
 
+    fpcs = []
+    side = 0.8
+    buff = 0.08
+    for i in range(4):
+      for j in range(8):
+        fpc = Rectangle(width=side, height=side, color=GREEN_C, fill_color=GREEN_C, fill_opacity=0.5, stroke_width=1)
+        if j == 0:
+          if i == 0:
+            fpc.move_to(ps[0], aligned_edge=UL)
+          else:
+            fpc.next_to(fpcs[(i-1)*8], DOWN, aligned_edge=LEFT, buff=buff)
+        else:
+          fpc.next_to(fpcs[-1], RIGHT, buff=buff)
+        fpcs.append(fpc)
+    fpc_t = Text("Cores", font_size=72, color=GREEN_C).move_to(VGroup(*fpcs))
+
+    self.play(LaggedStart(*[Create(x) for x in texs + ps + [l1, cc, rt]], *[Write(t) for t in tex_ts + p_ts + [l1_t, cc_t, rt_t]]))
+
+    cache = Rectangle(width=7, height=1, color=GOLD, fill_color=GOLD, fill_opacity=0.5).next_to(VGroup(*fpcs), DOWN)
+    cache_t = Text("Cache", color=GOLD, font_size=40).move_to(cache)
+
+    dram = Rectangle(width=7, height=1, color=RED, fill_color=RED, fill_opacity=0.5).next_to(cache, DOWN)
+    dram_t = Text("DRAM", color=RED, font_size=40).move_to(dram)
+    self.play(Transform(VGroup(cc, l1), cache, replace_mobject_with_target_in_scene=True),
+              Transform(VGroup(l1_t, cc_t), cache_t, replace_mobject_with_target_in_scene=True),
+              Transform(VGroup(*ps), VGroup(*fpcs), replace_mobject_with_target_in_scene=True),
+              Transform(VGroup(*p_ts), fpc_t, replace_mobject_with_target_in_scene=True),
+              Transform(VGroup(*texs, rt), dram, replace_mobject_with_target_in_scene=True),
+              Transform(VGroup(*tex_ts, rt_t), dram_t, replace_mobject_with_target_in_scene=True))
+
+    mem = Rectangle(width=side, height=side, color=RED, fill_color=RED, fill_opacity=0.5).move_to(cache, aligned_edge=UL).shift(0.1*DR)
+    self.play(FadeIn(mem, target_position=dram))
+    mem_broadcast = [mem.copy().move_to(x) for x in fpcs]
+    self.play(*[FadeIn(m, target_position=mem) for m in mem_broadcast])
+    self.wait(1)
+
+    mem2_broadcast = [mem.copy().move_to(x) for x in fpcs]
+    self.play(*[FadeIn(m, target_position=mem) for m in mem2_broadcast])
+
+    mem2 = Rectangle(width=side, height=side, color=RED, fill_color=RED, fill_opacity=0.5).next_to(mem, RIGHT, buff=0.1)
+    self.play(FadeIn(mem2, target_position=dram))
+    mem2_broadcast = [mem2.copy().move_to(x) for x in fpcs]
+    self.play(*[FadeIn(m, target_position=mem2) for m in mem2_broadcast])
+
     with self.voiceover(text="""And the second one is a double edged sword""") as trk:
       pass
     
