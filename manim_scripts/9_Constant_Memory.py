@@ -199,6 +199,51 @@ class ConstantMemory(VoiceoverScene):
       pass
     
     self.play(*[FadeOut(x) for x in self.mobjects])
+    code_vars = """#define CONST_SIZE 16384
+#define ACCESSES 10
+__constant__ float c_mem[CONST_SIZE];
+"""
+
+    code_const = """__global__ void add_const
+    (int n , float* a, float* c, int accesses)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = threadIdx.x % accesses;
+    if (i < n-ACCESSES)
+    {
+      for(int x = 0; x<ACCESSES; x++)
+      {
+        c[i] = a[i] + c_mem[j+x];
+        }
+      }
+    } """
+
+    code_global = """__global__ void add
+    (int n , float* a, float* b, float* c, int accesses)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = threadIdx.x % accesses;
+    if (i < n-ACCESSES)
+    {
+      for(int x = 0; x<ACCESSES; x++)
+      {
+        c[i] = a[i] + b[j+x];
+        }
+      }
+    }"""
+
+    code_obj = Code(code=code_const, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=1, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    code_obj2 = Code(code=code_vars, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).scale(1.2).next_to(code_obj, UP)
+    code_obj2.code[:2].set_color(GREEN_E)
+    code_obj3 = Code(code=code_global, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2).to_edge(RIGHT)
+    code_obj3.code = remove_invisible_chars(code_obj3.code)
+    self.play(Create(code_obj))
+    self.play(Create(code_obj2))
+    self.play(code_obj.animate.to_edge(LEFT))
+    self.play(Create(code_obj3))
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
 
     ratios_by_access = [[0.899, 0.870, 0.856, 0.883, 0.843, 0.834, 0.846, 0.803, 0.828, 0.833, ],
                        [0.956, 0.952, 0.901, 0.862, 0.896, 0.842, 0.835, 0.826, 0.823, 0.835, ],
@@ -304,7 +349,44 @@ class ConstantMemory(VoiceoverScene):
     y_l = ax3.get_y_axis_label("\\frac{Const}{Global}")
     self.play(Write(x_l), Write(y_l))
 
-    ratios = [[3.333, 3.611, 4.627, 5.473, 5.889, 6.397, 6.574, 6.616, 6.523, 6.388, ],
+    self.play(*[FadeIn(x) for x in [code_obj, code_obj2, code_obj3]])
+
+    code_const = """__global__ void add_const
+    (int n , float* a, float* c, int distance)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int j = (threadIdx.x * dist) % CONST_SIZE 
+  if (i < n-ACCESSES)
+  {
+    for(int x = 0; x<ACCESSES; x++)
+    {
+      c[i] = a[i] + c_mem[j+x];
+    }
+  }
+} """
+    code_global = """__global__ void add
+    (int n , float* a, float* b, float* c, int distance)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int j = (threadIdx.x * dist) % CONST_SIZE 
+  if (i < n-ACCESSES)
+  {
+    for(int x = 0; x<ACCESSES; x++)
+    {
+      c[i] = a[i] + b[j+x];
+    }
+  }
+}"""
+    code_obj_t = Code(code=code_const, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=1, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2).to_edge(LEFT)
+    code_obj_t.code = remove_invisible_chars(code_obj.code)
+    code_obj3_t = Code(code=code_global, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2).to_edge(RIGHT)
+    code_obj3_t.code = remove_invisible_chars(code_obj3.code)
+    self.play(Transform(code_obj, code_obj_t), Transform(code_obj3, code_obj3_t))
+    self.play(*[FadeOut(x) for x in self.mobjects])
+
+
+    ratios = [[0.898, 0.936, 0.855, 0.722, 0.890, 0.871, 0.861, 0.870, 0.878, 0.869, ],
+              [3.333, 3.611, 4.627, 5.473, 5.889, 6.397, 6.574, 6.616, 6.523, 6.388, ],
               [3.351, 4.353, 5.549, 6.166, 6.698, 7.109, 7.175, 7.093, 7.046, 6.915, ],
               [3.460, 4.449, 5.961, 6.765, 7.545, 8.242, 8.165, 8.057, 7.978, 7.797, ],
               [4.192, 5.361, 6.408, 7.108, 7.608, 7.783, 7.776, 7.772, 7.650, 7.573, ],
@@ -320,81 +402,236 @@ class ConstantMemory(VoiceoverScene):
               [10.885, 13.043, 15.410, 17.506, 19.317, 19.537, 19.680, 19.817, 19.424, 19.467, ],
               [11.166, 13.586, 14.967, 16.140, 18.034, 18.246, 18.420, 18.412, 18.508, 18.566, ],
               [10.541, 12.836, 14.552, 15.821, 16.914, 17.017, 17.081, 16.773, 16.730, 16.680, ]]
+
     rng = list(range(15, 25))
     nums = [2**x for x in rng]
 
     ax = Axes(
         x_range=[rng[0], rng[-1], 2],
-        y_range=[1, 7, 1],
+        y_range=[0.7, 1.5, 0.1],
         x_axis_config={"scaling": LogBase(2)},
         axis_config={"include_numbers": False}).scale(0.9)
 
 
-    one_access_graph = ax.plot_line_graph(
+    block_graph = ax.plot_line_graph(
         x_values=nums,
         y_values=ratios[0],
         line_color=BLUE,
         add_vertex_dots=False
     )
     self.play(Create(ax))
-    self.play(Create(one_access_graph))
+    self.play(Create(block_graph))
 
     ax2 = ThreeDAxes(
         x_range=[rng[0], rng[-1], 2],
-        y_range=[1, 22, 2],
-        z_range=[-16, 0, 2],
-        x_axis_config={"scaling": LogBase(2), "include_numbers": True},
-        axis_config={"include_numbers": True, "include_tip": False})
-    ax2.scale(0.6)
-    ax2.rotate(radians(-25), axis=UP)
-    ax2.rotate(radians(15), axis=RIGHT)
-    
-    def interp(u, v, r=ratios):
-      ul, ur = math.floor(u), math.ceil(u)
-      vl, vr = math.floor(v), math.ceil(v)
-      alpha = u-ul
-      start = r[vl][ul] * (1-alpha) + r[vl][ur] * alpha
-      end = r[vr][ul] * (1-alpha) + r[vr][ur] * alpha
-      alpha = v-vl
-      ret = start * (1-alpha) + end*alpha
-      return ret
+        y_range=[0,16,2],
+        z_range=[0,16,2],
+        x_axis_config={"scaling": LogBase(2)},
+        ).scale(0.5)
 
     points = []
     for j, ratio in enumerate(ratios):
       p = []
       for i, num in enumerate(nums[:-1]):
-        p.append(ax2.c2p(num, ratio[i], -j))
+        p.append(ax2.c2p(num, ratio[i], j))
       points.append(p)
 
-    multiple_access_graph = Surface(lambda u, v, points=points: interp(u,v,points),
+    block_graph2 = Surface(lambda u, v, points=points: interp(u,v,points),
                            u_range=(0,len(points[0])-1),
                            v_range=(0,len(points)-1),
-                           fill_color=BLUE,
-                           stroke_color=BLUE,
-                           stroke_width=4,
-                           fill_opacity=0.5,
-                           stroke_opacity=0,
                            resolution=(16,16), 
-                           checkerboard_colors=None)
+                           checkerboard_colors=False)
+
 
     self.play(Transform(ax, ax2, replace_mobject_with_target_in_scene=True),
-              Transform(one_access_graph, multiple_access_graph, replace_mobject_with_target_in_scene=True))
+              Transform(block_graph, block_graph2, replace_mobject_with_target_in_scene=True))
     
-    mean_r = np.mean(ratios, axis=1)
-    mean_graph = ax2.plot_line_graph(np.ones(mean_r.shape) * nums[0], mean_r, list([-x for x in range(1, 16)]), line_color=BLUE, add_vertex_dots=False)
-    self.play(Transform(multiple_access_graph, mean_graph, replace_mobject_with_target_in_scene=True),
-              ax2.get_x_axis().animate.scale(0.00001).move_to(ax2.c2p(nums[0], 0.7, 0)))
+    one_points = [[ ax2.c2p(min(nums), 1, 16), ax2.c2p(max(nums), 1, 16)],
+                   [ax2.c2p(min(nums), 1, 1), ax2.c2p(max(nums), 1, 1)]]
 
-    ax3 = Axes(
-        x_range=[1, 17, 1],
-        y_range=[1, 22, 2],
-        axis_config={"include_numbers": True}).scale(0.8)
+    one_surf = Surface(lambda u, v, points=one_points: interp(u,v,points),
+                       u_range=(0, 1),
+                       v_range=(0, 1),
+                       resolution=(16, 16), 
+                       checkerboard_colors=False,
+                       fill_color=GREEN,
+                       fill_opacity=0.5)
 
-    mean_graph2 = ax3.plot_line_graph(list(range(1, 17)), mean_r, line_color=BLUE, add_vertex_dots=False)
-    self.play(Transform(ax2.get_y_axis(), ax3.get_y_axis(), replace_mobject_with_target_in_scene=True),
-              Transform(ax2.get_z_axis(), ax3.get_x_axis(), replace_mobject_with_target_in_scene=True),
-              Transform(mean_graph, mean_graph2, replace_mobject_with_target_in_scene=True))
+    return
+    with self.voiceover(text="""There is a wonderfull blogpost by Lei Mao that profiled the different usecases for constant memory
+                        to show when to use it and when not to""") as trk:
+      pass
 
-    x_l = ax3.get_x_axis_label("Distance")
-    y_l = ax3.get_y_axis_label("\\frac{Const}{Global}")
-    self.play(Write(x_l), Write(y_l))
+    code_vars = """#define CONST_SIZE 16384
+#define ACCESSES 10
+__constant__ float c_mem[CONST_SIZE];
+"""
+
+    code_const = """__global__ void add_const(int n , float* a, float* c, int accesses)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int j = threadIdx.x % accesses;
+  if (i < n-ACCESSES)
+  {
+    for(int x = 0; x<ACCESSES; x++)
+    {
+      c[i] = a[i] + c_mem[j+x];
+    }
+  }
+} """
+    code_global = """__global__ void add(int n , float* a, float* b, float* c, int accesses)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int j = threadIdx.x % accesses;
+  if (i < n-ACCESSES)
+  {
+    for(int x = 0; x<ACCESSES; x++)
+    {
+      c[i] = a[i] + b[j+x];
+    }
+  }
+}"""
+    code_obj = Code(code=code_const, tab_width=2, language="c", font_size=12, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    code_obj2 = Code(code=code_vars, tab_width=2, language="c", font_size=12, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).next_to(code_obj, UP)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+    with self.voiceover(text="""It checks the timings for three different access patterns""") as trk:
+      self.play(Create(code_obj))
+      self.play(Create(code_obj2))
+
+    hl = SurroundingRectangle(code_obj.code[7:10], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""One where each block acesses only one memory address""") as trk:
+      self.play(Create(hl))
+
+    hl_t = SurroundingRectangle(code_obj.code[10:13], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""One where each thread in a block accessess a consecutive memory address""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[13:16], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And the last one where each thread accesses a random memory address""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    hl_t = SurroundingRectangle(code_obj.code[20], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Finally, we add the number to some input vector residing in global memory""") as trk:
+      self.play(Transform(hl, hl_t))
+
+    with self.voiceover(text="""We run the experiment twice """) as trk:
+      self.play(Uncreate(hl), code_obj.animate.to_edge(LEFT))
+      code_obj3 = Code(code=code_global, tab_width=2, language="c", font_size=12, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).to_edge(RIGHT)
+      code_obj3.code = remove_invisible_chars(code_obj3.code)
+      self.play(Create(code_obj3))
+
+    hl = SurroundingRectangle(code_obj2.code[1], BLUE, fill_color=BLUE, buff=0.03, stroke_width=2, fill_opacity=0.3)
+    hl2 = SurroundingRectangle(code_obj.code[20][-20:], BLUE, fill_color=BLUE, buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""Once when the second vector resides in constant memory""") as trk:
+      self.play(Create(hl), Create(hl2))
+
+    hl3 = SurroundingRectangle(code_obj3.code[20][-14:], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    hl4 = SurroundingRectangle(code_obj3.code[0][-13:-1], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""And once when it resides in the global memory""") as trk:
+      self.play(Create(hl3), Create(hl4))
+
+    self.wait(1)
+
+    header = Text("Modifications", font_size=72).shift(UP)
+    modifications = BulletedList("Change datatype to float",  "Clear L2 cache", "Multiple input sizes", font_size=48).next_to(header, DOWN)
+    with self.voiceover(text="""Inspired by this I expanded the work by changing the datatype from int to float as GPU's 
+                        are optimized for floating point operations""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+      self.play(Write(header))
+      self.play(Write(modifications[0]))
+
+    with self.voiceover(text="""Betweel the subsequent runs of the benchmark I'm clearing the L2 cache so that it doesn't influence
+                        the outcome""") as trk:
+      self.play(Write(modifications[1]))
+
+    with self.voiceover(text="""And I'm running the benchmarks for multiple input sizes""") as trk:
+      self.play(Write(modifications[2]))
+
+    ratio_block = [0.958, 0.914, 0.979, 0.938, 1.007, 0.973, 0.941, 0.975, 0.935, 0.946, 0.949, 0.954, 0.937, 0.968, 0.954, ]
+    ratio_thread = [1.355, 1.392, 1.334, 1.304, 1.239, 1.176, 1.055, 1.008, 1.001, 1.043, 1.024, 1.010, 0.967, 0.988, 0.978, ]
+    ratio_random = [5.994, 4.811, 4.009, 3.992, 3.620, 2.586, 2.079, 2.199, 2.861, 3.909, 5.022, 5.748, 6.258, 6.666, 6.868, ]
+    rng = list(range(10, 25))
+    nums = [2**x for x in rng]
+
+    ax = Axes(
+        x_range=[rng[0], rng[-1], 2],
+        y_range=[0.7, 1.5, 0.1],
+        x_axis_config={"scaling": LogBase(2)},
+        axis_config={"include_numbers": True}).scale(0.9)
+
+    labels = ax.get_axis_labels(x_label="Input \\, Size", y_label="\\frac{Const}{Global}")
+
+    block_graph = ax.plot_line_graph(
+        x_values=nums,
+        y_values=ratio_block,
+        line_color=BLUE,
+        add_vertex_dots=False
+    )
+
+    
+    with self.voiceover(text="""Let's look at the results of different scenarios for using constant memory""") as trk:
+      self.play(Unwrite(header), *[Unwrite(x) for x in modifications])
+      self.play(Create(ax))
+      self.play(Write(labels))
+    
+    fs = 40
+    title = Text("One access per block", font_size=fs).next_to(ax, UP)
+    with self.voiceover(text="""In case of one access per block <bookmark mark='1'/>
+                        We can see that using constant memory provides us with an advantage of around 5-10% speed increase when compared
+                        with global memory""") as trk:
+      self.play(Write(title))
+      self.wait_until_bookmark("1")
+      self.play(Create(block_graph))
+
+
+    with self.voiceover(text="""When we do one access per thread""") as trk:
+      self.play(Transform(title, Text("One access per thread", font_size=fs).next_to(ax, UP)))
+
+    thread_graph = ax.plot_line_graph(
+        x_values=nums,
+        y_values=ratio_thread,
+        line_color=BLUE,
+        add_vertex_dots=False
+    )
+    with self.voiceover(text="""The results are no longer as clear""") as trk:
+      self.play(Transform(block_graph, thread_graph, replace_mobject_with_target_in_scene=True))
+
+
+    with self.voiceover(text="""For small inputs, constant memory is giving us terrible performance, as loading values from const memory
+                        is initially slower than loading them from global memory""") as trk:
+      pass
+
+    with self.voiceover(text="""But as our input lenght get's bigger and we launch more and more blocks, it starts getting simillar of even slightly
+                        better performance""") as trk:
+      pass
+
+    with self.voiceover(text="""I'm not exactly sure why is this happening, my initial guess is that the first blocks executed take the values inside
+                        our constant cache, and subsequent ones are just comparing reads from cache for global memory vs from constant cache
+                        which starts favoring constant memory""") as trk:
+      pass
+
+    with self.voiceover(text="""But do take this with a grain of salt as it's nothing that I can swear by""") as trk:
+      pass
+
+    with self.voiceover(text="""And the last case will be random access""") as trk:
+      self.play(Transform(title, Text("Random Access", font_size=fs).next_to(ax, UP)))
+
+    ax2 = Axes(
+        x_range=[rng[0], rng[-1], 2],
+        y_range=[1, 8, 1],
+        x_axis_config={"scaling": LogBase(2)},
+        axis_config={"include_numbers": True}).scale(0.9)
+
+    random_graph = ax2.plot_line_graph(
+        x_values=nums,
+        y_values=ratio_random,
+        line_color=BLUE,
+        add_vertex_dots=False
+    )
+
+    with self.voiceover(text="""For this one, constant memory is performing terrible, as the values are read in a random order and
+                        they cannot leaverage our constant cache, resulting in a slow read from constant memory for each access""") as trk:
+      self.play(Transform(thread_graph, random_graph, replace_mobject_with_target_in_scene=True),
+                Transform(ax, ax2))
+    self.wait(1)
