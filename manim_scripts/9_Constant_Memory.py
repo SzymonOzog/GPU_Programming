@@ -195,6 +195,8 @@ class ConstantMemory(VoiceoverScene):
                         we are actually freeing space in our L1 for other variables""") as trk:
       self.play(Indicate(VGroup(cc, cc_t)))
 
+    with self.voiceover(text="""And the second one is not really a benefit - more of a tradeoff""") as trk:
+      pass
     fpcs = []
     side = 0.8
     buff = 0.08
@@ -211,37 +213,47 @@ class ConstantMemory(VoiceoverScene):
         fpcs.append(fpc)
     fpc_t = Text("Cores", font_size=72, color=GREEN_C).move_to(VGroup(*fpcs))
 
-    self.play(LaggedStart(*[Create(x) for x in texs + ps + [l1, cc, rt]], *[Write(t) for t in tex_ts + p_ts + [l1_t, cc_t, rt_t]]))
-
     cache = Rectangle(width=7, height=1, color=GOLD, fill_color=GOLD, fill_opacity=0.5).next_to(VGroup(*fpcs), DOWN)
     cache_t = Text("Cache", color=GOLD, font_size=40).move_to(cache)
 
     dram = Rectangle(width=7, height=1, color=RED, fill_color=RED, fill_opacity=0.5).next_to(cache, DOWN)
     dram_t = Text("DRAM", color=RED, font_size=40).move_to(dram)
-    self.play(Transform(VGroup(cc, l1), cache, replace_mobject_with_target_in_scene=True),
-              Transform(VGroup(l1_t, cc_t), cache_t, replace_mobject_with_target_in_scene=True),
-              Transform(VGroup(*ps), VGroup(*fpcs), replace_mobject_with_target_in_scene=True),
-              Transform(VGroup(*p_ts), fpc_t, replace_mobject_with_target_in_scene=True),
-              Transform(VGroup(*texs, rt), dram, replace_mobject_with_target_in_scene=True),
-              Transform(VGroup(*tex_ts, rt_t), dram_t, replace_mobject_with_target_in_scene=True))
+    with self.voiceover(text="""To explain it we have to look at our simplified architecture again""") as trk:
+      self.wait(1)
+      self.play(Transform(VGroup(cc, l1), cache, replace_mobject_with_target_in_scene=True),
+                Transform(VGroup(l1_t, cc_t), cache_t, replace_mobject_with_target_in_scene=True),
+                Transform(VGroup(*ps), VGroup(*fpcs), replace_mobject_with_target_in_scene=True),
+                Transform(VGroup(*p_ts), fpc_t, replace_mobject_with_target_in_scene=True),
+                Transform(VGroup(*texs, rt), dram, replace_mobject_with_target_in_scene=True),
+                Transform(VGroup(*tex_ts, rt_t), dram_t, replace_mobject_with_target_in_scene=True))
 
     mem = Rectangle(width=side, height=side, color=RED, fill_color=RED, fill_opacity=0.5).move_to(cache, aligned_edge=UL).shift(0.1*DR)
-    self.play(FadeIn(mem, target_position=dram))
     mem_broadcast = [mem.copy().move_to(x) for x in fpcs]
-    self.play(*[FadeIn(m, target_position=mem) for m in mem_broadcast])
+    with self.voiceover(text="""When we load a value from constant memory <bookmark mark='1'/> we broadcast the <bookmark mark='2'/>value across all threads""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(FadeIn(mem, target_position=dram))
+      self.wait_until_bookmark("2")
+      self.play(*[FadeIn(m, target_position=mem) for m in mem_broadcast])
     self.wait(1)
 
-    mem2_broadcast = [mem.copy().move_to(x) for x in fpcs]
-    self.play(*[FadeIn(m, target_position=mem) for m in mem2_broadcast])
-
-    mem2 = Rectangle(width=side, height=side, color=RED, fill_color=RED, fill_opacity=0.5).next_to(mem, RIGHT, buff=0.1)
-    self.play(FadeIn(mem2, target_position=dram))
-    mem2_broadcast = [mem2.copy().move_to(x) for x in fpcs]
-    self.play(*[FadeIn(m, target_position=mem2) for m in mem2_broadcast])
-
-    with self.voiceover(text="""And the second one is a double edged sword""") as trk:
+    with self.voiceover(text="""This works to our advantage when all the threads will use the value""") as trk:
       pass
-    
+
+    with self.voiceover(text="""But if even one thread needs to access a different value from our memory <bookmark mark='1'/>we have to pay the broadcasting cost again""") as trk:
+      self.wait_until_bookmark("1")
+      mem2_broadcast = [mem.copy().move_to(x) for x in fpcs]
+      self.play(*[FadeIn(m, target_position=mem) for m in mem2_broadcast])
+       
+    with self.voiceover(text="""When that memory is adjacent to the memory access that we did in other threads it's probably not that bad
+                        as values in the constant cache are loaded by blocks so we don't have to pay the DRAM access cost""") as trk:
+      pass
+
+    with self.voiceover(text="""But if we were to load a memory address from a different memory region the cost starts growing rapidly""") as trk:
+      mem2 = Rectangle(width=side, height=side, color=RED, fill_color=RED, fill_opacity=0.5).next_to(mem, RIGHT, buff=0.1)
+      self.play(FadeIn(mem2, target_position=dram))
+      mem2_broadcast = [mem2.copy().move_to(x) for x in fpcs]
+      self.play(*[FadeIn(m, target_position=mem2) for m in mem2_broadcast])
+
     self.play(*[FadeOut(x) for x in self.mobjects])
     code_vars = """#define CONST_SIZE 16384
 #define ACCESSES 10
