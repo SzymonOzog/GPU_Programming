@@ -254,7 +254,8 @@ class ConstantMemory(VoiceoverScene):
       mem2_broadcast = [mem2.copy().move_to(x) for x in fpcs]
       self.play(*[FadeIn(m, target_position=mem2) for m in mem2_broadcast])
 
-    self.play(*[FadeOut(x) for x in self.mobjects])
+    with self.voiceover(text="""Let's look at and benchmark an example of this""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
     code_vars = """#define CONST_SIZE 16384
 #define ACCESSES 10
 __constant__ float c_mem[CONST_SIZE];
@@ -294,10 +295,23 @@ __constant__ float c_mem[CONST_SIZE];
     code_obj2.code[:2].set_color(GREEN_E)
     code_obj3 = Code(code=code_global, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2).to_edge(RIGHT)
     code_obj3.code = remove_invisible_chars(code_obj3.code)
-    self.play(Create(code_obj))
-    self.play(Create(code_obj2))
-    self.play(code_obj.animate.to_edge(LEFT))
-    self.play(Create(code_obj3))
+    with self.voiceover(text="""We are going to use a code that uses the maximum amount of constant memory that we can use""") as trk:
+      self.play(Create(code_obj))
+
+    with self.voiceover(text="""And the kernel just adds 2 numbers together, one in global and one in constant memory - and it does that 10 times.
+                        The reason for that is that I've found that one access is too short and tends to give very noisy results""") as trk:
+      self.play(Create(code_obj2))
+
+    
+    hl = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""We are also passing in as a parameter the number of accesses per warp - so when it's one all threads in a warp
+                        use the same memory, if it's two half the threads access the same memory etc...""") as trk:
+      self.play(Create(hl))
+
+    with self.voiceover(text="""And we are going to do the same thing the second time, but this time the second vector is also in global memory""") as trk:
+      self.play(Uncreate(hl))
+      self.play(code_obj.animate.to_edge(LEFT))
+      self.play(Create(code_obj3))
 
     self.play(*[FadeOut(x) for x in self.mobjects])
 
@@ -327,14 +341,22 @@ __constant__ float c_mem[CONST_SIZE];
         line_color=BLUE,
         add_vertex_dots=False
     )
-    self.play(Create(ax))
-    self.play(Create(one_access_graph))
+    with self.voiceover(text="""Let's firs look at the result of doing one access across all threads""") as trk:
+      self.play(Create(ax))
 
+    x_l = ax.get_x_axis_label("N")
+    y_l = ax.get_y_axis_label("\\frac{Const}{Global}")
+    with self.voiceover(text="""As with previous benchmarks, we are checking for different input sizes""") as trk:
+      self.play(Write(x_l), Write(y_l))
+
+    with self.voiceover(text="""And we can see that when all threads in the warp access the same location we are getting about a 15% speed increase over global memory""") as trk:
+      self.play(Create(one_access_graph))
     ax2 = ThreeDAxes(
         x_range=[rng[0], rng[-1], 2],
         y_range=[0.7, 2, 0.2],
         z_range=[-16, 0, 2],
-        x_axis_config={"scaling": LogBase(2), "include_numbers": True},
+        x_axis_config={"scaling": LogBase(2)},
+        z_axis_config={"include_numbers": False},
         axis_config={"include_numbers": True, "include_tip": False})
     ax2.scale(0.6)
     ax2.rotate(radians(-25), axis=UP)
@@ -368,8 +390,9 @@ __constant__ float c_mem[CONST_SIZE];
                            resolution=(16,16), 
                            checkerboard_colors=None)
 
-    self.play(Transform(ax, ax2, replace_mobject_with_target_in_scene=True),
-              Transform(one_access_graph, multiple_access_graph, replace_mobject_with_target_in_scene=True))
+    with self.voiceover(text="""We can now add another dimension to our graph that represents our amount of accesses per warp""") as trk:
+      self.play(Transform(VGroup(ax, x_l, y_l), ax2, replace_mobject_with_target_in_scene=True),
+                Transform(one_access_graph, multiple_access_graph, replace_mobject_with_target_in_scene=True))
     
     one_points = [[ax2.c2p(min(nums), 1, -16), ax2.c2p(max(nums), 1, -16)],
                    [ax2.c2p(min(nums), 1, 0), ax2.c2p(max(nums), 1, 0)]]
@@ -381,14 +404,15 @@ __constant__ float c_mem[CONST_SIZE];
                        checkerboard_colors=False,
                        fill_color=GREEN,
                        fill_opacity=0.5)
-    self.play(Create(one_surf))
+    with self.voiceover(text="""With the green surface showing a 1 to 1 ratio of const to global usage""") as trk:
+      self.play(Create(one_surf))
+
+    with self.voiceover(text="""This graph is getting a bit hard to read and reason about""") as trk:
+      pass
+
     mean_r = np.mean(ratios_by_access, axis=1)
     mean_graph = ax2.plot_line_graph(np.ones(mean_r.shape) * nums[0], mean_r, list([-x for x in range(1, 16)]), line_color=BLUE, add_vertex_dots=False)
     one_graph = ax2.plot_line_graph([nums[0], nums[0]], [1, 1], [0, -16], line_color=GREEN, add_vertex_dots=False)
-    self.play(Transform(multiple_access_graph, mean_graph, replace_mobject_with_target_in_scene=True),
-              Transform(one_surf, one_graph, replace_mobject_with_target_in_scene=True),
-              ax2.get_x_axis().animate.scale(0.00001).move_to(ax2.c2p(nums[0], 0.7, 0)))
-
     ax3 = Axes(
         x_range=[1, 11, 1],
         y_range=[0.7, 2, 0.2],
@@ -396,16 +420,25 @@ __constant__ float c_mem[CONST_SIZE];
 
     mean_graph2 = ax3.plot_line_graph(list(range(1, 11)), mean_r, line_color=BLUE, add_vertex_dots=False)
     one_graph2 = ax3.plot_line_graph([1, 10], [1, 1], line_color=GREEN, add_vertex_dots=False)
-    self.play(Transform(ax2.get_y_axis(), ax3.get_y_axis(), replace_mobject_with_target_in_scene=True),
-              Transform(ax2.get_z_axis(), ax3.get_x_axis(), replace_mobject_with_target_in_scene=True),
-              Transform(mean_graph, mean_graph2, replace_mobject_with_target_in_scene=True),
-              Transform(one_graph, one_graph2, replace_mobject_with_target_in_scene=True))
 
     x_l = ax3.get_x_axis_label("\\frac{Accesses}{Warp}")
     y_l = ax3.get_y_axis_label("\\frac{Const}{Global}")
-    self.play(Write(x_l), Write(y_l))
+    with self.voiceover(text="""So what I'm going to do is average the ratios <bookmark mark='1'/> for different input sizes""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Transform(multiple_access_graph, mean_graph, replace_mobject_with_target_in_scene=True),
+                Transform(one_surf, one_graph, replace_mobject_with_target_in_scene=True),
+              ax2.get_x_axis().animate.scale(0.00001).move_to(ax2.c2p(nums[0], 0.7, 0)))
 
-    self.play(*[FadeIn(x) for x in [code_obj, code_obj2, code_obj3]])
+    with self.voiceover(text="""We can now see that it's around 4 accesses per warp when we are getting no improvements over global, and 
+                        our performance worsening beyond that point""") as trk:
+      self.play(Transform(ax2.get_y_axis(), ax3.get_y_axis(), replace_mobject_with_target_in_scene=True),
+                Transform(ax2.get_z_axis(), ax3.get_x_axis(), replace_mobject_with_target_in_scene=True),
+                Transform(mean_graph, mean_graph2, replace_mobject_with_target_in_scene=True),
+                Transform(one_graph, one_graph2, replace_mobject_with_target_in_scene=True))
+      self.play(Write(x_l), Write(y_l))
+
+    self.wait(2)
+    self.play(*[FadeOut(x) for x in self.mobjects])
 
     code_const = """__global__ void add_const
     (int n , float* a, float* c, int distance)
@@ -433,11 +466,20 @@ __constant__ float c_mem[CONST_SIZE];
     }
   }
 }"""
+    with self.voiceover(text="""Let's run a second benchmark""") as trk:
+      self.play(*[FadeIn(x) for x in [code_obj, code_obj2, code_obj3]])
     code_obj_t = Code(code=code_const, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=1, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2).to_edge(LEFT)
     code_obj_t.code = remove_invisible_chars(code_obj.code)
     code_obj3_t = Code(code=code_global, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2).to_edge(RIGHT)
     code_obj3_t.code = remove_invisible_chars(code_obj3.code)
-    self.play(Transform(code_obj, code_obj_t), Transform(code_obj3, code_obj3_t))
+
+    hl = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    hl2 = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""This time, instead of passing the amout of accesses per warp, each thread in a warp will access a different memory region
+                        and we are controlling how far away from each other those accesses are""") as trk:
+      self.play(Transform(code_obj, code_obj_t), Transform(code_obj3, code_obj3_t))
+      self.play(Create(hl), Create(hl2))
+
     self.play(*[FadeOut(x) for x in self.mobjects])
 
     ratios = [[3.333, 3.611, 4.627, 5.473, 5.889, 6.397, 6.574, 6.616, 6.523, 6.388, ],
@@ -465,6 +507,9 @@ __constant__ float c_mem[CONST_SIZE];
         x_axis_config={"scaling": LogBase(2)},
         axis_config={"include_numbers": False}).scale(0.9)
 
+    x_l = ax.get_x_axis_label("N")
+    y_l = ax.get_y_axis_label("\\frac{Const}{Global}")
+
 
     one_access_graph = ax.plot_line_graph(
         x_values=nums,
@@ -472,8 +517,11 @@ __constant__ float c_mem[CONST_SIZE];
         line_color=BLUE,
         add_vertex_dots=False
     )
-    self.play(Create(ax))
-    self.play(Create(one_access_graph))
+
+    with self.voiceover(text="""If we look at the graph, we are getting a 3-6x worse performance even when all of the threads access a consecutive memory address""") as trk:
+      self.play(Create(ax))
+      self.play(Write(x_l), Write(y_l))
+      self.play(Create(one_access_graph))
 
     ax2 = ThreeDAxes(
         x_range=[rng[0], rng[-1], 2],
@@ -503,24 +551,30 @@ __constant__ float c_mem[CONST_SIZE];
                            resolution=(16,16), 
                            checkerboard_colors=None)
 
-    self.play(Transform(ax, ax2, replace_mobject_with_target_in_scene=True),
-              Transform(one_access_graph, multiple_access_graph, replace_mobject_with_target_in_scene=True))
+    
+    with self.voiceover(text="""If we look at the performance as we make our threads access locations further away from each other""") as trk:
+      self.play(Transform(VGroup(ax, x_l, y_l), ax2, replace_mobject_with_target_in_scene=True),
+                Transform(one_access_graph, multiple_access_graph, replace_mobject_with_target_in_scene=True))
     
     mean_r = np.mean(ratios, axis=1)
     mean_graph = ax2.plot_line_graph(np.ones(mean_r.shape) * nums[0], mean_r, list([-x for x in range(1, 16)]), line_color=BLUE, add_vertex_dots=False)
-    self.play(Transform(multiple_access_graph, mean_graph, replace_mobject_with_target_in_scene=True),
-              ax2.get_x_axis().animate.scale(0.00001).move_to(ax2.c2p(nums[0], 0.7, 0)))
 
     ax3 = Axes(
         x_range=[1, 17, 1],
         y_range=[1, 22, 2],
         axis_config={"include_numbers": True}).scale(0.8)
 
-    mean_graph2 = ax3.plot_line_graph(list(range(1, 17)), mean_r, line_color=BLUE, add_vertex_dots=False)
-    self.play(Transform(ax2.get_y_axis(), ax3.get_y_axis(), replace_mobject_with_target_in_scene=True),
-              Transform(ax2.get_z_axis(), ax3.get_x_axis(), replace_mobject_with_target_in_scene=True),
-              Transform(mean_graph, mean_graph2, replace_mobject_with_target_in_scene=True))
+    with self.voiceover(text="""And we average them out for readability""") as trk:
+      self.play(Transform(multiple_access_graph, mean_graph, replace_mobject_with_target_in_scene=True),
+                ax2.get_x_axis().animate.scale(0.00001).move_to(ax2.c2p(nums[0], 0.7, 0)))
+      mean_graph2 = ax3.plot_line_graph(list(range(1, 17)), mean_r, line_color=BLUE, add_vertex_dots=False)
+      self.play(Transform(ax2.get_y_axis(), ax3.get_y_axis(), replace_mobject_with_target_in_scene=True),
+                Transform(ax2.get_z_axis(), ax3.get_x_axis(), replace_mobject_with_target_in_scene=True),
+                Transform(mean_graph, mean_graph2, replace_mobject_with_target_in_scene=True))
 
-    x_l = ax3.get_x_axis_label("Distance")
-    y_l = ax3.get_y_axis_label("\\frac{Const}{Global}")
-    self.play(Write(x_l), Write(y_l))
+      x_l = ax3.get_x_axis_label("Distance")
+      y_l = ax3.get_y_axis_label("\\frac{Const}{Global}")
+      self.play(Write(x_l), Write(y_l))
+
+    with self.voiceover(text="""We can see that we can get up to 18 times worse performance!""") as trk:
+      pass
