@@ -9,7 +9,7 @@ import math
 from math import radians
 
 
-class ConstantMemory(VoiceoverScene):
+class ConstantMemory(VoiceoverScene, ZoomedScene):
   def construct(self):
     self.set_speech_service(
         GTTSService(transcription_model="base")
@@ -578,3 +578,26 @@ __constant__ float c_mem[CONST_SIZE];
 
     with self.voiceover(text="""We can see that we can get up to 18 times worse performance!""") as trk:
       pass
+
+    with self.voiceover(text="""This is where we finish the episode on constant memory. As you can see it's not an easy one to use so be sure 
+                        that you understand it's underlying principles and the why and when to use it""") as trk:
+      pass
+    
+    bmac = Text("https://buymeacoffee.com/simonoz", font_size=48, color=YELLOW)
+    alex = Text("Alex", font_size=60).next_to(bmac, DOWN)
+    unknown = Text("Anonymous x2", font_size=60).next_to(alex, DOWN)
+    with self.voiceover(text="""I'm hosting a buy me a coffe for those that want to support this channel. A shoutout to Alex and two anonymous donors that supported so far""") as trk:
+      self.play(*[FadeOut(x) for x in self.mobjects])
+      self.camera.auto_zoom(VGroup(bmac, alex, unknown), margin=4, animate=False)
+      self.play(Write(bmac))
+      self.play(Write(alex))
+      self.play(Write(unknown))
+
+    with self.voiceover(text="""But you can always support me for free by subscribing, leaving a like, commenting and sharing this video with your friends""") as trk:
+      pass
+
+    with self.voiceover(text="""I'll see you in the next episode, bye""") as trk:
+      pass
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    self.wait(2)
