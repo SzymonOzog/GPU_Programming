@@ -13,9 +13,9 @@ class Transistor(VGroup):
     self.base = Line(UP, DOWN)
     self.l1 = Line().next_to(self.base, DOWN, buff=0)
     self.l2 = Line().next_to(self.l1, DOWN, buff=0.2)
-    self.collector = Line(0.2*DOWN, 0.2*UP).next_to(self.l2, LEFT, buff=0, aligned_edge=UP)
-    self.emitter = Line(0.2*UP, 0.2*DOWN).next_to(self.l2, RIGHT, buff=0, aligned_edge=UP)
-    super().__init__(self.base, self.l1, self.l2, self.collector, self.emitter, **kwargs)
+    self.drain = Line(0.2*DOWN, 0.2*UP).next_to(self.l2, LEFT, buff=0, aligned_edge=UP)
+    self.source = Line(0.2*UP, 0.2*DOWN).next_to(self.l2, RIGHT, buff=0, aligned_edge=UP)
+    super().__init__(self.base, self.l1, self.l2, self.drain, self.source, **kwargs)
 
 class Capacitor(VGroup):
   def __init__(self, **kwargs):
@@ -49,13 +49,13 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     t = Transistor()
     self.play(Create(t))
     b_t = Text("Base", font_size=24).next_to(t.base, UP)
-    c_t = Text("Collector", font_size=24).next_to(t.collector, DOWN)
-    e_t = Text("Emitter", font_size=24).next_to(t.emitter, DOWN)
+    c_t = Text("Drain", font_size=24).next_to(t.drain, DOWN)
+    e_t = Text("Source", font_size=24).next_to(t.source, DOWN)
     self.play(Write(c_t), Write(b_t), Write(e_t))
 
     
-    input = Line().next_to(t.collector, LEFT, aligned_edge=DOWN, buff=0)
-    output = Line().next_to(t.emitter, RIGHT, aligned_edge=DOWN, buff=0)
+    input = Line().next_to(t.drain, LEFT, aligned_edge=DOWN, buff=0)
+    output = Line().next_to(t.source, RIGHT, aligned_edge=DOWN, buff=0)
 
     self.play(Create(input))
     self.play(Create(output))
@@ -65,17 +65,17 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     set_line(t.base, True, self)
     self.play(t.base.animate(run_time=0.2).set_color(GREEN))
-    set_line(t.collector, True, self)
+    set_line(t.drain, True, self)
     set_line(t.l2, True, self)
-    set_line(t.emitter, True, self)
+    set_line(t.source, True, self)
     set_line(output, True, self)
 
     self.wait(1)
 
     set_line(t.base, False, self)
-    set_line(t.collector, False, self)
+    set_line(t.drain, False, self)
     set_line(t.l2, False, self)
-    set_line(t.emitter, False, self)
+    set_line(t.source, False, self)
     set_line(output, False, self)
 
     self.wait(1)
@@ -105,3 +105,5 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(Uncreate(out))
     self.play(FadeIn(mem))
     self.wait(1)
+
+
