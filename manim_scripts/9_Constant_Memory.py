@@ -211,7 +211,7 @@ class ConstantMemory(VoiceoverScene, ZoomedScene):
         else:
           fpc.next_to(fpcs[-1], RIGHT, buff=buff)
         fpcs.append(fpc)
-    fpc_t = Text("Cores", font_size=72, color=GREEN_C).move_to(VGroup(*fpcs))
+    fpc_t = Text("Cores", font_size=72, color=GREEN_C).set_z_index(1).move_to(VGroup(*fpcs))
 
     cache = Rectangle(width=7, height=1, color=GOLD, fill_color=GOLD, fill_opacity=0.5).next_to(VGroup(*fpcs), DOWN)
     cache_t = Text("Cache", color=GOLD, font_size=40).move_to(cache)
@@ -251,6 +251,7 @@ class ConstantMemory(VoiceoverScene, ZoomedScene):
     with self.voiceover(text="""But if we were to load a memory address from a different memory region the cost starts growing rapidly""") as trk:
       mem2 = Rectangle(width=side, height=side, color=RED, fill_color=RED, fill_opacity=0.5).next_to(mem, RIGHT, buff=0.1)
       self.play(FadeIn(mem2, target_position=dram))
+      self.wait(2)
       mem2_broadcast = [mem2.copy().move_to(x) for x in fpcs]
       self.play(*[FadeIn(m, target_position=mem2) for m in mem2_broadcast])
 
@@ -296,11 +297,11 @@ __constant__ float c_mem[CONST_SIZE];
     code_obj3 = Code(code=code_global, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2).to_edge(RIGHT)
     code_obj3.code = remove_invisible_chars(code_obj3.code)
     with self.voiceover(text="""We are going to use a code that uses the maximum amount of constant memory that we can use""") as trk:
-      self.play(Create(code_obj))
+      self.play(Create(code_obj2))
 
     with self.voiceover(text="""And the kernel just adds 2 numbers together, one in global and one in constant memory - and it does that 10 times.
                         The reason for that is that I've found that one access is too short and tends to give very noisy results""") as trk:
-      self.play(Create(code_obj2))
+      self.play(Create(code_obj))
 
     
     hl = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
@@ -332,7 +333,7 @@ __constant__ float c_mem[CONST_SIZE];
         x_range=[rng[0], rng[-1], 2],
         y_range=[0.7, 1.5, 0.1],
         x_axis_config={"scaling": LogBase(2)},
-        axis_config={"include_numbers": False}).scale(0.9)
+        axis_config={"include_numbers": True}).scale(0.9)
 
 
     one_access_graph = ax.plot_line_graph(
@@ -473,11 +474,11 @@ __constant__ float c_mem[CONST_SIZE];
     code_obj3_t = Code(code=code_global, tab_width=2, language="c", font_size=14, background="rectangle", line_no_buff=0, corner_radius=0.1, margin=0.1, insert_line_no=False).shift(DOWN).scale(1.2).to_edge(RIGHT)
     code_obj3_t.code = remove_invisible_chars(code_obj3.code)
 
-    hl = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
-    hl2 = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
     with self.voiceover(text="""This time, instead of passing the amout of accesses per warp, each thread in a warp will access a different memory region
                         and we are controlling how far away from each other those accesses are""") as trk:
       self.play(Transform(code_obj, code_obj_t), Transform(code_obj3, code_obj3_t))
+      hl = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
+      hl2 = SurroundingRectangle(code_obj.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3)
       self.play(Create(hl), Create(hl2))
 
     self.play(*[FadeOut(x) for x in self.mobjects])
@@ -505,7 +506,7 @@ __constant__ float c_mem[CONST_SIZE];
         x_range=[rng[0], rng[-1], 2],
         y_range=[1, 7, 1],
         x_axis_config={"scaling": LogBase(2)},
-        axis_config={"include_numbers": False}).scale(0.9)
+        axis_config={"include_numbers": True}).scale(0.9)
 
     x_l = ax.get_x_axis_label("N")
     y_l = ax.get_y_axis_label("\\frac{Const}{Global}")
@@ -528,6 +529,7 @@ __constant__ float c_mem[CONST_SIZE];
         y_range=[1, 22, 2],
         z_range=[-16, 0, 2],
         x_axis_config={"scaling": LogBase(2), "include_numbers": True},
+        z_axis_config={"include_numbers": False},
         axis_config={"include_numbers": True, "include_tip": False})
     ax2.scale(0.6)
     ax2.rotate(radians(-25), axis=UP)
@@ -544,14 +546,10 @@ __constant__ float c_mem[CONST_SIZE];
                            u_range=(0,len(points[0])-1),
                            v_range=(0,len(points)-1),
                            fill_color=BLUE,
-                           stroke_color=BLUE,
-                           stroke_width=4,
-                           fill_opacity=0.5,
-                           stroke_opacity=0,
+                           fill_opacity=1,
                            resolution=(16,16), 
                            checkerboard_colors=None)
 
-    
     with self.voiceover(text="""If we look at the performance as we make our threads access locations further away from each other""") as trk:
       self.play(Transform(VGroup(ax, x_l, y_l), ax2, replace_mobject_with_target_in_scene=True),
                 Transform(one_access_graph, multiple_access_graph, replace_mobject_with_target_in_scene=True))
