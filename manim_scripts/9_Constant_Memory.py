@@ -12,19 +12,17 @@ from math import radians
 class ConstantMemory(VoiceoverScene, ZoomedScene):
   def construct(self):
     self.set_speech_service(
-        GTTSService(transcription_model="base")
+        RecorderService(trim_buffer_end=50, trim_silence_threshold=-80, transcription_model="base")
         )
 
     title = Text("GPU programming", font_size=72)
     with self.voiceover(text="Hello and welcome to another episode in the series on GPU programming") as trk:
       self.play(Write(title))
+    self.play(Unwrite(title))
 
     subtitle = Text("Constant Memory", font_size=48).next_to(title, DOWN)
-    with self.voiceover(text="""This episode will be focused on constant memory, and when to use it to improve the 
-                        performance of our code""") as trk:
-      self.play(Write(subtitle))
 
-    self.play(Unwrite(title), Unwrite(subtitle))
+
 
     def join(r1, r2, start, double=True):
       nonlocal arrows
@@ -149,10 +147,14 @@ class ConstantMemory(VoiceoverScene, ZoomedScene):
       constant_load.append(ShowPassingFlash(Arrow(start=arrows[i].get_start(), end=arrows[i].get_end(), color=BLUE, buff=0, stroke_width=4, tip_length=0.12, max_stroke_width_to_length_ratio=90, max_tip_length_to_length_ratio=1).set_z_index(1), time_width=1))
 
     access_anims = [shared_store, shared_load, register_store, register_load, local_store, local_load, global_store, global_load, constant_load]
+    with self.voiceover(text="""This episode will be focused on constant memory, and when to use it to improve the 
+                        performance of our code""") as trk:
+      self.play(*[Create(r) for r in rects], *[Write(t) for t in texts], *[Create(a) for a in arrows])
+      while trk.get_remaining_duration() > 1:
+        self.play(*access_anims[random.randint(0, len(access_anims) -1)])
 
     with self.voiceover(text="""To recap what we learned in the previous episodes, constant memory is a read only memory region that 
                         lives in DRAM, it's also very limited, as we can only allocate 64KB for it""") as trk:
-      self.play(*[Create(r) for r in rects], *[Write(t) for t in texts], *[Create(a) for a in arrows])
       while trk.get_remaining_duration() > 1:
         self.play(*access_anims[random.randint(0, len(access_anims) -1)])
 
@@ -193,7 +195,8 @@ class ConstantMemory(VoiceoverScene, ZoomedScene):
 
     with self.voiceover(text="""The first benefit is that it's cached in a different cache than global memory, this means that by using constant memory
                         we are actually freeing space in our L1 for other variables""") as trk:
-      self.play(Indicate(VGroup(cc, cc_t)))
+      self.wait(2)
+      self.play(Indicate(VGroup(cc, cc_t), run_time=3))
 
     with self.voiceover(text="""And the second one is not really a benefit - more of a tradeoff""") as trk:
       pass
