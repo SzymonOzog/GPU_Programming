@@ -34,8 +34,8 @@ class MemoryUnit(VGroup):
   def __init__(self, c=None, t=None, input=None, output=None, **kwargs):
     self.c = Capacitor() if c is None else c
     self.t = Transistor() if t is None else t
-    self.out = Line().next_to(self.t.drain, LEFT, aligned_edge=DOWN, buff=0) if output is None else output
-    self.inp = Line().next_to(self.t.source, RIGHT, aligned_edge=DOWN, buff=0) if input is None else input
+    self.inp = Line().next_to(self.t.drain, LEFT, aligned_edge=DOWN, buff=0) if input is None else input
+    self.out = Line().next_to(self.t.source, RIGHT, aligned_edge=DOWN, buff=0) if output is None else output
     self.c.next_to(self.inp, LEFT, buff=0, aligned_edge=UP, submobject_to_align=self.c.out)
     self.charged = False
     super().__init__(self.c, self.t, self.out, self.inp, **kwargs)
@@ -155,4 +155,17 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     mem.read(self)
     self.wait(1)
 
+    mem_s = 0.25
+    mem.scale(mem_s).shift(2*UR).to_edge(UL)
+    mems = [mem]
+    for i in range(15):
+      mems.append(MemoryUnit().scale(mem_s))
+    VGroup(*mems).arrange_in_grid(4,4)
+    self.play(*[Create(x) for x in mems])
 
+    sz_w = 4
+    sz_b = 3
+    bit_lines = [Line(sz_b*UP, sz_b*DOWN).next_to(mems[i].out, RIGHT, aligned_edge=UP, buff=0) for i in range(4)]
+    word_lines = [Line(sz_w*LEFT, sz_w*RIGHT).next_to(mems[i*4].t.base, UP, aligned_edge=LEFT, buff=0) for i in range(4)]
+    self.play(*[Create(x) for x in bit_lines])
+    self.play(*[Create(x) for x in word_lines])
