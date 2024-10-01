@@ -30,6 +30,44 @@ class Capacitor(VGroup):
     self.gnd = VGroup(self.g1, self.g2, self.g3)
     super().__init__(self.cap, self.gnd, **kwargs)
 
+class MemoryUnit(VGroup):
+  def __init__(self, c=None, t=None, input=None, output=None, **kwargs):
+    self.c = Capacitor() if c is None else c
+    self.t = Transistor() if t is None else t
+    self.out = Line().next_to(self.t.drain, LEFT, aligned_edge=DOWN, buff=0) if output is None else output
+    self.inp = Line().next_to(self.t.source, RIGHT, aligned_edge=DOWN, buff=0) if input is None else input
+    self.c.next_to(self.inp, LEFT, buff=0, aligned_edge=UP, submobject_to_align=self.c.out)
+    self.charged = False
+    super().__init__(self.c, self.t, self.out, self.inp, **kwargs)
+
+  def write(self, scene, one=True, run_time_scale=0.3):
+    set_line(self.t.base, one, scene, run_time_scale)
+    set_line(self.out, one, scene, run_time_scale, backward=True)
+    set_line(self.t.source, one, scene, run_time_scale, backward=True)
+    set_line(self.t.l2, one, scene, run_time_scale, backward=True)
+    set_line(self.t.drain, one, scene, run_time_scale, backward=True)
+    set_line(self.inp, one, scene, run_time_scale, backward=True)
+    set_line(self.c.out, one, scene, run_time_scale, backward=True)
+    scene.play(self.c.l1.animate.set_color(GREEN if one else WHITE), 
+              self.c.l2.animate.set_color(GREEN if one else WHITE))
+    self.charged=one
+
+  def disable_line(self, scene, run_time_scale=0.3):
+    set_line(self.t.base, False, scene, run_time_scale)
+    set_line(self.out, False, scene, run_time_scale, backward=False)
+    set_line(self.t.source, False, scene, run_time_scale, backward=False)
+    set_line(self.t.l2, False, scene, run_time_scale, backward=False)
+    set_line(self.t.drain, False, scene, run_time_scale, backward=False)
+
+  def read(self, scene, run_time_scale=0.3):
+    set_line(self.t.base, self.charged, scene, run_time_scale)
+    set_line(self.t.drain, self.charged, scene, run_time_scale, backward=True)
+    set_line(self.t.l2, self.charged, scene, run_time_scale, backward=True)
+    set_line(self.t.source, self.charged, scene, run_time_scale, backward=True)
+    set_line(self.out, self.charged, scene, run_time_scale, backward=True)
+    scene.play(*[x.animate.set_color(WHITE) for x in [self.t.drain, self.t.l2, self.t.source, self.out, self.c, self.inp]])
+    self.charged=False
+
 def set_line(line, enabled, scene, run_time_scale=0.3, backward=False):
   color = GREEN if enabled else WHITE
   cp = line.copy()
@@ -106,28 +144,15 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(FadeIn(mem))
     self.wait(1)
 
-    set_line(t.base, True, self)
-    # self.play(t.base.animate(run_time=0.2).set_color(GREEN))
-    set_line(output, True, self, backward=True)
-    set_line(t.source, True, self, backward=True)
-    set_line(t.l2, True, self, backward=True)
-    set_line(t.drain, True, self, backward=True)
-    set_line(input, True, self, backward=True)
-    set_line(c.out, True, self, backward=True)
-    self.play(c.l1.animate.set_color(GREEN), c.l2.animate.set_color(GREEN))
+    mem = MemoryUnit(c, t, input, output)
+
+    mem.write(self, True)
     self.wait(1)
     
-    set_line(t.base, False, self)
-    set_line(output, False, self, backward=False)
-    set_line(t.source, False, self, backward=False)
-    set_line(t.l2, False, self, backward=False)
-    set_line(t.drain, False, self, backward=False)
+    mem.disable_line(self)
     self.wait(1)
 
-    set_line(t.base, True, self)
-    set_line(t.drain, True, self, backward=True)
-    set_line(t.l2, True, self, backward=True)
-    set_line(t.source, True, self, backward=True)
-    set_line(output, True, self, backward=True)
-    self.play(*[x.animate.set_color(WHITE) for x in [t.drain, t.l2, t.source, output, c, input]])
+    mem.read(self)
     self.wait(1)
+
+
