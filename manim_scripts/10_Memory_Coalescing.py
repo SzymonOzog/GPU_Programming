@@ -12,7 +12,7 @@ class Transistor(VGroup):
   def __init__(self, **kwargs):
     self.base = Line(UP, DOWN)
     self.l1 = Line().next_to(self.base, DOWN, buff=0)
-    self.l2 = Line().next_to(self.l1, DOWN, buff=0.2)
+    self.l2 = Line().next_to(self.l1, DOWN, buff=0.3)
     self.drain = Line(0.2*DOWN, 0.2*UP).next_to(self.l2, LEFT, buff=0, aligned_edge=UP)
     self.source = Line(0.2*UP, 0.2*DOWN).next_to(self.l2, RIGHT, buff=0, aligned_edge=UP)
     super().__init__(self.base, self.l1, self.l2, self.drain, self.source, **kwargs)
@@ -21,7 +21,7 @@ class Capacitor(VGroup):
   def __init__(self, **kwargs):
     self.out = Line(0.5*DOWN, 0.5*UP)
     self.l1 = Line().next_to(self.out, DOWN, buff=0)
-    self.l2 = Line().next_to(self.l1, DOWN, buff=0.2)
+    self.l2 = Line().next_to(self.l1, DOWN, buff=0.3)
     self.inp = Line(0.5*DOWN, 0.5*UP).next_to(self.l2, DOWN, buff=0, aligned_edge=UP)
     self.cap = VGroup(self.out, self.l1, self.l2, self.inp, **kwargs)
     self.g1 = Line(0.8*LEFT, 0.8*RIGHT).next_to(self.inp, DOWN, buff=0)
@@ -155,7 +155,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     mem.read(self)
     self.wait(1)
 
-    mem_s = 0.25
+    mem_s = 0.2
     mem.scale(mem_s).shift(2*UR).to_edge(UL)
     mems = [mem]
     for i in range(15):
@@ -163,9 +163,51 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     VGroup(*mems).arrange_in_grid(4,4)
     self.play(*[Create(x) for x in mems])
 
-    sz_w = 4
-    sz_b = 3
+    sz_w = 3.5
+    sz_b = 2.4
     bit_lines = [Line(sz_b*UP, sz_b*DOWN).next_to(mems[i].out, RIGHT, aligned_edge=UP, buff=0) for i in range(4)]
     word_lines = [Line(sz_w*LEFT, sz_w*RIGHT).next_to(mems[i*4].t.base, UP, aligned_edge=LEFT, buff=0) for i in range(4)]
     self.play(*[Create(x) for x in bit_lines])
     self.play(*[Create(x) for x in word_lines])
+
+    rd = Rectangle(height=5, width=0.5).next_to(VGroup(*word_lines), RIGHT, buff=0)
+    sa = Rectangle(height=0.5, width=6).next_to(VGroup(*bit_lines), DOWN, buff=0)
+    rd_t = Text("Row Decoder", font_size=32).rotate(PI/2).move_to(rd)
+    sa_t = Text("Sense Amplifiers", font_size=32).move_to(sa)
+
+    self.play(Create(rd), Write(rd_t))
+    self.play(Create(sa), Write(sa_t))
+    self.camera.background_color = GREY
+    
+    sz=0.2
+    decoder_lines = [Line(sz*UP, sz*DOWN).next_to(sa, DOWN, buff=0).set_x(bit_lines[i].get_x()) for i in range(4)]
+
+    self.play(*[Create(x) for x in decoder_lines])
+
+    cd = Rectangle(height=0.5, width=6).next_to(VGroup(*decoder_lines), DOWN, buff=0)
+    cd_t = Text("Column Decoder", font_size=32).move_to(cd)
+    self.play(Create(cd), Write(cd_t))
+
+    data_out = Line().next_to(sa, RIGHT, buff=0)
+    self.play(Create(data_out))
+
+    st = rd.get_top() + DOWN + 3*RIGHT
+    e1 = st.copy()
+    e1[1] = rd.get_y()
+    e2 = st.copy()
+    e2[1] = cd.get_y()
+    addres_lines = [Line(st+0.5*LEFT, e1+0.5*LEFT-0.1*DOWN),
+                    Line(st+0.25*LEFT, e1+0.25*LEFT+0.1*DOWN),
+                    Line(st, e2-0.1*DOWN),
+                    Line(st+0.25*RIGHT, e2+0.25*RIGHT+0.1*DOWN)]
+
+    addres_lines2 = []
+    for i in range(4):
+      end_obj = rd if i < 2 else cd
+      st = addres_lines[i].get_end()
+      end = st.copy()
+      end[0] = end_obj.get_right()[0]
+      addres_lines2.append(Line(st, end))
+
+    self.play(*[Create(x) for x in addres_lines])
+    self.play(*[Create(x) for x in addres_lines2])
