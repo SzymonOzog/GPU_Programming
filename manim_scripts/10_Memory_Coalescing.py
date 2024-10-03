@@ -37,24 +37,25 @@ class MemoryUnit(VGroup):
     self.inp = Line().next_to(self.t.drain, LEFT, aligned_edge=DOWN, buff=0) if input is None else input
     self.out = Line().next_to(self.t.source, RIGHT, aligned_edge=DOWN, buff=0) if output is None else output
     self.c.next_to(self.inp, LEFT, buff=0, aligned_edge=UP, submobject_to_align=self.c.out)
-    self.charged = False
+    self.charged = 0
     super().__init__(self.c, self.t, self.out, self.inp, **kwargs)
 
-  def write(self, scene, one=True, run_time_scale=0.3):
+  def write(self, scene, alpha=1, run_time_scale=0.3):
     anims = []
-    anims.append(set_line(self.t.base, one, scene, run_time_scale))
-    anims.append(set_line(self.out, one, scene, run_time_scale, backward=True))
-    anims.append(set_line(self.t.source, one, scene, run_time_scale, backward=True))
-    anims.append(set_line(self.t.l2, one, scene, run_time_scale, backward=True))
-    anims.append(set_line(self.t.drain, one, scene, run_time_scale, backward=True))
-    anims.append(set_line(self.inp, one, scene, run_time_scale, backward=True))
-    anims.append(set_line(self.c.out, one, scene, run_time_scale, backward=True))
-    anims.append([self.c.l1.animate.set_color(GREEN if one else WHITE), 
-              self.c.l2.animate.set_color(GREEN if one else WHITE)])
-    self.charged=one
+    anims.append(set_line(self.t.base, alpha, scene, run_time_scale))
+    anims.append(set_line(self.out, alpha, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.t.source, alpha, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.t.l2, alpha, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.t.drain, alpha, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.inp, alpha, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.c.out, alpha, scene, run_time_scale, backward=True))
+    color = WHITE.interpolate(GREEN, alpha) 
+    anims.append([self.c.l1.animate.set_color(color), 
+              self.c.l2.animate.set_color(color)])
+    self.charged=alpha
     return anims
 
-  def disable_line(self, scene, run_time_scale=0.3):
+  def disable_line(self, scene, alpha=0, run_time_scale=0.3):
     anims = []
     anims.append(set_line(self.t.base, False, scene, run_time_scale))
     anims.append(set_line(self.out, False, scene, run_time_scale, backward=False))
@@ -63,19 +64,20 @@ class MemoryUnit(VGroup):
     anims.append(set_line(self.t.drain, False, scene, run_time_scale, backward=False))
     return anims
 
-  def read(self, scene, run_time_scale=0.3):
+  def read(self, scene, alpha=0, run_time_scale=0.3):
+    color = WHITE.interpolate(GREEN, alpha) 
     anims = []
     anims.append(set_line(self.t.base, self.charged, scene, run_time_scale))
     anims.append(set_line(self.t.drain, self.charged, scene, run_time_scale, backward=True))
     anims.append(set_line(self.t.l2, self.charged, scene, run_time_scale, backward=True))
     anims.append(set_line(self.t.source, self.charged, scene, run_time_scale, backward=True))
     anims.append(set_line(self.out, self.charged, scene, run_time_scale, backward=True))
-    anims.append([x.animate.set_color(WHITE) for x in [self.t.drain, self.t.l2, self.t.source, self.out, self.c, self.inp]])
-    self.charged=False
+    anims.append([x.animate.set_color(color) for x in [self.t.drain, self.t.l2, self.t.source, self.out, self.c, self.inp]])
+    self.charged=alpha
     return anims
 
-def set_line(line, enabled, scene, run_time_scale=0.3, backward=False):
-  color = GREEN if enabled else WHITE
+def set_line(line, alpha, scene, run_time_scale=0.3, backward=False):
+  color = WHITE.interpolate(GREEN, alpha) 
   cp = line.copy()
   scene.add(cp)
   scene.remove(line)
@@ -105,22 +107,22 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(Create(input))
     self.play(Create(output))
 
-    self.play(*set_line(input, True, self))
+    self.play(*set_line(input, 1, self))
     self.wait(1)
 
-    self.play(*set_line(t.base, True, self))
-    self.play(*set_line(t.drain, True, self))
-    self.play(*set_line(t.l2, True, self))
-    self.play(*set_line(t.source, True, self))
-    self.play(*set_line(output, True, self))
+    self.play(*set_line(t.base, 1, self))
+    self.play(*set_line(t.drain, 1, self))
+    self.play(*set_line(t.l2, 1, self))
+    self.play(*set_line(t.source, 1, self))
+    self.play(*set_line(output, 1, self))
 
     self.wait(1)
 
-    self.play(*set_line(t.base, False, self))
-    self.play(*set_line(t.drain, False, self))
-    self.play(*set_line(t.l2, False, self))
-    self.play(*set_line(t.source, False, self))
-    self.play(*set_line(output, False, self))
+    self.play(*set_line(t.base, 0, self))
+    self.play(*set_line(t.drain, 0, self))
+    self.play(*set_line(t.l2, 0, self))
+    self.play(*set_line(t.source, 0, self))
+    self.play(*set_line(output, 0, self))
 
     self.wait(1)
     
@@ -152,7 +154,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     mem = MemoryUnit(c, t, input, output)
 
-    for a in mem.write(self, True):
+    for a in mem.write(self, 1):
       self.play(*a)
     self.wait(1)
     
