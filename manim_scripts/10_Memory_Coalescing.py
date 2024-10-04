@@ -18,10 +18,11 @@ class Transistor(VGroup):
     super().__init__(self.base, self.l1, self.l2, self.drain, self.source, **kwargs)
 
 class Capacitor(VGroup):
-  def __init__(self, **kwargs):
-    self.out = Line(0.5*DOWN, 0.5*UP)
-    self.l1 = Line().next_to(self.out, DOWN, buff=0)
-    self.l2 = Line().next_to(self.l1, DOWN, buff=0.3)
+  def __init__(self, charge=0, **kwargs):
+    color = WHITE.interpolate(GREEN, charge)
+    self.out = Line(0.5*DOWN, 0.5*UP, color=color)
+    self.l1 = Line(color=color).next_to(self.out, DOWN, buff=0)
+    self.l2 = Line(color=color).next_to(self.l1, DOWN, buff=0.3)
     self.inp = Line(0.5*DOWN, 0.5*UP).next_to(self.l2, DOWN, buff=0, aligned_edge=UP)
     self.cap = VGroup(self.out, self.l1, self.l2, self.inp, **kwargs)
     self.g1 = Line(0.8*LEFT, 0.8*RIGHT).next_to(self.inp, DOWN, buff=0)
@@ -31,13 +32,14 @@ class Capacitor(VGroup):
     super().__init__(self.cap, self.gnd, **kwargs)
 
 class MemoryUnit(VGroup):
-  def __init__(self, c=None, t=None, input=None, output=None, **kwargs):
-    self.c = Capacitor() if c is None else c
+  def __init__(self, c=None, t=None, input=None, output=None, charge=0, **kwargs):
+    color = WHITE.interpolate(GREEN, charge)
+    self.c = Capacitor(charge=charge) if c is None else c
     self.t = Transistor() if t is None else t
-    self.inp = Line().next_to(self.t.drain, LEFT, aligned_edge=DOWN, buff=0) if input is None else input
+    self.inp = Line(color=color).next_to(self.t.drain, LEFT, aligned_edge=DOWN, buff=0) if input is None else input
     self.out = Line().next_to(self.t.source, RIGHT, aligned_edge=DOWN, buff=0) if output is None else output
     self.c.next_to(self.inp, LEFT, buff=0, aligned_edge=UP, submobject_to_align=self.c.out)
-    self.charged = 0
+    self.charged = charge
     super().__init__(self.c, self.t, self.out, self.inp, **kwargs)
 
   def write(self, scene, alpha=1, run_time_scale=0.3):
@@ -170,8 +172,13 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     mem_s = 0.2
     mem.scale(mem_s).shift(2*UR).to_edge(UL)
     mems = [mem]
+    charges = [   1, 0, 0,
+               1, 0, 0, 1,
+               0, 1, 1, 1, 
+               1, 0, 1, 1]
+
     for i in range(15):
-      mems.append(MemoryUnit().scale(mem_s))
+      mems.append(MemoryUnit(charge = charges[i]).scale(mem_s))
     VGroup(*mems).arrange_in_grid(4,4)
     self.play(*[Create(x) for x in mems])
 
@@ -185,11 +192,10 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     rd = Rectangle(height=5, width=0.5).next_to(VGroup(*word_lines), RIGHT, buff=0)
     sa = Rectangle(height=0.5, width=6).next_to(VGroup(*bit_lines), DOWN, buff=0)
     rd_t = Text("Row Decoder", font_size=32).rotate(PI/2).move_to(rd)
-    sa_t = Text("Sense Amplifiers", font_size=32).move_to(sa)
+    sa_t = Text("Sense Amplifiers", font_size=32, z_index=1).move_to(sa)
 
     self.play(Create(rd), Write(rd_t))
     self.play(Create(sa), Write(sa_t))
-    self.camera.background_color = GREY
     
     sz=0.2
     decoder_lines = [Line(sz*UP, sz*DOWN).next_to(sa, DOWN, buff=0).set_x(bit_lines[i].get_x()) for i in range(4)]
@@ -223,3 +229,52 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     self.play(*[Create(x) for x in addres_lines])
     self.play(*[Create(x) for x in addres_lines2])
+
+    anims = []
+    for i in range(4):
+      anims.extend(set_line(bit_lines[i], 0.5, self))
+
+    self.play(*anims)
+    address = [Text(x, font_size=24).next_to(addres_lines[i], UP, buff=1) for i, x in enumerate("0100")]
+    self.play(*[Write(x) for x in address])
+    self.play(address[0].animate.next_to(addres_lines[0], UP),
+              address[1].animate.next_to(addres_lines[1], UP))
+    self.play(*set_line(addres_lines[1], 1, self))
+    self.play(*set_line(addres_lines2[1], 1, self))
+    self.play(*set_line(word_lines[1], 1, self))
+    spotlight = Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[4], buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
+    self.play(FadeIn(spotlight))
+
+    for a in mems[4].read(self, (mems[4].charged + 0.5)/2):
+      self.play(*a)
+    self.play(*set_line(bit_lines[0], (mems[4].charged + 0.5)/2, self))
+
+    
+    self.play(Transform(spotlight,
+                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[5], buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+    for a in mems[5].read(self, (mems[5].charged + 0.5)/2):
+      self.play(*a)
+    self.play(*set_line(bit_lines[1], (mems[5].charged + 0.5)/2, self))
+
+    self.play(Transform(spotlight,
+                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(VGroup(mems[6], mems[7]), buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+
+    for a1, a2 in zip(mems[6].read(self, (mems[6].charged + 0.5)/2), mems[7].read(self, (mems[7].charged + 0.5)/2)):
+      self.play(*a1, *a2)
+    self.play(*set_line(bit_lines[2], (mems[6].charged + 0.5)/2, self),
+              *set_line(bit_lines[3], (mems[7].charged + 0.5)/2, self))
+
+    self.play(Transform(spotlight,
+                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(sa, buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+
+    vals = []
+    for i, b in enumerate(bit_lines):
+      vals.append(Rectangle(width=0.5, height=0.5, color=GREEN if mems[4+i].charged > 0.5 else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
+    self.play(*[Create(x) for x in vals])
+    self.play(FadeOut(spotlight))
+
+    self.play(address[2].animate.next_to(addres_lines[2], UP),
+              address[3].animate.next_to(addres_lines[3], UP))
+    self.play(*set_line(decoder_lines[0], 1, self))
+    self.play(sa.animate.set_color(vals[0].color))
+    self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
