@@ -315,3 +315,40 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     for i in range(4):
       anims.extend(set_line(bit_lines[i], 0, self))
     self.play(*anims)
+
+    self.play(Transform(address[0], Text("1", font_size=24).next_to(addres_lines[0], UP, buff=1)),
+              Transform(address[1], Text("0", font_size=24).next_to(addres_lines[1], UP, buff=1)))
+
+    anims = []
+    for i in range(4):
+      anims.extend(set_line(bit_lines[i], 0.5, self))
+
+    self.play(*anims)
+
+    self.play(address[0].animate.next_to(addres_lines[0], UP),
+              address[1].animate.next_to(addres_lines[1], UP))
+    self.play(*set_line(addres_lines[2], 1, self))
+    self.play(*set_line(addres_lines2[2], 1, self))
+    self.play(*set_line(word_lines[2], 1, self))
+
+    for a1, a2, a3, a4 in zip(mems[8].read(self, (mems[8].charged + 0.5)/2), 
+                              mems[9].read(self, (mems[9].charged + 0.5)/2), 
+                              mems[10].read(self, (mems[10].charged + 0.5)/2), 
+                              mems[11].read(self, (mems[11].charged + 0.5)/2)):
+      self.play(*a1, *a2, *a3, *a4)
+
+    self.play(*set_line(bit_lines[0], (mems[8].charged + 0.5)/2, self),
+              *set_line(bit_lines[1], (mems[9].charged + 0.5)/2, self),
+              *set_line(bit_lines[2], (mems[10].charged + 0.5)/2, self),
+              *set_line(bit_lines[3], (mems[11].charged + 0.5)/2, self))
+
+    vals = []
+    for i, b in enumerate(bit_lines):
+      vals.append(Rectangle(width=0.5, height=0.5, color=GREEN if mems[8+i].charged > 0.5 else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
+    self.play(*[Create(x) for x in vals])
+
+    self.play(address[2].animate.next_to(addres_lines[2], UP),
+              address[3].animate.next_to(addres_lines[3], UP))
+    self.play(*set_line(decoder_lines[0], 1, self))
+    self.play(sa.animate.set_color(vals[0].color))
+    self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
