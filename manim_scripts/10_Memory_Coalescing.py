@@ -278,3 +278,40 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(*set_line(decoder_lines[0], 1, self))
     self.play(sa.animate.set_color(vals[0].color))
     self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
+
+    self.play(address[2].animate.next_to(addres_lines[2], UP, buff=1),
+              address[3].animate.next_to(addres_lines[3], UP, buff=1))
+
+    self.play(*set_line(decoder_lines[0], 0, self))
+    self.play(sa.animate.set_color(WHITE))
+    self.play(*set_line(data_out, 0, self))
+
+    anims = []
+    for i in range(4):
+      anims.append(FadeOut(vals[i]))
+      anims.extend(set_line(bit_lines[i], 1 if vals[i].color == GREEN else 0, self))
+    self.play(*anims)
+
+    for a1, a2, a3, a4 in zip(mems[4].write(self, 1 if vals[0].color == GREEN else 0), 
+                              mems[5].write(self, 1 if vals[1].color == GREEN else 0), 
+                              mems[6].write(self, 1 if vals[2].color == GREEN else 0), 
+                              mems[7].write(self, 1 if vals[3].color == GREEN else 0)):
+      self.play(*a1, *a2, *a3, *a4)
+
+    self.play(address[0].animate.next_to(addres_lines[0], UP, buff=1),
+              address[1].animate.next_to(addres_lines[1], UP, buff=1))
+
+    self.play(*set_line(addres_lines[1], 0, self))
+    self.play(*set_line(addres_lines2[1], 0, self))
+    self.play(*set_line(word_lines[1], 0, self))
+
+    for a1, a2, a3, a4 in zip(mems[4].disable_line(self, 0), 
+                              mems[5].disable_line(self, 0), 
+                              mems[6].disable_line(self, 0), 
+                              mems[7].disable_line(self, 0)):
+      self.play(*a1, *a2, *a3, *a4)
+
+    anims = []
+    for i in range(4):
+      anims.extend(set_line(bit_lines[i], 0, self))
+    self.play(*anims)
