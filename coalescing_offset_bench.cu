@@ -32,10 +32,10 @@ void clear_l2() {
 
 __global__ void copy(int n , float* in, float* out, int offset)
 {
-  int i = blockIdx.x * blockDim.x + threadIdx.x + offset;
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i < n)
   {
-    out[i] = in[i];
+    out[i + offset] = in[i + offset];
   }
 }
 
@@ -45,12 +45,12 @@ int main()
   float* in_d;
   float* out_d;
 
-  long N = std::pow<long, long>(2, 15);
-  cudaMalloc((void**) &in_d, N*sizeof(float));
-  cudaMalloc((void**) &out_d, N*sizeof(float));
+  long N = std::pow<long, long>(2, 20);
 
-  for (int offset = 0; offset<MAX_OFFSET; offset++)
+  for (int o = -1; o<MAX_OFFSET; o++)
   {
+    //one warmup run
+    int offset = std::max(o, 0);
     cudaEvent_t start, stop;
     gpuErrchk(cudaEventCreate(&start));
     gpuErrchk(cudaEventCreate(&stop));
@@ -58,6 +58,8 @@ int main()
     dim3 dimGrid(ceil(N/(float)BLOCK_SIZE), 1, 1);
     dim3 dimBlock(BLOCK_SIZE, 1, 1);
 
+    cudaMalloc((void**) &in_d, (N+offset)*sizeof(float));
+    cudaMalloc((void**) &out_d, (N+offset)*sizeof(float));
     float time = 0.f;
     double run_time = 0.0;
     for (int i = -1; i<BENCH_STEPS; i++)
@@ -84,10 +86,11 @@ int main()
   std::cout<<"timings"<<" = [";
   for (int i = 0; i<MAX_OFFSET; i++)
   {
-    std::cout<<std::fixed<<std::setprecision(3)<<timings[i]<<", ";
+    std::cout<<std::fixed<<std::setprecision(6)<<timings[i]<<", ";
   }
   std::cout<<"]"<<std::endl;
   cudaFree(in_d);
   cudaFree(out_d);
   return 0;
 }
+
