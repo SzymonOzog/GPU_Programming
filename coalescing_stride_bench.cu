@@ -46,11 +46,11 @@ int main()
   float* out_d;
 
   long N = std::pow<long, long>(2, 15);
-  cudaMalloc((void**) &in_d, N*sizeof(float));
+  cudaMalloc((void**) &out_d, N*sizeof(float));
 
-  for (int stride = 0; stride<=MAX_STRIDE; stride++)
+  for (int stride = 1; stride<=MAX_STRIDE; stride++)
   {
-    cudaMalloc((void**) &out_d, N*stride*sizeof(float));
+    cudaMalloc((void**) &in_d, N*stride*sizeof(float));
     cudaEvent_t start, stop;
     gpuErrchk(cudaEventCreate(&start));
     gpuErrchk(cudaEventCreate(&stop));
