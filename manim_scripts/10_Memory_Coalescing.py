@@ -333,8 +333,8 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     self.play(address[0].animate.next_to(addres_lines[0], UP),
               address[1].animate.next_to(addres_lines[1], UP))
-    self.play(*set_line(addres_lines[2], 1, self))
-    self.play(*set_line(addres_lines2[2], 1, self))
+    self.play(*set_line(addres_lines[0], 1, self))
+    self.play(*set_line(addres_lines2[0], 1, self))
     self.play(*set_line(word_lines[2], 1, self, backward=True))
 
     for a1, a2, a3, a4 in zip(mems[8].read(self, (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo)), 
@@ -358,4 +358,5 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(*set_line(decoder_lines[0], 1, self))
     self.play(sa.animate.set_color(vals[0].color))
     self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
+
 
