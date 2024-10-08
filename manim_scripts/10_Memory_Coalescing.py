@@ -359,4 +359,22 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(sa.animate.set_color(vals[0].color))
     self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
 
+    for i, v in enumerate(["01", "10", "11"]):
+      self.play(address[2].animate.next_to(addres_lines[2], UP, buff=1),
+                address[3].animate.next_to(addres_lines[3], UP, buff=1))
+      self.play(*set_line(addres_lines[2], 0, self), *set_line(addres_lines[3], 0, self))
+      self.play(*set_line(addres_lines2[2], 0, self), *set_line(addres_lines2[3], 0, self))
 
+      self.play(*set_line(decoder_lines[i], 0, self))
+      self.play(sa.animate.set_color(WHITE))
+      self.play(*set_line(data_out, 0, self))
+
+      self.play(Transform(address[2], Text(v[0], font_size=24).next_to(addres_lines[2], UP, buff=1)),
+                Transform(address[3], Text(v[1], font_size=24).next_to(addres_lines[3], UP, buff=1)))
+      self.play(address[2].animate.next_to(addres_lines[2], UP),
+                address[3].animate.next_to(addres_lines[3], UP))
+      self.play(*set_line(addres_lines[2], int(v[0]), self), *set_line(addres_lines[3], int(v[1]), self))
+      self.play(*set_line(addres_lines2[2], int(v[0]), self), *set_line(addres_lines2[3], int(v[1]), self))
+      self.play(*set_line(decoder_lines[i+1], 1, self))
+      self.play(sa.animate.set_color(vals[i+1].color))
+      self.play(*set_line(data_out, 1 if vals[i+1].color == GREEN else 0, self))
