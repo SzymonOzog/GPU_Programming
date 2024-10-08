@@ -169,6 +169,9 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     self.wait(1)
 
+    for a in mem.disable_line(self):
+      self.play(*a)
+
     mem_s = 0.2
     mem.scale(mem_s).shift(2*UR).to_edge(UL)
     mems = [mem]
@@ -230,9 +233,12 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(*[Create(x) for x in addres_lines])
     self.play(*[Create(x) for x in addres_lines2])
 
+    pre_charge_value = 0.7
+    chrg_hi = 0.8
+    chrg_lo = 0.5
     anims = []
     for i in range(4):
-      anims.extend(set_line(bit_lines[i], 0.5, self))
+      anims.extend(set_line(bit_lines[i], pre_charge_value, self))
 
     self.play(*anims)
     address = [Text(x, font_size=24).next_to(addres_lines[i], UP, buff=1) for i, x in enumerate("0100")]
@@ -241,35 +247,35 @@ class Coalescing(VoiceoverScene, ZoomedScene):
               address[1].animate.next_to(addres_lines[1], UP))
     self.play(*set_line(addres_lines[1], 1, self))
     self.play(*set_line(addres_lines2[1], 1, self))
-    self.play(*set_line(word_lines[1], 1, self))
+    self.play(*set_line(word_lines[1], 1, self, backward=True))
     spotlight = Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[4], buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
     self.play(FadeIn(spotlight))
 
-    for a in mems[4].read(self, (mems[4].charged + 0.5)/2):
+    for a in mems[4].read(self, (mems[4].charged + pre_charge_value)/2):
       self.play(*a)
-    self.play(*set_line(bit_lines[0], (mems[4].charged + 0.5)/2, self))
+    self.play(*set_line(bit_lines[0], (chrg_hi if mems[4].charged > pre_charge_value else chrg_lo), self))
 
     
     self.play(Transform(spotlight,
                         Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[5], buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
-    for a in mems[5].read(self, (mems[5].charged + 0.5)/2):
+    for a in mems[5].read(self, (chrg_hi if mems[5].charged > pre_charge_value else chrg_lo)):
       self.play(*a)
-    self.play(*set_line(bit_lines[1], (mems[5].charged + 0.5)/2, self))
+    self.play(*set_line(bit_lines[1], (chrg_hi if mems[5].charged > pre_charge_value else chrg_lo), self))
 
     self.play(Transform(spotlight,
                         Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(VGroup(mems[6], mems[7]), buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
 
-    for a1, a2 in zip(mems[6].read(self, (mems[6].charged + 0.5)/2), mems[7].read(self, (mems[7].charged + 0.5)/2)):
+    for a1, a2 in zip(mems[6].read(self, (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo)), mems[7].read(self, (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo))):
       self.play(*a1, *a2)
-    self.play(*set_line(bit_lines[2], (mems[6].charged + 0.5)/2, self),
-              *set_line(bit_lines[3], (mems[7].charged + 0.5)/2, self))
+    self.play(*set_line(bit_lines[2], (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo), self),
+              *set_line(bit_lines[3], (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo), self))
 
     self.play(Transform(spotlight,
                         Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(sa, buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
 
     vals = []
     for i, b in enumerate(bit_lines):
-      vals.append(Rectangle(width=0.5, height=0.5, color=GREEN if mems[4+i].charged > 0.5 else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
+      vals.append(Rectangle(width=0.5, height=0.5, color=GREEN if mems[4+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
     self.play(*[Create(x) for x in vals])
     self.play(FadeOut(spotlight))
 
@@ -303,7 +309,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     self.play(*set_line(addres_lines[1], 0, self))
     self.play(*set_line(addres_lines2[1], 0, self))
-    self.play(*set_line(word_lines[1], 0, self))
+    self.play(*set_line(word_lines[1], 0, self, backward=True))
 
     for a1, a2, a3, a4 in zip(mems[4].disable_line(self, 0), 
                               mems[5].disable_line(self, 0), 
@@ -321,7 +327,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     anims = []
     for i in range(4):
-      anims.extend(set_line(bit_lines[i], 0.5, self))
+      anims.extend(set_line(bit_lines[i], pre_charge_value, self))
 
     self.play(*anims)
 
@@ -329,22 +335,22 @@ class Coalescing(VoiceoverScene, ZoomedScene):
               address[1].animate.next_to(addres_lines[1], UP))
     self.play(*set_line(addres_lines[2], 1, self))
     self.play(*set_line(addres_lines2[2], 1, self))
-    self.play(*set_line(word_lines[2], 1, self))
+    self.play(*set_line(word_lines[2], 1, self, backward=True))
 
-    for a1, a2, a3, a4 in zip(mems[8].read(self, (mems[8].charged + 0.5)/2), 
-                              mems[9].read(self, (mems[9].charged + 0.5)/2), 
-                              mems[10].read(self, (mems[10].charged + 0.5)/2), 
-                              mems[11].read(self, (mems[11].charged + 0.5)/2)):
+    for a1, a2, a3, a4 in zip(mems[8].read(self, (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo)), 
+                              mems[9].read(self, (chrg_hi if mems[9].charged > pre_charge_value else chrg_lo)), 
+                              mems[10].read(self, (chrg_hi if mems[10].charged > pre_charge_value else chrg_lo)), 
+                              mems[11].read(self, (chrg_hi if mems[11].charged > pre_charge_value else chrg_lo))):
       self.play(*a1, *a2, *a3, *a4)
 
-    self.play(*set_line(bit_lines[0], (mems[8].charged + 0.5)/2, self),
-              *set_line(bit_lines[1], (mems[9].charged + 0.5)/2, self),
-              *set_line(bit_lines[2], (mems[10].charged + 0.5)/2, self),
-              *set_line(bit_lines[3], (mems[11].charged + 0.5)/2, self))
+    self.play(*set_line(bit_lines[0], (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo), self),
+              *set_line(bit_lines[1], (chrg_hi if mems[9].charged > pre_charge_value else chrg_lo), self),
+              *set_line(bit_lines[2], (chrg_hi if mems[10].charged > pre_charge_value else chrg_lo), self),
+              *set_line(bit_lines[3], (chrg_hi if mems[11].charged > pre_charge_value else chrg_lo), self))
 
     vals = []
     for i, b in enumerate(bit_lines):
-      vals.append(Rectangle(width=0.5, height=0.5, color=GREEN if mems[8+i].charged > 0.5 else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
+      vals.append(Rectangle(width=0.5, height=0.5, color=GREEN if mems[8+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
     self.play(*[Create(x) for x in vals])
 
     self.play(address[2].animate.next_to(addres_lines[2], UP),
@@ -352,3 +358,4 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(*set_line(decoder_lines[0], 1, self))
     self.play(sa.animate.set_color(vals[0].color))
     self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
+
