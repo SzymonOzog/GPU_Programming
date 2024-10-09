@@ -295,7 +295,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     anims = []
     for i in range(4):
       anims.append(FadeOut(vals[i]))
-      anims.extend(set_line(bit_lines[i], 1 if vals[i].color == GREEN else 0, self))
+      anims.extend(set_line(bit_lines[i], 1 if vals[i].color == GREEN else 0, self, backward=True))
     self.play(*anims)
 
     for a1, a2, a3, a4 in zip(mems[4].write(self, 1 if vals[0].color == GREEN else 0), 
