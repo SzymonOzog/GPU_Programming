@@ -3,8 +3,8 @@
 #include <cassert>
 
 #define BLOCK_SIZE 1024 
-#define BENCH_STEPS 4000
-#define MAX_STRIDE 32
+#define BENCH_STEPS 100
+#define MAX_STRIDE 15 
  
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
@@ -46,10 +46,12 @@ int main()
   float* out_d;
 
   long N = std::pow<long, long>(2, 15);
-  cudaMalloc((void**) &out_d, N*sizeof(float));
 
-  for (int stride = 1; stride<=MAX_STRIDE; stride++)
+  cudaMalloc((void**) &out_d, N*sizeof(float));
+  for (int s = -1; s<=MAX_STRIDE; s++)
   {
+    int stride = std::pow(2, std::max(0, s));
+    std::cout<<stride<<std::endl;
     cudaMalloc((void**) &in_d, N*stride*sizeof(float));
     cudaEvent_t start, stop;
     gpuErrchk(cudaEventCreate(&start));
@@ -77,14 +79,14 @@ int main()
       }
     }
 
-    timings[stride] = run_time;
+    timings[s] = run_time;
     gpuErrchk(cudaEventDestroy(start));
     gpuErrchk(cudaEventDestroy(stop));
   }
   std::cout<<"timings"<<" = [";
   for (int i = 0; i<MAX_STRIDE; i++)
   {
-    std::cout<<std::fixed<<std::setprecision(3)<<timings[i]<<", ";
+    std::cout<<std::fixed<<std::setprecision(6)<<timings[i]<<", ";
   }
   std::cout<<"]"<<std::endl;
   cudaFree(in_d);
