@@ -378,3 +378,41 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       self.play(*set_line(decoder_lines[i+1], 1, self))
       self.play(sa.animate.set_color(vals[i+1].color))
       self.play(*set_line(data_out, 1 if vals[i+1].color == GREEN else 0, self))
+
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    strided_cp = """__global__ void copy(int n , float* in, float* out, int stride)
+    {
+      int i = blockIdx.x * blockDim.x + threadIdx.x;
+      if (i < n)
+      {
+        out[i] = in[i * stride];
+      }
+    }"""
+
+    code_obj = Code(code=strided_cp, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1)
+    self.play(Create(code_obj))
+
+    self.wait(1)
+    self.play(Uncreate(code_obj))
+
+    timings = [0.003619, 0.004091, 0.004631, 0.005690, 0.005933, 0.006505, 0.006846, 0.007276, 0.009585, 0.009903, 0.010967, 0.011174, 0.011700, 0.011849, 0.012079, ]
+    timings = [t*1e6 for t in timings]
+    stride = list(range(1, 15))
+    # stride = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768]
+
+    ax = Axes(x_range=[1, stride[-1]+1, 1],
+              y_range=[3000, 13000, 1000],
+              x_axis_config={"scaling": LogBase(2)},
+              axis_config={"include_numbers": True}).scale(0.8)
+
+    graph = ax.plot_line_graph(x_values=[2**x for x in stride], y_values=timings, line_color=BLUE, add_vertex_dots=False) 
+
+    x_label = ax.get_x_axis_label("Stride")
+    y_label = ax.get_y_axis_label("Time [\\mu s]")
+
+    self.play(Create(ax))
+    self.play(Create(graph))
+    self.play(Write(x_label), Write(y_label))
+
+
