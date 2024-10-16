@@ -2,9 +2,9 @@
 #include <iostream>
 #include <cassert>
 
-#define BLOCK_SIZE 1024 
+#define BLOCK_SIZE 32 
 #define BENCH_STEPS 4000
-#define MAX_OFFSET 17
+#define MAX_OFFSET 129 
  
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
@@ -32,7 +32,7 @@ void clear_l2() {
 
 __global__ void copy(int n , float* in, float* out, int offset)
 {
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i < n)
   {
     out[i + offset] = in[i + offset];

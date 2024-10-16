@@ -2,8 +2,8 @@
 #include <iostream>
 #include <cassert>
 
-#define BLOCK_SIZE 1024 
-#define BENCH_STEPS 100
+#define BLOCK_SIZE 32 
+#define BENCH_STEPS 1
 #define MAX_STRIDE 15 
  
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -32,27 +32,28 @@ void clear_l2() {
 
 __global__ void copy(int n , float* in, float* out, int stride)
 {
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned long i = (blockIdx.x * blockDim.x + threadIdx.x)*stride;
+  i+=i/n;
+  i=i%n;
   if (i < n)
   {
-    out[i] = in[i * stride];
+    out[i] = in[i];
   }
 }
 
 int main()
 {
-  double timings[MAX_STRIDE];
+  double timings[MAX_STRIDE+1];
   float* in_d;
   float* out_d;
 
-  long N = std::pow<long, long>(2, 15);
+  long N = std::pow<long, long>(2, 21);
 
-  cudaMalloc((void**) &out_d, N*sizeof(float));
+  gpuErrchk(cudaMalloc((void**) &out_d, N*sizeof(float)));
+  gpuErrchk(cudaMalloc((void**) &in_d, N*sizeof(float)));
   for (int s = -1; s<=MAX_STRIDE; s++)
   {
     int stride = std::pow(2, std::max(0, s));
-    std::cout<<stride<<std::endl;
-    cudaMalloc((void**) &in_d, N*stride*sizeof(float));
     cudaEvent_t start, stop;
     gpuErrchk(cudaEventCreate(&start));
     gpuErrchk(cudaEventCreate(&stop));
@@ -62,12 +63,12 @@ int main()
 
     float time = 0.f;
     double run_time = 0.0;
-    for (int i = -1; i<BENCH_STEPS; i++)
+    for (int i = 0; i<BENCH_STEPS; i++)
     {
       clear_l2();
       gpuErrchk(cudaDeviceSynchronize());
       gpuErrchk(cudaEventRecord(start));
-      copy<<<dimGrid, dimBlock>>>(N, in_d, out_d, stride);
+      copy<<<dimGrid, dimBlock>>>(N, out_d, in_d, stride);
       gpuErrchk(cudaEventRecord(stop));
       gpuErrchk(cudaEventSynchronize(stop));
       gpuErrchk(cudaEventElapsedTime(&time, start, stop));
@@ -79,12 +80,16 @@ int main()
       }
     }
 
-    timings[s] = run_time;
+    std::cout<<stride<<" "<<run_time<<std::endl;
+    if (s >= 0)
+    {
+      timings[s] = run_time;
+    }
     gpuErrchk(cudaEventDestroy(start));
     gpuErrchk(cudaEventDestroy(stop));
   }
   std::cout<<"timings"<<" = [";
-  for (int i = 0; i<MAX_STRIDE; i++)
+  for (int i = 0; i<=MAX_STRIDE; i++)
   {
     std::cout<<std::fixed<<std::setprecision(6)<<timings[i]<<", ";
   }
