@@ -3,7 +3,7 @@
 #include <cassert>
 
 #define BLOCK_SIZE 32 
-#define BENCH_STEPS 1
+#define BENCH_STEPS 100
 #define MAX_STRIDE 15 
  
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -32,9 +32,7 @@ void clear_l2() {
 
 __global__ void copy(int n , float* in, float* out, int stride)
 {
-  unsigned long i = (blockIdx.x * blockDim.x + threadIdx.x)*stride;
-  i+=i/n;
-  i=i%n;
+  unsigned long i = blockIdx.x%stride + (blockIdx.x/stride) * (blockDim.x*stride) + threadIdx.x*stride;
   if (i < n)
   {
     out[i] = in[i];
@@ -47,7 +45,7 @@ int main()
   float* in_d;
   float* out_d;
 
-  long N = std::pow<long, long>(2, 22);
+  long N = std::pow<long, long>(2, 23);
 
   float* out_h = new float[N];
   float* in_h = new float[N];
