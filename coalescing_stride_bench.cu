@@ -47,16 +47,19 @@ int main()
   float* in_d;
   float* out_d;
 
-  long N = std::pow<long, long>(2, 21);
+  long N = std::pow<long, long>(2, 22);
 
-  gpuErrchk(cudaMalloc((void**) &out_d, N*sizeof(float)));
-  gpuErrchk(cudaMalloc((void**) &in_d, N*sizeof(float)));
+  float* out_h = new float[N];
+  float* in_h = new float[N];
+
   for (int s = -1; s<=MAX_STRIDE; s++)
   {
     int stride = std::pow(2, std::max(0, s));
     cudaEvent_t start, stop;
     gpuErrchk(cudaEventCreate(&start));
     gpuErrchk(cudaEventCreate(&stop));
+    gpuErrchk(cudaMalloc((void**) &out_d, N*sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &in_d, N*sizeof(float)));
 
     dim3 dimGrid(ceil(N/(float)BLOCK_SIZE), 1, 1);
     dim3 dimBlock(BLOCK_SIZE, 1, 1);
@@ -65,6 +68,8 @@ int main()
     double run_time = 0.0;
     for (int i = 0; i<BENCH_STEPS; i++)
     {
+      cudaMemset(in_d, 1, N*sizeof(float));
+      cudaMemset(out_d, 0, N*sizeof(float));
       clear_l2();
       gpuErrchk(cudaDeviceSynchronize());
       gpuErrchk(cudaEventRecord(start));
@@ -78,6 +83,12 @@ int main()
       {
         run_time += time / BENCH_STEPS;
       }
+    }
+    gpuErrchk(cudaMemcpy(out_h, out_d, N*sizeof(float), cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(in_h, in_d, N*sizeof(float), cudaMemcpyDeviceToHost));
+    for(int i = 0; i < N; i++)
+    {
+      ASSERT(out_h[i] == in_h[i], "elements at %d are not matching", i);
     }
 
     std::cout<<stride<<" "<<run_time<<std::endl;
