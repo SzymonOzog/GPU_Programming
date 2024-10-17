@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cassert>
 
-#define BLOCK_SIZE 32 
+#define BLOCK_SIZE 256
 #define BENCH_STEPS 100
 #define MAX_STRIDE 15 
  
