@@ -96,6 +96,8 @@ int main()
     }
     gpuErrchk(cudaEventDestroy(start));
     gpuErrchk(cudaEventDestroy(stop));
+    cudaFree(in_d);
+    cudaFree(out_d);
   }
   std::cout<<"timings"<<" = [";
   for (int i = 0; i<=MAX_STRIDE; i++)
@@ -103,7 +105,5 @@ int main()
     std::cout<<std::fixed<<std::setprecision(6)<<timings[i]<<", ";
   }
   std::cout<<"]"<<std::endl;
-  cudaFree(in_d);
-  cudaFree(out_d);
   return 0;
 }
