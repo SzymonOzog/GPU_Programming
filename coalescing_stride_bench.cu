@@ -2,9 +2,9 @@
 #include <iostream>
 #include <cassert>
 
-#define BLOCK_SIZE 256
-#define BENCH_STEPS 100
-#define MAX_STRIDE 15 
+#define BLOCK_SIZE 128
+#define BENCH_STEPS 10
+#define MAX_STRIDE 22 
  
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
@@ -45,7 +45,7 @@ int main()
   float* in_d;
   float* out_d;
 
-  long N = std::pow<long, long>(2, 23);
+  long N = std::pow<long, long>(2, 30);
 
   float* out_h = new float[N];
   float* in_h = new float[N];
@@ -59,7 +59,7 @@ int main()
     gpuErrchk(cudaMalloc((void**) &out_d, N*sizeof(float)));
     gpuErrchk(cudaMalloc((void**) &in_d, N*sizeof(float)));
 
-    dim3 dimGrid(ceil(N/(float)BLOCK_SIZE), 1, 1);
+    dim3 dimGrid(ceil(N/(double)BLOCK_SIZE), 1, 1);
     dim3 dimBlock(BLOCK_SIZE, 1, 1);
 
     float time = 0.f;
