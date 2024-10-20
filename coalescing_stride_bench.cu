@@ -2,15 +2,16 @@
 #include <iostream>
 #include <cassert>
 
-#define BLOCK_SIZE 128
-#define BENCH_STEPS 10
-#define MAX_STRIDE 22 
- 
+#define BLOCK_SIZE 32
+#define BENCH_STEPS 100
+#define MAX_STRIDE 15
+#define BLOCKS 84*10
+
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
-   if (code != cudaSuccess) 
+   if (code != cudaSuccess)
    {
       fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
       if (abort) exit(code);
@@ -32,10 +33,14 @@ void clear_l2() {
 
 __global__ void copy(int n , float* in, float* out, int stride)
 {
-  unsigned long i = blockIdx.x%stride + (blockIdx.x/stride) * (blockDim.x*stride) + threadIdx.x*stride;
+  unsigned long i = (blockIdx.x*blockDim.x + threadIdx.x)*stride;
   if (i < n)
   {
     out[i] = in[i];
+  }
+  else
+  {
+    printf("skip load \n");
   }
 }
 
@@ -45,26 +50,26 @@ int main()
   float* in_d;
   float* out_d;
 
-  long N = std::pow<long, long>(2, 30);
+  long N = std::pow<long, long>(2, 31);
 
   float* out_h = new float[N];
   float* in_h = new float[N];
-
+  gpuErrchk(cudaMalloc((void**) &out_d, N*sizeof(float)));
+  gpuErrchk(cudaMalloc((void**) &in_d, N*sizeof(float)));
   for (int s = -1; s<=MAX_STRIDE; s++)
   {
     int stride = std::pow(2, std::max(0, s));
     cudaEvent_t start, stop;
     gpuErrchk(cudaEventCreate(&start));
     gpuErrchk(cudaEventCreate(&stop));
-    gpuErrchk(cudaMalloc((void**) &out_d, N*sizeof(float)));
-    gpuErrchk(cudaMalloc((void**) &in_d, N*sizeof(float)));
 
-    dim3 dimGrid(ceil(N/(double)BLOCK_SIZE), 1, 1);
+
+    dim3 dimGrid(BLOCKS, 1, 1);
     dim3 dimBlock(BLOCK_SIZE, 1, 1);
 
     float time = 0.f;
     double run_time = 0.0;
-    for (int i = 0; i<BENCH_STEPS; i++)
+    for (int i = -1; i<BENCH_STEPS; i++)
     {
       cudaMemset(in_d, 1, N*sizeof(float));
       cudaMemset(out_d, 0, N*sizeof(float));
@@ -82,12 +87,6 @@ int main()
         run_time += time / BENCH_STEPS;
       }
     }
-    gpuErrchk(cudaMemcpy(out_h, out_d, N*sizeof(float), cudaMemcpyDeviceToHost));
-    gpuErrchk(cudaMemcpy(in_h, in_d, N*sizeof(float), cudaMemcpyDeviceToHost));
-    for(int i = 0; i < N; i++)
-    {
-      ASSERT(out_h[i] == in_h[i], "elements at %d are not matching", i);
-    }
 
     std::cout<<stride<<" "<<run_time<<std::endl;
     if (s >= 0)
@@ -96,8 +95,6 @@ int main()
     }
     gpuErrchk(cudaEventDestroy(start));
     gpuErrchk(cudaEventDestroy(stop));
-    cudaFree(in_d);
-    cudaFree(out_d);
   }
   std::cout<<"timings"<<" = [";
   for (int i = 0; i<=MAX_STRIDE; i++)
@@ -105,5 +102,7 @@ int main()
     std::cout<<std::fixed<<std::setprecision(6)<<timings[i]<<", ";
   }
   std::cout<<"]"<<std::endl;
+  cudaFree(in_d);
+  cudaFree(out_d);
   return 0;
 }
