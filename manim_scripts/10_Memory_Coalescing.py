@@ -95,6 +95,70 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.set_speech_service(
         GTTSService(transcription_model="base")
         )
+    Rectangle.set_default(stroke_width=10)
+    Line.set_default(stroke_width=10)
+    t = Transistor()
+    input = Line().next_to(t.drain, LEFT, aligned_edge=DOWN, buff=0)
+    output = Line().next_to(t.source, RIGHT, aligned_edge=DOWN, buff=0)
+    mem = VGroup(t, input, output)
+    mem.shift(UR)
+    c = Capacitor()
+    out = Line().next_to(input, LEFT, buff=0, aligned_edge=UP)
+
+    mem = MemoryUnit(c, t, input, output)
+    mem_s = 1
+    mem.scale(mem_s).shift(2*UR).to_edge(UL)
+    mems = [mem]
+    charges = [   1, 0, 0,
+               1, 0, 0, 1,
+               0, 1, 1, 1, 
+               1, 0, 1, 1]
+
+    for i in range(15):
+      mems.append(MemoryUnit(charge = charges[i]).scale(mem_s))
+    VGroup(*mems).arrange_in_grid(4,4)
+
+    sz_w = 3.5*5
+    sz_b = 2.4*5
+    bit_lines = [Line(sz_b*UP, sz_b*DOWN).next_to(mems[i].out, RIGHT, aligned_edge=UP, buff=0) for i in range(4)]
+    word_lines = [Line(sz_w*LEFT, sz_w*RIGHT).next_to(mems[i*4].t.base, UP, aligned_edge=LEFT, buff=0) for i in range(4)]
+
+    rd = Rectangle(height=5*5, width=0.5*5).next_to(VGroup(*word_lines), RIGHT, buff=0)
+    sa = Rectangle(height=0.5*5, width=6*5).next_to(VGroup(*bit_lines), DOWN, buff=0)
+    rd_t = Text("Row Decoder", font_size=32*5).rotate(PI/2).move_to(rd)
+    sa_t = Text("Sense Amplifiers", font_size=32*4, z_index=1).move_to(sa)
+
+    
+    sz=0.2*5
+    decoder_lines = [Line(sz*UP, sz*DOWN).next_to(sa, DOWN, buff=0).set_x(bit_lines[i].get_x()) for i in range(4)]
+
+
+    cd = Rectangle(height=0.5*5, width=6*5).next_to(VGroup(*decoder_lines), DOWN, buff=0)
+    cd_t = Text("Column Decoder", font_size=32*4).move_to(cd)
+
+    data_out = Line().next_to(sa, RIGHT, buff=0)
+
+    all = VGroup(*mems, *bit_lines, *word_lines, rd, sa, *decoder_lines, cd, data_out)
+    self.camera.frame.save_state()
+    self.camera.auto_zoom(all, margin=4, animate=False)
+
+
+    self.play(*[Create(x) for x in mems])
+    self.play(*[Create(x) for x in bit_lines])
+    self.play(*[Create(x) for x in word_lines])
+    self.play(Create(rd), Write(rd_t))
+    self.play(Create(sa), Write(sa_t))
+    self.play(*[Create(x) for x in decoder_lines])
+    self.play(Create(cd), Write(cd_t))
+    self.play(Create(data_out))
+
+    self.wait(3)
+    self.play([FadeOut(x) for x in self.mobjects])
+
+    self.play(Restore(self.camera.frame))
+    Rectangle.set_default()
+    Line.set_default()
+
     t = Transistor()
     self.play(Create(t))
     b_t = Text("Base", font_size=24).next_to(t.base, UP)
@@ -172,55 +236,35 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     for a in mem.disable_line(self):
       self.play(*a)
 
-    mem_s = 0.2
-    mem.scale(mem_s).shift(2*UR).to_edge(UL)
-    mems = [mem]
-    charges = [   1, 0, 0,
-               1, 0, 0, 1,
-               0, 1, 1, 1, 
-               1, 0, 1, 1]
+    self.play(FadeOut(mem))
 
-    for i in range(15):
-      mems.append(MemoryUnit(charge = charges[i]).scale(mem_s))
-    VGroup(*mems).arrange_in_grid(4,4)
+    self.camera.frame.save_state()
+    self.camera.auto_zoom(all, margin=4, animate=False)
+    Rectangle.set_default(stroke_width=10)
+    Line.set_default(stroke_width=10)
     self.play(*[Create(x) for x in mems])
 
-    sz_w = 3.5
-    sz_b = 2.4
-    bit_lines = [Line(sz_b*UP, sz_b*DOWN).next_to(mems[i].out, RIGHT, aligned_edge=UP, buff=0) for i in range(4)]
-    word_lines = [Line(sz_w*LEFT, sz_w*RIGHT).next_to(mems[i*4].t.base, UP, aligned_edge=LEFT, buff=0) for i in range(4)]
     self.play(*[Create(x) for x in bit_lines])
     self.play(*[Create(x) for x in word_lines])
-
-    rd = Rectangle(height=5, width=0.5).next_to(VGroup(*word_lines), RIGHT, buff=0)
-    sa = Rectangle(height=0.5, width=6).next_to(VGroup(*bit_lines), DOWN, buff=0)
-    rd_t = Text("Row Decoder", font_size=32).rotate(PI/2).move_to(rd)
-    sa_t = Text("Sense Amplifiers", font_size=32, z_index=1).move_to(sa)
 
     self.play(Create(rd), Write(rd_t))
     self.play(Create(sa), Write(sa_t))
     
-    sz=0.2
-    decoder_lines = [Line(sz*UP, sz*DOWN).next_to(sa, DOWN, buff=0).set_x(bit_lines[i].get_x()) for i in range(4)]
-
     self.play(*[Create(x) for x in decoder_lines])
 
-    cd = Rectangle(height=0.5, width=6).next_to(VGroup(*decoder_lines), DOWN, buff=0)
-    cd_t = Text("Column Decoder", font_size=32).move_to(cd)
     self.play(Create(cd), Write(cd_t))
 
-    data_out = Line().next_to(sa, RIGHT, buff=0)
     self.play(Create(data_out))
 
-    st = rd.get_top() + DOWN + 3*RIGHT
+    st = rd.get_top() + DOWN + 6*RIGHT
     e1 = st.copy()
     e1[1] = rd.get_y()
     e2 = st.copy()
     e2[1] = cd.get_y()
-    addres_lines = [Line(st+0.5*LEFT, e1+0.5*LEFT-0.1*DOWN),
-                    Line(st+0.25*LEFT, e1+0.25*LEFT+0.1*DOWN),
+    addres_lines = [Line(st+5*0.5*LEFT, e1+5*0.5*LEFT-5*0.1*DOWN),
+                    Line(st+5*0.25*LEFT, e1+5*0.25*LEFT+5*0.1*DOWN),
                     Line(st, e2-0.1*DOWN),
-                    Line(st+0.25*RIGHT, e2+0.25*RIGHT+0.1*DOWN)]
+                    Line(st+5*0.25*RIGHT, e2+5*0.25*RIGHT+5*0.1*DOWN)]
 
     addres_lines2 = []
     for i in range(4):
@@ -241,14 +285,14 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       anims.extend(set_line(bit_lines[i], pre_charge_value, self))
 
     self.play(*anims)
-    address = [Text(x, font_size=24).next_to(addres_lines[i], UP, buff=1) for i, x in enumerate("0100")]
+    address = [Text(x, font_size=5*24).next_to(addres_lines[i], UP, buff=1) for i, x in enumerate("0100")]
     self.play(*[Write(x) for x in address])
     self.play(address[0].animate.next_to(addres_lines[0], UP),
               address[1].animate.next_to(addres_lines[1], UP))
     self.play(*set_line(addres_lines[1], 1, self))
     self.play(*set_line(addres_lines2[1], 1, self))
     self.play(*set_line(word_lines[1], 1, self, backward=True))
-    spotlight = Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[4], buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
+    spotlight = Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[4], buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
     self.play(FadeIn(spotlight))
 
     for a in mems[4].read(self, (mems[4].charged + pre_charge_value)/2):
@@ -257,13 +301,13 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     
     self.play(Transform(spotlight,
-                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[5], buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[5], buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
     for a in mems[5].read(self, (chrg_hi if mems[5].charged > pre_charge_value else chrg_lo)):
       self.play(*a)
     self.play(*set_line(bit_lines[1], (chrg_hi if mems[5].charged > pre_charge_value else chrg_lo), self))
 
     self.play(Transform(spotlight,
-                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(VGroup(mems[6], mems[7]), buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(VGroup(mems[6], mems[7]), buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
 
     for a1, a2 in zip(mems[6].read(self, (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo)), mems[7].read(self, (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo))):
       self.play(*a1, *a2)
@@ -271,11 +315,11 @@ class Coalescing(VoiceoverScene, ZoomedScene):
               *set_line(bit_lines[3], (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo), self))
 
     self.play(Transform(spotlight,
-                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(sa, buff=0.1), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(sa, buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
 
     vals = []
     for i, b in enumerate(bit_lines):
-      vals.append(Rectangle(width=0.5, height=0.5, color=GREEN if mems[4+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
+      vals.append(Rectangle(width=2.5, height=2.5, color=GREEN if mems[4+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
     self.play(*[Create(x) for x in vals])
     self.play(FadeOut(spotlight))
 
@@ -322,8 +366,8 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       anims.extend(set_line(bit_lines[i], 0, self))
     self.play(*anims)
 
-    self.play(Transform(address[0], Text("1", font_size=24).next_to(addres_lines[0], UP, buff=1)),
-              Transform(address[1], Text("0", font_size=24).next_to(addres_lines[1], UP, buff=1)))
+    self.play(Transform(address[0], Text("1", font_size=5*24).next_to(addres_lines[0], UP, buff=1)),
+              Transform(address[1], Text("0", font_size=5*24).next_to(addres_lines[1], UP, buff=1)))
 
     anims = []
     for i in range(4):
@@ -350,7 +394,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     vals = []
     for i, b in enumerate(bit_lines):
-      vals.append(Rectangle(width=0.5, height=0.5, color=GREEN if mems[8+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
+      vals.append(Rectangle(width=2.5, height=2.5, color=GREEN if mems[8+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
     self.play(*[Create(x) for x in vals])
 
     self.play(address[2].animate.next_to(addres_lines[2], UP),
@@ -369,8 +413,8 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       self.play(sa.animate.set_color(WHITE))
       self.play(*set_line(data_out, 0, self))
 
-      self.play(Transform(address[2], Text(v[0], font_size=24).next_to(addres_lines[2], UP, buff=1)),
-                Transform(address[3], Text(v[1], font_size=24).next_to(addres_lines[3], UP, buff=1)))
+      self.play(Transform(address[2], Text(v[0], font_size=5*24).next_to(addres_lines[2], UP, buff=1)),
+                Transform(address[3], Text(v[1], font_size=5*24).next_to(addres_lines[3], UP, buff=1)))
       self.play(address[2].animate.next_to(addres_lines[2], UP),
                 address[3].animate.next_to(addres_lines[3], UP))
       self.play(*set_line(addres_lines[2], int(v[0]), self), *set_line(addres_lines[3], int(v[1]), self))
@@ -381,6 +425,9 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
 
     self.play(*[FadeOut(x) for x in self.mobjects])
+    self.play(Restore(self.camera.frame))
+    Rectangle.set_default()
+    Line.set_default()
     strided_cp = """__global__ void copy(int n , float* in, float* out, int stride)
 {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
