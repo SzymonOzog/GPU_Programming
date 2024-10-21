@@ -396,14 +396,16 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.wait(1)
     self.play(Uncreate(code_obj))
 
-    timings = [0.003619, 0.004091, 0.004631, 0.005690, 0.005933, 0.006505, 0.006846, 0.007276, 0.009585, 0.009903, 0.010967, 0.011174, 0.011700, 0.011849, 0.012079, ]
+    timings = [0.008079, 0.008223, 0.008253, 0.008885, 0.010435, 0.011180, 0.011325, 0.011930, 0.013414, 0.014060, 0.014264, 0.014264, 0.014060, 0.014592, 0.014653, 0.014725, ]
+
     timings = [t*1e3 for t in timings]
     stride = list(range(15))
+    stride = [s+2 for s in stride]
 
-    ax = Axes(x_range=[0, stride[-1]+1, 1],
-              y_range=[3, 13, 1],
+    ax = Axes(x_range=[2, stride[-1]+1, 1],
+              y_range=[8, 15, 1],
               x_length=16,
-              x_axis_config={"scaling": LogBase(2, custom_labels=False)},
+              x_axis_config={"scaling": LogBase(2, custom_labels=True)},
               axis_config={"include_numbers": True}).scale(0.8)
 
     graph = ax.plot_line_graph(x_values=[2**x for x in stride], y_values=timings, line_color=BLUE, add_vertex_dots=False) 
