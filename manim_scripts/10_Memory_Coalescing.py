@@ -142,96 +142,115 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.camera.frame.save_state()
     self.camera.auto_zoom(all, margin=4, animate=False)
 
+    with self.voiceover(text="""Hello and welcome to the next episode in our GPU series, this episode will focus on how memory, and specifically
+                        DRAM memory works in modern GPUs and why should we care about such low level detais as GPU programmers. Without further ado let's jump in""") as trk:
+      self.play(*[Create(x) for x in mems])
+      self.play(*[Create(x) for x in bit_lines])
+      self.play(*[Create(x) for x in word_lines])
+      self.play(Create(rd), Write(rd_t))
+      self.play(Create(sa), Write(sa_t))
+      self.play(*[Create(x) for x in decoder_lines])
+      self.play(Create(cd), Write(cd_t))
+      self.play(Create(data_out))
 
-    self.play(*[Create(x) for x in mems])
-    self.play(*[Create(x) for x in bit_lines])
-    self.play(*[Create(x) for x in word_lines])
-    self.play(Create(rd), Write(rd_t))
-    self.play(Create(sa), Write(sa_t))
-    self.play(*[Create(x) for x in decoder_lines])
-    self.play(Create(cd), Write(cd_t))
-    self.play(Create(data_out))
-
-    self.wait(3)
     self.play([FadeOut(x) for x in self.mobjects])
 
-    self.play(Restore(self.camera.frame))
+    self.camera.frame.restore()
     Rectangle.set_default()
     Line.set_default()
 
     t = Transistor()
-    self.play(Create(t))
+
+    with self.voiceover(text="""To understand how memory works, we have to go into electronic component level of detais, and we'll start with the transistor""") as trk:
+      self.play(Create(t))
     b_t = Text("Base", font_size=24).next_to(t.base, UP)
     c_t = Text("Drain", font_size=24).next_to(t.drain, DOWN)
     e_t = Text("Source", font_size=24).next_to(t.source, DOWN)
-    self.play(Write(c_t), Write(b_t), Write(e_t))
-
+    with self.voiceover(text="""The transistor has 3 entry points, the <bookmark mark='1'/>Base, the<bookmark mark='2'/> Drain  and the <bookmark mark='3'/> source""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Write(c_t))
+      self.wait_until_bookmark("2")
+      self.play(Write(b_t))
+      self.wait_until_bookmark("3")
+      self.play(Write(e_t))
     
     input = Line().next_to(t.drain, LEFT, aligned_edge=DOWN, buff=0)
     output = Line().next_to(t.source, RIGHT, aligned_edge=DOWN, buff=0)
 
-    self.play(Create(input))
-    self.play(Create(output))
+    with self.voiceover(text="""We can now plug in some input line and output line to our transistor""") as trk:
+      self.play(Create(input))
+      self.play(Create(output))
 
-    self.play(*set_line(input, 1, self))
-    self.wait(1)
+    with self.voiceover(text="""In this state, if we put the voltage through the transistor, it won't pass through
+                        and the output won't have voltage""") as trk:
+      self.play(*set_line(input, 1, self))
 
-    self.play(*set_line(t.base, 1, self))
-    self.play(*set_line(t.drain, 1, self))
-    self.play(*set_line(t.l2, 1, self))
-    self.play(*set_line(t.source, 1, self))
-    self.play(*set_line(output, 1, self))
-
-    self.wait(1)
-
-    self.play(*set_line(t.base, 0, self))
-    self.play(*set_line(t.drain, 0, self))
-    self.play(*set_line(t.l2, 0, self))
-    self.play(*set_line(t.source, 0, self))
-    self.play(*set_line(output, 0, self))
+    with self.voiceover(text="""But if we also put the voltage on the base the transistor starts being open, and voltage
+                        passes through to the output""") as trk:
+      self.play(*set_line(t.base, 1, self))
+      self.play(*set_line(t.drain, 1, self))
+      self.play(*set_line(t.l2, 1, self))
+      self.play(*set_line(t.source, 1, self))
+      self.play(*set_line(output, 1, self))
 
     self.wait(1)
+
+    with self.voiceover(text="""If we turn off the voltage from the base, the transistor turns off and once again, no voltage can pass through it""") as trk:
+      self.play(*set_line(t.base, 0, self))
+      self.play(*set_line(t.drain, 0, self))
+      self.play(*set_line(t.l2, 0, self))
+      self.play(*set_line(t.source, 0, self))
+      self.play(*set_line(output, 0, self))
+
     
     mem = VGroup(t, input, output)
     self.play(Unwrite(b_t), Unwrite(c_t), Unwrite(e_t), FadeOut(mem))
     mem.shift(UR)
     input.set_color(WHITE)
     c = Capacitor()
-    self.play(Create(c.cap))
-    self.wait(1)
-    self.play(Create(c.gnd))
-    self.wait(1)
+    with self.voiceover(text="""The second component that we need to know about is the capacitor and for simplicity, we'll 
+                        assume that it's always<bookmark mark='1'/> connected to the ground""") as trk:
+      self.play(Create(c.cap))
+      self.wait_until_bookmark("1")
+      self.play(Create(c.gnd))
 
     voltage = Line(RIGHT, LEFT, color=GREEN).next_to(c.out, UP, buff=0, aligned_edge=LEFT)
 
-    self.play(Create(voltage))
-    self.play(*set_line(c.out, True, self, backward=True))
-    self.play(c.l1.animate.set_color(GREEN), c.l2.animate.set_color(GREEN))
-    self.play(Uncreate(voltage))
+    with self.voiceover(text="""We can use the capacitor to store charge""") as trk:
+      pass
+    
+    with self.voiceover(text="""This means that when we put voltage on it's imput<bookmark mark='1'/> it starts accumulating charge""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Create(voltage))
+      self.play(*set_line(c.out, True, self, backward=True))
+      self.play(c.l1.animate.set_color(GREEN), c.l2.animate.set_color(GREEN))
+      self.play(Uncreate(voltage))
     
     out = Line().next_to(input, LEFT, buff=0, aligned_edge=UP)
-    self.play(Create(out))
-    self.play(c.animate.next_to(input, LEFT, buff=0, aligned_edge=UP, submobject_to_align=c.out))
-    self.play(*set_line(out, True, self, backward=True))
-    self.play(c.animate.set_color(WHITE), out.animate.set_color(WHITE))
-    self.play(Uncreate(out))
-    self.play(FadeIn(mem))
-    self.wait(1)
+    with self.voiceover(text="""And when we plug it in again, it slowly discharges""") as trk:
+      self.play(Create(out))
+      self.play(c.animate.next_to(input, LEFT, buff=0, aligned_edge=UP, submobject_to_align=c.out))
+      self.play(*set_line(out, True, self, backward=True))
+      self.play(c.animate.set_color(WHITE), out.animate.set_color(WHITE))
+
+
+    with self.voiceover(text="""With that in mind, we can combine those two elements and create a simple memory cell""") as trk:
+      self.play(Uncreate(out))
+      self.play(FadeIn(mem))
 
     mem = MemoryUnit(c, t, input, output)
 
-    for a in mem.write(self, 1):
-      self.play(*a)
-    self.wait(1)
+    with self.voiceover(text="""We can open out transistor, and put voltage on the source to charge our capacitor and store a 1""") as trk:
+      for a in mem.write(self, 1):
+        self.play(*a)
     
-    for a in mem.disable_line(self):
-      self.play(*a)
-    self.wait(1)
+    with self.voiceover(text="""If we then disable the transistor, the capacitor stores our value""") as trk:
+      for a in mem.disable_line(self):
+        self.play(*a)
 
-    for a in mem.read(self):
-      self.play(*a)
-
-    self.wait(1)
+    with self.voiceover(text="""And if we want to read it, we just open our transistor again""") as trk:
+      for a in mem.read(self):
+        self.play(*a)
 
     for a in mem.disable_line(self):
       self.play(*a)
@@ -242,19 +261,27 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.camera.auto_zoom(all, margin=4, animate=False)
     Rectangle.set_default(stroke_width=10)
     Line.set_default(stroke_width=10)
-    self.play(*[Create(x) for x in mems])
+    with self.voiceover(text="""Those memory cells are arranged in a rectangular grid, called a memory array""") as trk:
+      self.play(*[Create(x) for x in mems])
 
-    self.play(*[Create(x) for x in bit_lines])
-    self.play(*[Create(x) for x in word_lines])
+    with self.voiceover(text="""The bases of each transistors are connected using word lines""") as trk:
+      self.play(*[Create(x) for x in word_lines])
 
-    self.play(Create(rd), Write(rd_t))
-    self.play(Create(sa), Write(sa_t))
+    with self.voiceover(text="""the outputs are connected to the bit lines""") as trk:
+      self.play(*[Create(x) for x in bit_lines])
+
+    with self.voiceover(text="""The word lines are coming out of a row decoder""") as trk:
+      self.play(Create(rd), Write(rd_t))
+
+    with self.voiceover(text="""the bit lines are connected to sense amplifiers""") as trk:
+      self.play(Create(sa), Write(sa_t))
     
-    self.play(*[Create(x) for x in decoder_lines])
+    with self.voiceover(text="""That are controlled by a column decoder""") as trk:
+      self.play(*[Create(x) for x in decoder_lines])
+      self.play(Create(cd), Write(cd_t))
 
-    self.play(Create(cd), Write(cd_t))
-
-    self.play(Create(data_out))
+    with self.voiceover(text="""And finally everything is connected to the data input and output line""") as trk:
+      self.play(Create(data_out))
 
     st = rd.get_top() + DOWN + 6*RIGHT
     e1 = st.copy()
@@ -274,8 +301,13 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       end[0] = end_obj.get_right()[0]
       addres_lines2.append(Line(st, end))
 
-    self.play(*[Create(x) for x in addres_lines])
-    self.play(*[Create(x) for x in addres_lines2])
+    with self.voiceover(text="""Now that we have our memory array constructed, we need a way to control it""") as trk:
+      pass
+
+    with self.voiceover(text="""And we do that through address lines, some that represent the row that we want to access, and some that represent
+                        the columns""") as trk:
+      self.play(*[Create(x) for x in addres_lines])
+      self.play(*[Create(x) for x in addres_lines2])
 
     pre_charge_value = 0.7
     chrg_hi = 0.8
@@ -284,144 +316,170 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     for i in range(4):
       anims.extend(set_line(bit_lines[i], pre_charge_value, self))
 
-    self.play(*anims)
-    address = [Text(x, font_size=5*24).next_to(addres_lines[i], UP, buff=1) for i, x in enumerate("0100")]
-    self.play(*[Write(x) for x in address])
-    self.play(address[0].animate.next_to(addres_lines[0], UP),
-              address[1].animate.next_to(addres_lines[1], UP))
-    self.play(*set_line(addres_lines[1], 1, self))
-    self.play(*set_line(addres_lines2[1], 1, self))
-    self.play(*set_line(word_lines[1], 1, self, backward=True))
-    spotlight = Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[4], buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
-    self.play(FadeIn(spotlight))
 
-    for a in mems[4].read(self, (mems[4].charged + pre_charge_value)/2):
-      self.play(*a)
-    self.play(*set_line(bit_lines[0], (chrg_hi if mems[4].charged > pre_charge_value else chrg_lo), self))
+    with self.voiceover(text="""With all of the elements in place, we can now see how to read a value from our memory array""") as trk:
+      pass
+
+    with self.voiceover(text="""The first step is the precharging step, where we put some voltage on our bitlines, that is non zero but lower than the 
+                        voltage stored in our transistors""") as trk:
+      self.play(*anims)
+    address = [Text(x, font_size=5*24).next_to(addres_lines[i], UP, buff=1) for i, x in enumerate("0100")]
+    with self.voiceover(text="""Then we need to provide the address of the memory that we want to access""") as trk:
+      self.play(*[Write(x) for x in address])
+    with self.voiceover(text="""The high part of the address goes to the row decoder""") as trk:
+      self.play(address[0].animate.next_to(addres_lines[0], UP),
+                address[1].animate.next_to(addres_lines[1], UP))
+      self.play(*set_line(addres_lines[1], 1, self))
+      self.play(*set_line(addres_lines2[1], 1, self))
+
+    with self.voiceover(text="""That decodes it and activates a whole row of transistors""") as trk:
+      self.play(*set_line(word_lines[1], 1, self, backward=True))
+    spotlight = Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[4], buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
+    with self.voiceover(text="""If a memory cell was storing a value of 1, it starts discharging into the bitline increasing it's voltage""") as trk:
+      self.play(FadeIn(spotlight))
+      for a in mems[4].read(self, (mems[4].charged + pre_charge_value)/2):
+        self.play(*a)
+      self.play(*set_line(bit_lines[0], (chrg_hi if mems[4].charged > pre_charge_value else chrg_lo), self))
 
     
-    self.play(Transform(spotlight,
-                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[5], buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
-    for a in mems[5].read(self, (chrg_hi if mems[5].charged > pre_charge_value else chrg_lo)):
-      self.play(*a)
-    self.play(*set_line(bit_lines[1], (chrg_hi if mems[5].charged > pre_charge_value else chrg_lo), self))
+    with self.voiceover(text="""Likewhise, if the memory cell stored a 0, it starts draining from the bitline decreasing it's voltage""") as trk:
+      self.play(Transform(spotlight,
+                          Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(mems[5], buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+      for a in mems[5].read(self, (chrg_hi if mems[5].charged > pre_charge_value else chrg_lo)):
+        self.play(*a)
+      self.play(*set_line(bit_lines[1], (chrg_hi if mems[5].charged > pre_charge_value else chrg_lo), self))
 
-    self.play(Transform(spotlight,
-                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(VGroup(mems[6], mems[7]), buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+    with self.voiceover(text="""this happens for all of the transistors in a row""") as trk:
+      self.play(Transform(spotlight,
+                          Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(VGroup(mems[6], mems[7]), buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
 
-    for a1, a2 in zip(mems[6].read(self, (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo)), mems[7].read(self, (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo))):
-      self.play(*a1, *a2)
-    self.play(*set_line(bit_lines[2], (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo), self),
-              *set_line(bit_lines[3], (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo), self))
+      for a1, a2 in zip(mems[6].read(self, (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo)), mems[7].read(self, (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo))):
+        self.play(*a1, *a2)
+      self.play(*set_line(bit_lines[2], (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo), self),
+                *set_line(bit_lines[3], (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo), self))
 
-    self.play(Transform(spotlight,
-                        Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(sa, buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+    with self.voiceover(text="""Now, sense amplifiers come into play, their job is to detect the voltage on the bitlines, if it's higher than expected
+                        they load the values as 1 and if it's lower they load a 0""") as trk:
+      self.play(Transform(spotlight,
+                            Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(sa, buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
+      vals = []
+      for i, b in enumerate(bit_lines):
+        vals.append(Rectangle(width=2.5, height=2.5, color=GREEN if mems[4+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
+      self.play(*[Create(x) for x in vals])
 
-    vals = []
-    for i, b in enumerate(bit_lines):
-      vals.append(Rectangle(width=2.5, height=2.5, color=GREEN if mems[4+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
-    self.play(*[Create(x) for x in vals])
     self.play(FadeOut(spotlight))
 
-    self.play(address[2].animate.next_to(addres_lines[2], UP),
-              address[3].animate.next_to(addres_lines[3], UP))
-    self.play(*set_line(decoder_lines[0], 1, self))
-    self.play(sa.animate.set_color(vals[0].color))
-    self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
+    with self.voiceover(text="""Now that the values are loaded into the sense amplifiers we can put the remaining half of the address onto our
+                        column decoder""") as trk:
+      self.play(address[2].animate.next_to(addres_lines[2], UP),
+                address[3].animate.next_to(addres_lines[3], UP))
+    with self.voiceover(text="""It decodes the address of the value that we want to access, and passsess it onto the data output line""") as trk:
+      self.play(*set_line(decoder_lines[0], 1, self))
+      self.play(sa.animate.set_color(vals[0].color))
+      self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
 
-    self.play(address[2].animate.next_to(addres_lines[2], UP, buff=1),
-              address[3].animate.next_to(addres_lines[3], UP, buff=1))
+    with self.voiceover(text="""You might have noticed that it's a lot of work, but it starts getting even worse. 
+                        Because after reading the values our memory cells either lost some of their charge or gained an unnecessary charge""") as trk:
+      self.play(address[2].animate.next_to(addres_lines[2], UP, buff=1),
+                address[3].animate.next_to(addres_lines[3], UP, buff=1))
 
-    self.play(*set_line(decoder_lines[0], 0, self))
-    self.play(sa.animate.set_color(WHITE))
-    self.play(*set_line(data_out, 0, self))
+      self.play(*set_line(decoder_lines[0], 0, self))
+      self.play(sa.animate.set_color(WHITE))
+      self.play(*set_line(data_out, 0, self))
 
     anims = []
     for i in range(4):
-      anims.append(FadeOut(vals[i]))
       anims.extend(set_line(bit_lines[i], 1 if vals[i].color == GREEN else 0, self, backward=True))
-    self.play(*anims)
 
-    for a1, a2, a3, a4 in zip(mems[4].write(self, 1 if vals[0].color == GREEN else 0), 
-                              mems[5].write(self, 1 if vals[1].color == GREEN else 0), 
-                              mems[6].write(self, 1 if vals[2].color == GREEN else 0), 
-                              mems[7].write(self, 1 if vals[3].color == GREEN else 0)):
-      self.play(*a1, *a2, *a3, *a4)
+    with self.voiceover(text="""So now we have to write the row values from our sense amplifiers back to the memory cells""") as trk:
+      self.play(*anims)
 
-    self.play(address[0].animate.next_to(addres_lines[0], UP, buff=1),
-              address[1].animate.next_to(addres_lines[1], UP, buff=1))
+      for a1, a2, a3, a4 in zip(mems[4].write(self, 1 if vals[0].color == GREEN else 0), 
+                                mems[5].write(self, 1 if vals[1].color == GREEN else 0), 
+                                mems[6].write(self, 1 if vals[2].color == GREEN else 0), 
+                                mems[7].write(self, 1 if vals[3].color == GREEN else 0)):
+        self.play(*a1, *a2, *a3, *a4)
 
-    self.play(*set_line(addres_lines[1], 0, self))
-    self.play(*set_line(addres_lines2[1], 0, self))
-    self.play(*set_line(word_lines[1], 0, self, backward=True))
+    
+    with self.voiceover(text="""Now if we want to access a value that's in a different row than our previous access""") as trk:
+      self.play(address[0].animate.next_to(addres_lines[0], UP, buff=1),
+                address[1].animate.next_to(addres_lines[1], UP, buff=1))
+      self.play(Transform(address[0], Text("1", font_size=5*24).next_to(addres_lines[0], UP, buff=1)),
+                Transform(address[1], Text("0", font_size=5*24).next_to(addres_lines[1], UP, buff=1)))
 
-    for a1, a2, a3, a4 in zip(mems[4].disable_line(self, 0), 
-                              mems[5].disable_line(self, 0), 
-                              mems[6].disable_line(self, 0), 
-                              mems[7].disable_line(self, 0)):
-      self.play(*a1, *a2, *a3, *a4)
+      self.play(*set_line(addres_lines[1], 0, self))
+      self.play(*set_line(addres_lines2[1], 0, self))
+      self.play(*set_line(word_lines[1], 0, self, backward=True))
+
+      for a1, a2, a3, a4 in zip(mems[4].disable_line(self, 0), 
+                                mems[5].disable_line(self, 0), 
+                                mems[6].disable_line(self, 0), 
+                                mems[7].disable_line(self, 0)):
+        self.play(*a1, *a2, *a3, *a4)
 
     anims = []
     for i in range(4):
       anims.extend(set_line(bit_lines[i], 0, self))
-    self.play(*anims)
 
-    self.play(Transform(address[0], Text("1", font_size=5*24).next_to(addres_lines[0], UP, buff=1)),
-              Transform(address[1], Text("0", font_size=5*24).next_to(addres_lines[1], UP, buff=1)))
+    with self.voiceover(text="""We have to go to the whole process again, prechargint the bitlines, decoding the row address
+                        reading into sense amplifiers and decoding the column address. This situation is called a row miss""") as trk:
+      self.play(*anims)
+      anims = []
+      for i in range(4):
+        anims.extend(set_line(bit_lines[i], pre_charge_value, self))
 
-    anims = []
-    for i in range(4):
-      anims.extend(set_line(bit_lines[i], pre_charge_value, self))
+      self.play(*anims)
 
-    self.play(*anims)
+      self.play(address[0].animate.next_to(addres_lines[0], UP),
+                address[1].animate.next_to(addres_lines[1], UP))
+      self.play(*set_line(addres_lines[0], 1, self))
+      self.play(*set_line(addres_lines2[0], 1, self))
+      self.play(*set_line(word_lines[2], 1, self, backward=True))
 
-    self.play(address[0].animate.next_to(addres_lines[0], UP),
-              address[1].animate.next_to(addres_lines[1], UP))
-    self.play(*set_line(addres_lines[0], 1, self))
-    self.play(*set_line(addres_lines2[0], 1, self))
-    self.play(*set_line(word_lines[2], 1, self, backward=True))
+      for a1, a2, a3, a4 in zip(mems[8].read(self, (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo)), 
+                                mems[9].read(self, (chrg_hi if mems[9].charged > pre_charge_value else chrg_lo)), 
+                                mems[10].read(self, (chrg_hi if mems[10].charged > pre_charge_value else chrg_lo)), 
+                                mems[11].read(self, (chrg_hi if mems[11].charged > pre_charge_value else chrg_lo))):
+        self.play(*a1, *a2, *a3, *a4)
 
-    for a1, a2, a3, a4 in zip(mems[8].read(self, (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo)), 
-                              mems[9].read(self, (chrg_hi if mems[9].charged > pre_charge_value else chrg_lo)), 
-                              mems[10].read(self, (chrg_hi if mems[10].charged > pre_charge_value else chrg_lo)), 
-                              mems[11].read(self, (chrg_hi if mems[11].charged > pre_charge_value else chrg_lo))):
-      self.play(*a1, *a2, *a3, *a4)
+      self.play(*set_line(bit_lines[0], (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo), self),
+                *set_line(bit_lines[1], (chrg_hi if mems[9].charged > pre_charge_value else chrg_lo), self),
+                *set_line(bit_lines[2], (chrg_hi if mems[10].charged > pre_charge_value else chrg_lo), self),
+                *set_line(bit_lines[3], (chrg_hi if mems[11].charged > pre_charge_value else chrg_lo), self))
 
-    self.play(*set_line(bit_lines[0], (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo), self),
-              *set_line(bit_lines[1], (chrg_hi if mems[9].charged > pre_charge_value else chrg_lo), self),
-              *set_line(bit_lines[2], (chrg_hi if mems[10].charged > pre_charge_value else chrg_lo), self),
-              *set_line(bit_lines[3], (chrg_hi if mems[11].charged > pre_charge_value else chrg_lo), self))
+      vals_t = []
+      for i, b in enumerate(bit_lines):
+        vals_t.append(Rectangle(width=2.5, height=2.5, color=GREEN if mems[8+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
+      self.play(*[Transform(v1, v2) for v1, v2 in zip(vals, vals_t)])
 
-    vals = []
-    for i, b in enumerate(bit_lines):
-      vals.append(Rectangle(width=2.5, height=2.5, color=GREEN if mems[8+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
-    self.play(*[Create(x) for x in vals])
-
-    self.play(address[2].animate.next_to(addres_lines[2], UP),
-              address[3].animate.next_to(addres_lines[3], UP))
-    self.play(*set_line(decoder_lines[0], 1, self))
-    self.play(sa.animate.set_color(vals[0].color))
-    self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
-
-    for i, v in enumerate(["01", "10", "11"]):
-      self.play(address[2].animate.next_to(addres_lines[2], UP, buff=1),
-                address[3].animate.next_to(addres_lines[3], UP, buff=1))
-      self.play(*set_line(addres_lines[2], 0, self), *set_line(addres_lines[3], 0, self))
-      self.play(*set_line(addres_lines2[2], 0, self), *set_line(addres_lines2[3], 0, self))
-
-      self.play(*set_line(decoder_lines[i], 0, self))
-      self.play(sa.animate.set_color(WHITE))
-      self.play(*set_line(data_out, 0, self))
-
-      self.play(Transform(address[2], Text(v[0], font_size=5*24).next_to(addres_lines[2], UP, buff=1)),
-                Transform(address[3], Text(v[1], font_size=5*24).next_to(addres_lines[3], UP, buff=1)))
       self.play(address[2].animate.next_to(addres_lines[2], UP),
                 address[3].animate.next_to(addres_lines[3], UP))
-      self.play(*set_line(addres_lines[2], int(v[0]), self), *set_line(addres_lines[3], int(v[1]), self))
-      self.play(*set_line(addres_lines2[2], int(v[0]), self), *set_line(addres_lines2[3], int(v[1]), self))
-      self.play(*set_line(decoder_lines[i+1], 1, self))
-      self.play(sa.animate.set_color(vals[i+1].color))
-      self.play(*set_line(data_out, 1 if vals[i+1].color == GREEN else 0, self))
+      self.play(*set_line(decoder_lines[0], 1, self))
+      self.play(sa.animate.set_color(vals[0].color))
+      self.play(*set_line(data_out, 1 if vals[0].color == GREEN else 0, self))
+
+    with self.voiceover(text="""Lucily for us, we can also have a row hit situation where we try to access a value in a raw that is already
+                        loaded into memory. We can now skip all of the steps that were required when we needed to change the row stored in the 
+                        sense amplifiers, and just decode the column address and pass it to our data output line""") as trk:
+      for i, v in enumerate(["01", "10", "11"]):
+        self.play(address[2].animate.next_to(addres_lines[2], UP, buff=1),
+                  address[3].animate.next_to(addres_lines[3], UP, buff=1))
+        self.play(*set_line(addres_lines[2], 0, self), *set_line(addres_lines[3], 0, self))
+        self.play(*set_line(addres_lines2[2], 0, self), *set_line(addres_lines2[3], 0, self))
+
+        self.play(*set_line(decoder_lines[i], 0, self))
+        self.play(sa.animate.set_color(WHITE))
+        self.play(*set_line(data_out, 0, self))
+
+        self.play(Transform(address[2], Text(v[0], font_size=5*24).next_to(addres_lines[2], UP, buff=1)),
+                  Transform(address[3], Text(v[1], font_size=5*24).next_to(addres_lines[3], UP, buff=1)))
+        self.play(address[2].animate.next_to(addres_lines[2], UP),
+                  address[3].animate.next_to(addres_lines[3], UP))
+        self.play(*set_line(addres_lines[2], int(v[0]), self), *set_line(addres_lines[3], int(v[1]), self))
+        self.play(*set_line(addres_lines2[2], int(v[0]), self), *set_line(addres_lines2[3], int(v[1]), self))
+        self.play(*set_line(decoder_lines[i+1], 1, self))
+        self.play(sa.animate.set_color(vals[i+1].color))
+        self.play(*set_line(data_out, 1 if vals[i+1].color == GREEN else 0, self))
 
 
     self.play(*[FadeOut(x) for x in self.mobjects])
