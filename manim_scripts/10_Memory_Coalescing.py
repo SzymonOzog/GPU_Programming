@@ -488,17 +488,39 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     Line.set_default()
     strided_cp = """__global__ void copy(int n , float* in, float* out, int stride)
 {
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  unsigned long i = (blockIdx.x*blockDim.x + threadIdx.x)*stride;
   if (i < n)
   {
-    out[i] = in[i * stride];
+    out[i] = in[i];
   }
 }"""
 
     code_obj = Code(code=strided_cp, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1)
-    self.play(Create(code_obj))
+    with self.voiceover(text="""This brings us to the crux of the problem, what does that mean to us as programmers. To anwser this
+                        we can examine a simple strided copy kernel""") as trk:
+      self.play(Create(code_obj))
 
-    self.wait(1)
+    with self.voiceover(text="""All it does is just copying from one buffer to another, but we can specify the stride between successive
+                        memory accesses""") as trk:
+      pass
+    buffers = [Rectangle(width=0.25, height=0.25, color=WHITE, fill_color=WHITE, fill_opacity=0.25, stroke_width=2) for x in range(16)]
+    VGroup(*buffers).arrange(RIGHT, buff=0.05).next_to(code_obj, DOWN)
+    def strided(rng, stride):
+      accessed = [stride * i for i in range(rng)]
+      buffers = [Rectangle(width=0.25, height=0.25, color=GREEN if x in accessed else WHITE, fill_color=GREEN if x in accessed else WHITE, fill_opacity=0.25, stroke_width=2) for x in range(16)]
+      VGroup(*buffers).arrange(RIGHT, buff=0.05).next_to(code_obj, DOWN)
+      return buffers
+    with self.voiceover(text="""So when we are using a stride of 1<bookmark mark='1'/> we access memory regions that are next to each other,
+                        with a stride of 2 <bookmark mark='2'/> they are separated by one value, and with a stride of 4<bookmark mark='3'/>
+                        each access is 4 values away of the previous one """) as trk:
+      self.play(*[Create(x) for x in buffers])
+      self.wait_until_bookmark("1")
+      self.play(*[Transform(b1, b2) for b1, b2 in zip(buffers, strided(4, 1))])
+      self.wait_until_bookmark("2")
+      self.play(*[Transform(b1, b2) for b1, b2 in zip(buffers, strided(4, 2))])
+      self.wait_until_bookmark("3")
+      self.play(*[Transform(b1, b2) for b1, b2 in zip(buffers, strided(4, 4))])
+
     self.play(Uncreate(code_obj))
 
     timings = [0.008079, 0.008223, 0.008253, 0.008885, 0.010435, 0.011180, 0.011325, 0.011930, 0.013414, 0.014060, 0.014264, 0.014264, 0.014060, 0.014592, 0.014653, 0.014725, ]
