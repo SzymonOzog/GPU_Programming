@@ -460,7 +460,9 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     with self.voiceover(text="""Lucily for us, we can also have a row hit situation where we try to access a value in a raw that is already
                         loaded into memory. We can now skip all of the steps that were required when we needed to change the row stored in the 
-                        sense amplifiers, and just decode the column address and pass it to our data output line""") as trk:
+                        sense amplifiers, and just decode the column address and pass it to our data output line.
+                        And the memory kinda does that for you, during the time of writing the rows back to memory, it just outputs a few next values from the row.
+                        This is called a DRAM burst and the amout of bytes that get returned from the burst is a burst length or a burst size""") as trk:
       for i, v in enumerate(["01", "10", "11"]):
         self.play(address[2].animate.next_to(addres_lines[2], UP, buff=1),
                   address[3].animate.next_to(addres_lines[3], UP, buff=1))
@@ -522,6 +524,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       self.play(*[Transform(b1, b2) for b1, b2 in zip(buffers, strided(4, 4))])
 
     self.play(Uncreate(code_obj))
+    self.play(*[Uncreate(x) for x in buffers])
 
     timings = [0.008079, 0.008223, 0.008253, 0.008885, 0.010435, 0.011180, 0.011325, 0.011930, 0.013414, 0.014060, 0.014264, 0.014264, 0.014060, 0.014592, 0.014653, 0.014725, ]
 
@@ -531,15 +534,30 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     ax = Axes(x_range=[2, stride[-1]+1, 1],
               y_range=[8, 15, 1],
-              x_length=16,
+              x_length=12,
               x_axis_config={"scaling": LogBase(2, custom_labels=True)},
               axis_config={"include_numbers": True}).scale(0.8)
 
     graph = ax.plot_line_graph(x_values=[2**x for x in stride], y_values=timings, line_color=BLUE, add_vertex_dots=False) 
+    burst_length = ax.plot_line_graph(x_values=[64, 64], y_values=[8, 15], line_color=ORANGE, add_vertex_dots=False)
+    page_size = ax.plot_line_graph(x_values=[1024, 1024], y_values=[8, 15], line_color=RED, add_vertex_dots=False)
 
-    x_label = ax.get_x_axis_label("Stride")
+    x_label = ax.get_x_axis_label("Stride[Bytes]")
     y_label = ax.get_y_axis_label("Time [ms]")
 
-    self.play(Create(ax))
-    self.play(Create(graph))
-    self.play(Write(x_label), Write(y_label))
+    with self.voiceover(text="""We can run this plot for diffrent stride values too see how this affects the speed of our algorithm""") as trk:
+      self.play(Create(ax))
+      self.play(Write(x_label), Write(y_label))
+
+    with self.voiceover(text="""As expected, the bigger our stride the longer it takes to access our memory""") as trk:
+      self.play(Create(graph))
+    with self.voiceover(text="""But there are two points that are standing out, where we have big increases followed by plateus""") as trk:
+      pass
+
+    with self.voiceover(text="""One is at 64B, which is the burst length of the GPU I've been testing on""") as trk:
+      self.play(Create(burst_length))
+
+    with self.voiceover(text="""And the next one is at 1KB, and this is the page size, so the amount of values that get loaded 
+                        into sense amplifiers when we select a row""") as trk:
+      self.play(Create(page_size))
+    self.wait(1)
