@@ -69,7 +69,7 @@ class MemoryUnit(VGroup):
   def read(self, scene, alpha=0, run_time_scale=0.3):
     color = WHITE.interpolate(GREEN, alpha) 
     anims = []
-    anims.append(set_line(self.t.base, self.charged, scene, run_time_scale))
+    anims.append(set_line(self.t.base, 1, scene, run_time_scale))
     anims.append(set_line(self.t.drain, self.charged, scene, run_time_scale, backward=True))
     anims.append(set_line(self.t.l2, self.charged, scene, run_time_scale, backward=True))
     anims.append(set_line(self.t.source, self.charged, scene, run_time_scale, backward=True))
