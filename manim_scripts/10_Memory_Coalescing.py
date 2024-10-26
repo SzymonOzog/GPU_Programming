@@ -510,19 +510,35 @@ class Coalescing(VoiceoverScene, ZoomedScene):
                         <bookmark mark='2'/> a 64 byte transaction <bookmark mark='3'/>or a 128 byte transaction""") as trk:
       self.wait_until_bookmark("1")
       self.play(*[s.animate.set_color(GREEN) for s in segments[:1]],
-                Transform(bytes_t, Text("32B Transaction").next_to(brace, UP)))
+                Transform(bytes_t, Text("32B Transaction", font_size=32).next_to(brace, UP)))
       self.wait_until_bookmark("2")
       self.play(*[s.animate.set_color(GREEN) for s in segments[:2]],
                 Transform(brace, brace64),
-                Transform(bytes_t, Text("64B Transaction").next_to(brace64, UP)))
+                Transform(bytes_t, Text("64B Transaction", font_size=32).next_to(brace64, UP)))
       self.wait_until_bookmark("3")
       self.play(*[s.animate.set_color(GREEN) for s in segments[:4]],
                 Transform(brace, brace128),
-                Transform(bytes_t, Text("128B Transaction").next_to(brace128, UP)))
+                Transform(bytes_t, Text("128B Transaction", font_size=32).next_to(brace128, UP)))
 
     with self.voiceover(text="""The transaction size depends on the alignment of our data, the type of memory we are accessing,
                         and the size of our data access""") as trk:
-      pass
+      self.play(*[s.animate.set_color(BLUE) for s in segments[:4]],
+                FadeOut(brace), FadeOut(bytes_t))
+
+    
+    brace = Brace(segments[0], direction=UP).scale(0.5).next_to(VGroup(*segments[:2]), UP, buff=0.1)
+    transaction_t = Text("2B Transaction", font_size=24).next_to(brace, UP, buff=0.1)
+    with self.voiceover(text="""Also our accesses need to be aligned to those segments, for example - <bookmark mark='1'/>if we want to access even just 2 bytes that are in 2
+                        different segments<bookmark mark='2'/> we still need to load both of those segments into memory""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Create(brace))
+      self.play(Write(transaction_t))
+      self.wait_until_bookmark("2")
+      self.play(*[s.animate.set_color(GREEN) for s in segments[:2]])
+
+    return
+
+
 
     self.play(*[FadeOut(x) for x in self.mobjects])
     Rectangle.set_default()
