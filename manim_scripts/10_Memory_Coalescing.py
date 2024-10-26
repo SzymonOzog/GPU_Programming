@@ -486,6 +486,45 @@ class Coalescing(VoiceoverScene, ZoomedScene):
 
     self.play(*[FadeOut(x) for x in self.mobjects])
     self.play(Restore(self.camera.frame))
+
+    bytes = [Square(side_length=0.2, color=BLUE, fill_color=BLUE, fill_opacity=0.5, stroke_width=1) for _ in range(32)]
+    VGroup(*bytes).arrange(RIGHT, buff=0.05).move_to(self.camera.frame)
+    brace = Brace(VGroup(*bytes), direction=UP)
+    bytes_t = Text("32 Bytes", font_size=32).next_to(brace, UP)
+    segments = [Rectangle(height=0.3, width=1, color=BLUE, fill_color=BLUE, fill_opacity=0.5, stroke_width=2) for _ in range(8)]
+    VGroup(*segments).arrange(RIGHT, buff=0.05).move_to(self.camera.frame)
+    brace_transform = Brace(segments[0], direction=UP)
+    
+    with self.voiceover(text="""Because of that, memory is accessed in segments, where<bookmark mark='1'/> one segment consists of 32 Bytes""") as trk:
+      self.play(*[Create(x) for x in bytes], Create(brace), Write(bytes_t))
+      self.wait_until_bookmark("1")
+      self.play(Transform(VGroup(*bytes), segments[0], replace_mobject_with_target_in_scene=True),
+                Transform(brace, brace_transform),
+                Transform(bytes_t, Text("32B Segment", font_size=32).next_to(brace_transform, UP)))
+      self.play(*[Create(x) for x in segments[1:]])
+
+    brace64 = Brace(VGroup(*segments[:2]), direction=UP)
+    brace128 = Brace(VGroup(*segments[:4]), direction=UP)
+
+    with self.voiceover(text="""When we make a memory access, a whole warp generates a memory thransaction that can be <bookmark mark='1'/>either a 32B transaction,
+                        <bookmark mark='2'/> a 64 byte transaction <bookmark mark='3'/>or a 128 byte transaction""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(*[s.animate.set_color(GREEN) for s in segments[:1]],
+                Transform(bytes_t, Text("32B Transaction").next_to(brace, UP)))
+      self.wait_until_bookmark("2")
+      self.play(*[s.animate.set_color(GREEN) for s in segments[:2]],
+                Transform(brace, brace64),
+                Transform(bytes_t, Text("64B Transaction").next_to(brace64, UP)))
+      self.wait_until_bookmark("3")
+      self.play(*[s.animate.set_color(GREEN) for s in segments[:4]],
+                Transform(brace, brace128),
+                Transform(bytes_t, Text("128B Transaction").next_to(brace128, UP)))
+
+    with self.voiceover(text="""The transaction size depends on the alignment of our data, the type of memory we are accessing,
+                        and the size of our data access""") as trk:
+      pass
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
     Rectangle.set_default()
     Line.set_default()
     strided_cp = """__global__ void copy(int n , float* in, float* out, int stride)
