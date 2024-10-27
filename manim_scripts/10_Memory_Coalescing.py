@@ -536,10 +536,6 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       self.wait_until_bookmark("2")
       self.play(*[s.animate.set_color(GREEN) for s in segments[:2]])
 
-    return
-
-
-
     self.play(*[FadeOut(x) for x in self.mobjects])
     Rectangle.set_default()
     Line.set_default()
@@ -581,21 +577,23 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(Uncreate(code_obj))
     self.play(*[Uncreate(x) for x in buffers])
 
-    timings = [0.008079, 0.008223, 0.008253, 0.008885, 0.010435, 0.011180, 0.011325, 0.011930, 0.013414, 0.014060, 0.014264, 0.014264, 0.014060, 0.014592, 0.014653, 0.014725, ]
+    timings = [0.007830, 0.008743, 0.009828, 0.011690, 0.014539, 0.018326, 0.018364, 0.018616, 0.021799, 0.022405, 0.022495, 0.022226, 0.023013, 0.022790, 0.023171, ]
 
     timings = [t*1e3 for t in timings]
     stride = list(range(15))
     stride = [s+2 for s in stride]
 
     ax = Axes(x_range=[2, stride[-1]+1, 1],
-              y_range=[8, 15, 1],
+              y_range=[8, 24, 2],
               x_length=12,
               x_axis_config={"scaling": LogBase(2, custom_labels=True)},
               axis_config={"include_numbers": True}).scale(0.8)
 
     graph = ax.plot_line_graph(x_values=[2**x for x in stride], y_values=timings, line_color=BLUE, add_vertex_dots=False) 
-    burst_length = ax.plot_line_graph(x_values=[64, 64], y_values=[8, 15], line_color=ORANGE, add_vertex_dots=False)
-    page_size = ax.plot_line_graph(x_values=[1024, 1024], y_values=[8, 15], line_color=RED, add_vertex_dots=False)
+    segment_size = ax.plot_line_graph(x_values=[128, 128], y_values=[8, 24], line_color=ORANGE, add_vertex_dots=False)
+    segment_t = Text("       128B\nSegment Size", font_size=24, color=ORANGE).next_to(segment_size, LEFT).shift(UP)
+    page_size = ax.plot_line_graph(x_values=[1024, 1024], y_values=[8, 24], line_color=RED, add_vertex_dots=False)
+    page_t = Text("1KB Page Size", font_size=24, color=RED).next_to(page_size, RIGHT)
 
     x_label = ax.get_x_axis_label("Stride[Bytes]")
     y_label = ax.get_y_axis_label("Time [ms]")
@@ -607,12 +605,12 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     with self.voiceover(text="""As expected, the bigger our stride the longer it takes to access our memory""") as trk:
       self.play(Create(graph))
     with self.voiceover(text="""But there are two points that are standing out, where we have big increases followed by plateus""") as trk:
-      pass
+      self.play(Create(segment_size), Create(page_size))
 
-    with self.voiceover(text="""One is at 64B, which is the burst length of the GPU I've been testing on""") as trk:
-      self.play(Create(burst_length))
+    with self.voiceover(text="""One is 128 bytes, which is the segment size of one memory request going through L1 cache""") as trk:
+      self.play(Write(segment_t))
 
     with self.voiceover(text="""And the next one is at 1KB, and this is the page size, so the amount of values that get loaded 
                         into sense amplifiers when we select a row""") as trk:
-      self.play(Create(page_size))
+      self.play(Write(page_t))
     self.wait(1)
