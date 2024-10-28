@@ -539,6 +539,36 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.play(*[FadeOut(x) for x in self.mobjects])
     Rectangle.set_default()
     Line.set_default()
+
+    offset_cp = """__global__ void copy(int n , float* in, float* out, int offset)
+{
+  unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i < n)
+  {
+    out[i + offset] = in[i + offset];
+  }
+}"""
+    code_obj = Code(code=offset_cp, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1)
+    with self.voiceover(text="""This brings us to the crux of the problem, what does that mean to us as programmers. To anwser this
+                        we can examine a simple offset copy kernel""") as trk:
+      self.play(Create(code_obj))
+    
+    VGroup(*segments).next_to(code_obj, 2*DOWN)
+    brace = Brace(VGroup(*segments[:4]), direction=DOWN)
+    text = Text("Offset = 0", font_size=32).next_to(brace, DOWN)
+    for s in segments:
+      s.set_color(BLUE)
+    with self.voiceover(text="""In this kernel, if we look at what the whole warp is doing, it's accessing 128 bytes of memory with an offset""") as trk:
+      self.play(*[Create(s) for s in segments], Create(brace), Write(text))
+      self.wait(1)
+      self.play(brace.animate.shift(0.25*RIGHT))
+      self.play(Transform(text, Text("Offset = 2", font_size=32).next_to(brace, DOWN)))
+      self.play(brace.animate.shift(0.25*RIGHT))
+      self.play(Transform(text, Text("Offset = 4", font_size=32).next_to(brace, DOWN)))
+
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+
     strided_cp = """__global__ void copy(int n , float* in, float* out, int stride)
 {
   unsigned long i = (blockIdx.x*blockDim.x + threadIdx.x)*stride;
@@ -547,10 +577,8 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     out[i] = in[i];
   }
 }"""
-
     code_obj = Code(code=strided_cp, tab_width=2, language="c", font_size=14, line_no_buff=0.1, corner_radius=0.1)
-    with self.voiceover(text="""This brings us to the crux of the problem, what does that mean to us as programmers. To anwser this
-                        we can examine a simple strided copy kernel""") as trk:
+    with self.voiceover(text="""Another kernel that we can examine is the strided copy kernal""") as trk:
       self.play(Create(code_obj))
 
     with self.voiceover(text="""All it does is just copying from one buffer to another, but we can specify the stride between successive
