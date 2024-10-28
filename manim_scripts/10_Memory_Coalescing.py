@@ -566,6 +566,34 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       self.play(brace.animate.shift(0.25*RIGHT))
       self.play(Transform(text, Text("Offset = 4", font_size=32).next_to(brace, DOWN)))
 
+    self.play(*[FadeOut(x) for x in self.mobjects])
+
+    timings = [0.019367, 0.019925, 0.019936, 0.019934, 0.020016, 0.019917, 0.019904, 0.019895, 0.019908, 0.019940, 0.019978, 0.020023, 0.019927, 0.019989, 0.019981, 0.020036, 0.019957, 0.019928, 0.019966, 0.019954, 0.019941, 0.019984, 0.019906, 0.019981, 0.019988, 0.019848, 0.019775, 0.019766, 0.019844, 0.019798, 0.019781, 0.019863, 0.018953, 0.019896, 0.019926, 0.019977, 0.019960, 0.019939, 0.019905, 0.019913, 0.019926, 0.019980, 0.019938, 0.019950, 0.020023, 0.019957, 0.020110, 0.020120, 0.019976, 0.019959, 0.019931, 0.019998, 0.019952, 0.019945, 0.020011, 0.019952, 0.020014, 0.019774, 0.019777, 0.019763, 0.019877, 0.019785, 0.019781, 0.019846, 0.018926, 0.019941, 0.019955, 0.019994, 0.019931, 0.019984, 0.019984, 0.019937, 0.019971, 0.019923, 0.019978, 0.019955, 0.020009, 0.019993, 0.019995, 0.019985, 0.019997, 0.019918, 0.019966, 0.019996, 0.020016, 0.019929, 0.020023, 0.019961, 0.020032, 0.019795, 0.019772, 0.019782, 0.019834, 0.019786, 0.019889, 0.019814, 0.018984, 0.019938, 0.019944, 0.019935, 0.020103, 0.019914, 0.019990, 0.019909, 0.020012, 0.020028, 0.020015, 0.020021, 0.019926, 0.020081, 0.019974, 0.020045, 0.020032, 0.020067, 0.019973, 0.019943, 0.019926, 0.020061, 0.019954, 0.019965, 0.020057, 0.019855, 0.019780, 0.019792, 0.019804, 0.019813, 0.019769, 0.019795, 0.018979, ]
+    stride = list(range(130))
+    timings = [t*1e3 for t in timings]
+    stride = [s*4 for s in stride]
+
+    ax = Axes(x_range=[0, stride[-1]+1, 32],
+              y_range=[18, 22, 1],
+              x_length=16,
+              y_length=8,
+              axis_config={"include_numbers": True}).scale(0.8)
+
+    graph = ax.plot_line_graph(x_values=stride, y_values=timings, line_color=GREEN, add_vertex_dots=False) 
+
+    x_label = ax.get_x_axis_label("Offset[bytes]")
+    y_label = ax.get_y_axis_label("Time [ms]")
+
+    with self.voiceover(text="""We run this kernel and measure the timing for different values of the offset variable""") as trk:
+      self.play(Create(ax))
+      self.play(Write(x_label), Write(y_label))
+
+    with self.voiceover(text="""Note that on the graph, the offset is given in bytes""") as trk:
+      self.play(Indicate(x_label))
+
+    with self.voiceover(text="""And if we examine the results, we can see that the kernel performs the best when the offset is a multiple of 128 bytes,
+                        and this is the memory transaction size used when accessing data through the L1 cache on my architecture""") as trk:
+      self.play(Create(graph))
 
     self.play(*[FadeOut(x) for x in self.mobjects])
 
