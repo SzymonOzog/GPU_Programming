@@ -669,4 +669,42 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     with self.voiceover(text="""And the next one is at 1KB, and this is the page size, so the amount of values that get loaded 
                         into sense amplifiers when we select a row""") as trk:
       self.play(Write(page_t))
-    self.wait(1)
+
+    with self.voiceover(text="""We've come to the end of another episode, related to memory - by now you should see how imortant
+                        efficient memory managment is to performance of our kernels""") as trk:
+      pass
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    
+    bmac = Text("https://buymeacoffee.com/simonoz", font_size=48, color=YELLOW)
+    alex = Text("Alex", font_size=60).next_to(bmac, DOWN)
+    udit = Text("Udit Ransaria", font_size=60).next_to(alex, DOWN)
+    unknown = Text("Anonymous x3", font_size=60).next_to(udit, DOWN)
+    with self.voiceover(text="""I'm hosting a buy me a coffe for those that want to support this channel. A shoutout to Alex, Udit Ransaria and three anonymous donors that supported so far""") as trk:
+      self.camera.auto_zoom(VGroup(bmac, alex, unknown), margin=4, animate=False)
+      self.play(Write(bmac))
+      self.play(Write(alex))
+      self.play(Write(udit))
+      self.play(Write(unknown))
+
+    subscribe = SVGMobject("icons/subscribe.svg")
+    like = SVGMobject("icons/like.svg")
+    share = SVGMobject("icons/share.svg")
+    VGroup(subscribe, like, share).arrange(RIGHT).next_to(unknown, DOWN).scale(0.7)
+
+    with self.voiceover(text="""But you can always support me for fre by <bookmark mark='1'/>subscribing, <bookmark mark='2'/>leaving a like, <bookmark mark='3'/>commenting and sharing this video with your friends""") as trk:
+      self.play(Create(like), Create(subscribe), Create(share))
+      self.wait_until_bookmark("1")
+      self.play(like.animate.set_color(RED))
+      self.wait_until_bookmark("2")
+      self.play(subscribe.animate.set_color(RED))
+      self.wait_until_bookmark("3")
+      self.play(share.animate.set_color(RED))
+
+
+    return
+    with self.voiceover(text="""I'll see you in the next episode, bye""") as trk:
+      pass
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    self.wait(2)
