@@ -96,7 +96,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
         GTTSService(transcription_model="base")
         )
     Rectangle.set_default(stroke_width=10)
-    Line.set_default(stroke_width=10)
+    Line.set_default(stroke_width=15)
     t = Transistor()
     input = Line().next_to(t.drain, LEFT, aligned_edge=DOWN, buff=0)
     output = Line().next_to(t.source, RIGHT, aligned_edge=DOWN, buff=0)
@@ -260,7 +260,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     self.camera.frame.save_state()
     self.camera.auto_zoom(all, margin=4, animate=False)
     Rectangle.set_default(stroke_width=10)
-    Line.set_default(stroke_width=10)
+    Line.set_default(stroke_width=15)
     with self.voiceover(text="""Those memory cells are arranged in a rectangular grid, called a memory array""") as trk:
       self.play(*[Create(x) for x in mems])
 
