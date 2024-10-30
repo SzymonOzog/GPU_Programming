@@ -86,7 +86,7 @@ def set_line(line, alpha, scene, run_time_scale=0.3, backward=False):
   line.set_color(color)
   line.scale(-1 if backward else 1)
   def on_finish(scene):
-    line.scale(1)
+    line.scale(-1 if backward else 1)
     scene.remove(cp)
   return [Create(line, lag_ratio=0, _on_finish=on_finish, run_time=run_time_scale*line.get_length())]
 
