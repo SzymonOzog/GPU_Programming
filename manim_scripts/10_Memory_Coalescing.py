@@ -60,10 +60,10 @@ class MemoryUnit(VGroup):
   def disable_line(self, scene, alpha=0, run_time_scale=0.3):
     anims = []
     anims.append(set_line(self.t.base, False, scene, run_time_scale))
-    anims.append(set_line(self.out, False, scene, run_time_scale, backward=False))
-    anims.append(set_line(self.t.source, False, scene, run_time_scale, backward=False))
-    anims.append(set_line(self.t.l2, False, scene, run_time_scale, backward=False))
-    anims.append(set_line(self.t.drain, False, scene, run_time_scale, backward=False))
+    anims.append(set_line(self.out, False, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.t.source, False, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.t.l2, False, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.t.drain, False, scene, run_time_scale, backward=True))
     return anims
 
   def read(self, scene, alpha=0, run_time_scale=0.3):
@@ -71,10 +71,10 @@ class MemoryUnit(VGroup):
     anims = []
     end = [x.animate.set_color(color) for x in [self.t.drain, self.t.l2, self.t.source, self.out, self.c.out, self.c.l1, self.c.l2, self.inp]]
     anims.append(set_line(self.t.base, 1, scene, run_time_scale))
-    anims.append(set_line(self.t.drain, self.charged, scene, run_time_scale, backward=True))
-    anims.append(set_line(self.t.l2, self.charged, scene, run_time_scale, backward=True))
-    anims.append(set_line(self.t.source, self.charged, scene, run_time_scale, backward=True))
-    anims.append(set_line(self.out, self.charged, scene, run_time_scale, backward=True))
+    anims.append(set_line(self.t.drain, self.charged, scene, run_time_scale, backward=False))
+    anims.append(set_line(self.t.l2, self.charged, scene, run_time_scale, backward=False))
+    anims.append(set_line(self.t.source, self.charged, scene, run_time_scale, backward=False))
+    anims.append(set_line(self.out, self.charged, scene, run_time_scale, backward=False))
     anims.append(end)
     self.charged=alpha
     return anims
@@ -170,9 +170,9 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     e_t = Text("Source", font_size=24).next_to(t.source, DOWN)
     with self.voiceover(text="""The transistor has 3 entry points, the <bookmark mark='1'/>Base, the<bookmark mark='2'/> Drain  and the <bookmark mark='3'/> source""") as trk:
       self.wait_until_bookmark("1")
-      self.play(Write(c_t))
-      self.wait_until_bookmark("2")
       self.play(Write(b_t))
+      self.wait_until_bookmark("2")
+      self.play(Write(c_t))
       self.wait_until_bookmark("3")
       self.play(Write(e_t))
     
@@ -292,7 +292,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     e2[1] = cd.get_y()
     addres_lines = [Line(st+5*0.5*LEFT, e1+5*0.5*LEFT-5*0.1*DOWN),
                     Line(st+5*0.25*LEFT, e1+5*0.25*LEFT+5*0.1*DOWN),
-                    Line(st, e2-0.1*DOWN),
+                    Line(st, e2-5*0.1*DOWN),
                     Line(st+5*0.25*RIGHT, e2+5*0.25*RIGHT+5*0.1*DOWN)]
 
     addres_lines2 = []
@@ -322,6 +322,10 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     with self.voiceover(text="""With all of the elements in place, we can now see how to read a value from our memory array""") as trk:
       pass
 
+    def animate_access(mem):
+      if mem.charged > pre_charge_value:
+        return mem.read(self, chrg_hi)
+      return mem.write(self, chrg_lo)
     with self.voiceover(text="""The first step is the precharging step, where we put some voltage on our bitlines, that is non zero but lower than the 
                         voltage stored in our transistors""") as trk:
       self.play(*anims)
@@ -355,7 +359,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       self.play(Transform(spotlight,
                           Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(VGroup(mems[6], mems[7]), buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)))
 
-      for a1, a2 in zip(mems[6].read(self, (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo)), mems[7].read(self, (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo))):
+      for a1, a2 in zip(animate_access(mems[6]), animate_access(mems[7])):
         self.play(*a1, *a2)
       self.play(*set_line(bit_lines[2], (chrg_hi if mems[6].charged > pre_charge_value else chrg_lo), self),
                 *set_line(bit_lines[3], (chrg_hi if mems[7].charged > pre_charge_value else chrg_lo), self))
@@ -369,7 +373,8 @@ class Coalescing(VoiceoverScene, ZoomedScene):
         vals.append(Rectangle(width=2.5, height=2.5, color=GREEN if mems[4+i].charged > pre_charge_value else WHITE, fill_opacity=0.5).next_to(b, DOWN, buff=0))
       self.play(*[Create(x) for x in vals])
 
-    self.play(FadeOut(spotlight))
+    with self.voiceover(text="""The amount of data that was loaded to our sense amplifiers is called a page size""") as trk:
+      self.play(FadeOut(spotlight))
 
     with self.voiceover(text="""Now that the values are loaded into the sense amplifiers we can put the remaining half of the address onto our
                         column decoder""") as trk:
@@ -403,7 +408,8 @@ class Coalescing(VoiceoverScene, ZoomedScene):
         self.play(*a1, *a2, *a3, *a4)
 
     
-    with self.voiceover(text="""Now if we want to access a value that's in a different row than our previous access""") as trk:
+    with self.voiceover(text="""Now if we want to access a value that's in a different row than our previous access, we come to a very problematic situation called a row miss
+                        """) as trk:
       self.play(address[0].animate.next_to(addres_lines[0], UP, buff=1),
                 address[1].animate.next_to(addres_lines[1], UP, buff=1))
       self.play(Transform(address[0], Text("1", font_size=5*24).next_to(addres_lines[0], UP, buff=1)),
@@ -419,16 +425,16 @@ class Coalescing(VoiceoverScene, ZoomedScene):
                                 mems[7].disable_line(self, 0)):
         self.play(*a1, *a2, *a3, *a4)
 
-    anims = []
-    for i in range(4):
-      anims.extend(set_line(bit_lines[i], 0, self))
-
-    with self.voiceover(text="""We have to go to the whole process again, prechargint the bitlines, decoding the row address
-                        reading into sense amplifiers and decoding the column address. This situation is called a row miss""") as trk:
-      self.play(*anims)
       anims = []
       for i in range(4):
-        anims.extend(set_line(bit_lines[i], pre_charge_value, self))
+        anims.extend(set_line(bit_lines[i], 0, self))
+      self.play(*anims)
+
+    anims = []
+    for i in range(4):
+      anims.extend(set_line(bit_lines[i], pre_charge_value, self))
+    with self.voiceover(text="""We have to go to the whole process again, prechargint the bitlines, decoding the row address
+                        reading into sense amplifiers and decoding the column address.""") as trk:
 
       self.play(*anims)
 
@@ -438,10 +444,10 @@ class Coalescing(VoiceoverScene, ZoomedScene):
       self.play(*set_line(addres_lines2[0], 1, self))
       self.play(*set_line(word_lines[2], 1, self, backward=True))
 
-      for a1, a2, a3, a4 in zip(mems[8].read(self, (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo)), 
-                                mems[9].read(self, (chrg_hi if mems[9].charged > pre_charge_value else chrg_lo)), 
-                                mems[10].read(self, (chrg_hi if mems[10].charged > pre_charge_value else chrg_lo)), 
-                                mems[11].read(self, (chrg_hi if mems[11].charged > pre_charge_value else chrg_lo))):
+      for a1, a2, a3, a4 in zip(animate_access(mems[8]), 
+                                animate_access(mems[9]), 
+                                animate_access(mems[10]), 
+                                animate_access(mems[11])):
         self.play(*a1, *a2, *a3, *a4)
 
       self.play(*set_line(bit_lines[0], (chrg_hi if mems[8].charged > pre_charge_value else chrg_lo), self),
@@ -508,7 +514,7 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     brace64 = Brace(VGroup(*segments[:2]), direction=UP)
     brace128 = Brace(VGroup(*segments[:4]), direction=UP)
 
-    with self.voiceover(text="""When we make a memory access, a whole warp generates a memory thransaction that can be <bookmark mark='1'/>either a 32B transaction,
+    with self.voiceover(text="""When we make a memory access, a whole warp generates a memory transaction that can be <bookmark mark='1'/>either a 32B transaction,
                         <bookmark mark='2'/> a 64 byte transaction <bookmark mark='3'/>or a 128 byte transaction""") as trk:
       self.wait_until_bookmark("1")
       self.play(*[s.animate.set_color(GREEN) for s in segments[:1]],
@@ -523,7 +529,8 @@ class Coalescing(VoiceoverScene, ZoomedScene):
                 Transform(bytes_t, Text("128B Transaction", font_size=32).next_to(brace128, UP)))
 
     with self.voiceover(text="""The transaction size depends on the alignment of our data, the type of memory we are accessing,
-                        and the size of our data access""") as trk:
+                        and the architecture we are using, for example requests to the L1 use 128B segments, while requests from L1 to L2
+                        are made in 32B segments""") as trk:
       self.play(*[s.animate.set_color(BLUE) for s in segments[:4]],
                 FadeOut(brace), FadeOut(bytes_t))
 
@@ -697,9 +704,9 @@ class Coalescing(VoiceoverScene, ZoomedScene):
     with self.voiceover(text="""But you can always support me for fre by <bookmark mark='1'/>subscribing, <bookmark mark='2'/>leaving a like, <bookmark mark='3'/>commenting and sharing this video with your friends""") as trk:
       self.play(Create(like), Create(subscribe), Create(share))
       self.wait_until_bookmark("1")
-      self.play(like.animate.set_color(RED))
-      self.wait_until_bookmark("2")
       self.play(subscribe.animate.set_color(RED))
+      self.wait_until_bookmark("2")
+      self.play(like.animate.set_color(RED))
       self.wait_until_bookmark("3")
       self.play(share.animate.set_color(RED))
 
