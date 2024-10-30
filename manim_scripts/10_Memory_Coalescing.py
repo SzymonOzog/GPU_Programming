@@ -88,7 +88,8 @@ def set_line(line, alpha, scene, run_time_scale=0.3, backward=False):
   def on_finish(scene):
     line.scale(-1 if backward else 1)
     scene.remove(cp)
-  return [Create(line, lag_ratio=0, _on_finish=on_finish, run_time=run_time_scale*line.get_length())]
+  rt = max(0.2, run_time_scale*(line.get_length()*4/line.get_stroke_width()))
+  return [Create(line, lag_ratio=0, _on_finish=on_finish, run_time=rt)]
 
 class Coalescing(VoiceoverScene, ZoomedScene):
   def construct(self):
