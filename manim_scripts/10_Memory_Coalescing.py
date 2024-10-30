@@ -74,7 +74,7 @@ class MemoryUnit(VGroup):
     anims.append(set_line(self.t.l2, self.charged, scene, run_time_scale, backward=True))
     anims.append(set_line(self.t.source, self.charged, scene, run_time_scale, backward=True))
     anims.append(set_line(self.out, self.charged, scene, run_time_scale, backward=True))
-    anims.append([x.animate.set_color(color) for x in [self.t.drain, self.t.l2, self.t.source, self.out, self.c.inp, self.c.l1, self.c.l2, self.inp]])
+    anims.append([x.animate.set_color(color) for x in [self.t.drain, self.t.l2, self.t.source, self.out, self.c.out, self.c.l1, self.c.l2, self.inp]])
     self.charged=alpha
     return anims
 
