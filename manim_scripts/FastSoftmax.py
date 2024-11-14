@@ -10,7 +10,7 @@ from math import radians
 
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
-    e_x = np.exp(x - np.max(x))
+    e_x = np.exp(x)
     return e_x / e_x.sum(axis=0)
 
 class FastSoftmax (VoiceoverScene):
@@ -64,37 +64,49 @@ class FastSoftmax (VoiceoverScene):
     formula2 = MathTex(
         r"\text{softmax}(x_i) = \frac{e^{x_i - max(x)}}{\sum_{j=1}^{K} e^{x_j - max(x)}}"
     ).move_to(formula)
+    vec = [[3025], [3020], [3000]]
+    formulas = [["\\frac{e^{3025}}{e^{3025}+e^{3020}+e^{3000}}"], ["\\frac{e^{3020}}{e^{3025}+e^{3020}+e^{3000}}"], ["\\frac{e^{3000}}{e^{3025}+e^{3020}+e^{3000}}"]]
+    results = np.expand_dims(softmax(np.array(vec).flatten()), axis=1).tolist()
+    vbuff=1.5
+    v0_t = Matrix(vec, v_buff=vbuff)
+    a1_t = Arrow(start=LEFT, end=RIGHT)
+    v1_t = Matrix(formulas, v_buff=vbuff)
+    v2_t = Matrix(results, v_buff=vbuff)    
+    eq_t = Tex("=")
+    calculations = VGroup(v0_t, a1_t, v1_t, eq_t, v2_t).arrange(RIGHT).move_to(ORIGIN)
+    softmax_t_t = Tex("softmax").next_to(a1_t, UP, buff=0.1)
     with self.voiceover(text="""Although there is one caveat, since it uses an exponential function, that grows - well exponentially
-                        if our input vector will contain multiple positive values, it can overflow as we will add a lot of big numbers together
-                        in our divisor""") as trk:
-      pass
+                        if our input vector will contain multiple<bookmark mark='1'/> positive values, it can overflow as we will add a lot of big numbers together
+                        in our divisorr""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Transform(v0, v0_t),
+                Transform(v1, v1_t),
+                Transform(v2, v2_t),
+                Transform(a1, a1_t),
+                Transform(eq, eq_t),
+                Transform(softmax_t, softmax_t_t))
       
+    vec = [[3025], [3020], [3000]]
+    formulas = [["\\frac{e^{3025-3025}}{e^{3025-3025}+e^{3020-3025}+e^{3000-3025}}"], ["\\frac{e^{3020-3025}}{e^{3025-3025}+e^{3020-3025}+e^{3000-3025}}"], ["\\frac{e^{3000-3025}}{e^{3025-3025}+e^{3020-3025}+e^{3000-3025}}"]]
+    results = np.expand_dims(softmax(np.array(vec).flatten() - 3025), axis=1).tolist()
+    results = [[f"{r[0]:.3f}"] for r in results]
+    vbuff=1.5
+    v0_t = Matrix(vec, v_buff=vbuff)
+    a1_t = Arrow(start=LEFT, end=RIGHT)
+    v1_t = Matrix(formulas, v_buff=vbuff)
+    v2_t = Matrix(results, v_buff=vbuff)    
+    eq_t = Tex("=")
+    calculations = VGroup(v0_t, a1_t, v1_t, eq_t, v2_t).arrange(RIGHT).move_to(ORIGIN)
+    softmax_t_t = Tex("softmax").next_to(a1_t, UP, buff=0.1)
 
     with self.voiceover(text="""We can mitigate this by subtracting the maximum of our vector from the exponent. 
                         That way - the powers will always be negative, and our values will remain in range of 0 to 1""") as trk:
       self.play(Transform(formula, formula2))
+      self.play(Transform(v0, v0_t),
+                Transform(v1, v1_t),
+                Transform(v2, v2_t),
+                Transform(a1, a1_t),
+                Transform(eq, eq_t),
+                Transform(softmax_t, softmax_t_t))
     self.wait(1)
 
-    softmax_code="""__global__ void softmax(int w, int h, float* input, float* output)
-{
-  int col = blockIdx.x*blockDim.x + threadIdx.x;
-  int row = blockIdx.y*blockDim.y + threadIdx.y;
-  if (row < h && col < w)
-  {
-    float maxval = input[row*w];
-    for (int i = 1; i<w; i++)
-    {
-      maxval = max(maxval, input[row*w + i]);
-    }
-    float divisor = 0.f;
-    for (int i = 0; i<w; i++)
-    {
-      divisor += exp(input[row*w + i] - maxval);
-    }
-    output[row*w + col] = exp(input[row*w + col]-maxval)/(divisor);
-  }
-}"""
-
-
-    code_obj = Code(code=softmax_code, tab_width=2, language="c", font_size=16, line_no_buff=0.1, corner_radius=0.1)
-    code_obj.code = remove_invisible_chars(code_obj.code)
