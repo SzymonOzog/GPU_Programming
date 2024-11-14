@@ -110,3 +110,65 @@ class FastSoftmax (VoiceoverScene):
                 Transform(softmax_t, softmax_t_t))
     self.wait(1)
 
+    softmax_code="""__global__ void softmax(int w, int h, float* input, float* output)
+{
+  int col = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < h && col < w)
+  {
+    float maxval = input[row*w];
+    for (int i = 1; i<w; i++)
+    {
+      maxval = max(maxval, input[row*w + i]);
+    }
+    float divisor = 0.f;
+    for (int i = 0; i<w; i++)
+    {
+      divisor += exp(input[row*w + i] - maxval);
+    }
+    output[row*w + col] = exp(input[row*w + col]-maxval)/(divisor);
+  }
+}"""
+
+
+    code_obj = Code(code=softmax_code, tab_width=2, language="c", font_size=12, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""If you watched the episode on neural networks, we wrote a very simple softmax kernel there""") as trk:
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.play(Create(code_obj))
+
+    with self.voiceover(text="""In it each thread calculates one output element of a softmax, 
+                        so we create as many threads as there are elements in our input matrix""") as trk:
+        self.play(code_obj.animate.to_edge(UP))
+        m2 = Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
+                     ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
+                     ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                     ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
+        self.play(Create(m2))
+
+    hl = SurroundingRectangle(code_obj.code[7:11], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    hl2 = SurroundingRectangle(code_obj.code[12:16], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""There is one major bottleneck in this kernel, each thread in the row recalculates the maxval and the divisor""") as trk:
+        self.play(Create(hl))
+        self.play(Create(hl2))
+        
+    with self.voiceover(text="""While this wasn't really a big problem in our MNIST solver, 
+                        where the height of the input was much bigger than the width""") as trk:
+        self.play(Transform(m2, 
+                            Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
+                                    ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
+                                    ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                    ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], v_buff=1.2, element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
+                            )
+                  )
+
+    with self.voiceover(text="""But in recent trends, the amount of classes that we are predicting
+                        is much bigger than the batch size we are feeding the model""") as trk:
+        self.play(Transform(m2, 
+                            Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
+                                    ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
+                                    ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                    ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], h_buff=2.8, element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
+                            )
+                  )
