@@ -172,3 +172,15 @@ class FastSoftmax (VoiceoverScene):
                                     ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], h_buff=2.8, element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
                             )
                   )
+
+    operations = Tex("Operations", "=", font_size=24).next_to(code_obj, DOWN, aligned_edge=LEFT)
+    memory_access = Tex("MemoryAccess", "=", font_size=24).next_to(code_obj, DOWN, aligned_edge=RIGHT)
+
+    with self.voiceover(text="""To have an estimate for how fast our kenel can theoretically be we need to calculate how <bookmark mark='1'/>much floating 
+                        point operations are we calculating, <bookmark mark='2'/>and how much memory are we accessing""") as trk:
+        self.play(FadeOut(m2))
+        self.wait_until_bookmark("1")
+        self.play(Write(operations))
+        self.wait_until_bookmark("2")
+        self.play(Write(memory_access))
+
