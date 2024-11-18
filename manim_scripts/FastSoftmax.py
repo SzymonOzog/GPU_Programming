@@ -173,14 +173,68 @@ class FastSoftmax (VoiceoverScene):
                             )
                   )
 
-    operations = Tex("Operations", "=", font_size=24).next_to(code_obj, DOWN, aligned_edge=LEFT)
-    memory_access = Tex("MemoryAccess", "=", font_size=24).next_to(code_obj, DOWN, aligned_edge=RIGHT)
+    formula2.to_edge(UP)
+    m = Tex("$m = max(x)$", color=YELLOW)
+    x = Tex("$x = x - m$", color=BLUE)
+    e = Tex("$exp = e^x$", color=RED)
+    s = Tex("$s = sum(exp)$", color=GREEN)
+    out = Tex("$out = \\frac{exp_i}{s}$", color=ORANGE)
+    VGroup(m,x,e,s,out).arrange(DOWN).next_to(formula2, DOWN)
+    flops = Tex("FLOPS", "=", "N", "+", "N", "+", "N", "+", "N", "+", "N", font_size=48).next_to(out, DOWN).align_to(formula2, LEFT).shift(LEFT)
+    bytes_loaded = Tex("Bytes", "=", "2*N", "*4", font_size=48).next_to(out, DOWN).align_to(formula2, RIGHT).shift(RIGHT)
 
     with self.voiceover(text="""To have an estimate for how fast our kenel can theoretically be we need to calculate how <bookmark mark='1'/>much floating 
                         point operations are we calculating, <bookmark mark='2'/>and how much memory are we accessing""") as trk:
         self.play(FadeOut(m2))
+        self.play(Uncreate(code_obj), Uncreate(hl), Uncreate(hl2))
+        self.play(Create(formula2))
         self.wait_until_bookmark("1")
-        self.play(Write(operations))
+        self.play(Write(flops[:2]))
         self.wait_until_bookmark("2")
-        self.play(Write(memory_access))
+        self.play(Write(bytes_loaded[:2]))
 
+    with self.voiceover(text="""For bytes loaded it's quite simple, we load the whole vector once, and save it once so we get <bookmark mark='1'/> 2 times our vector size memory accesses of floating point values
+                        that are <bookmark mark='2'/>4 bytes each""") as trk:
+        self.wait_until_bookmark("1")
+        self.play(Write(bytes_loaded[2]))
+        self.wait_until_bookmark("2")
+        self.play(Write(bytes_loaded[3]))
+        self.play(Transform(bytes_loaded, 
+                              Tex("Bytes", "=", "8*N", font_size=48).next_to(out, DOWN).align_to(formula2, RIGHT).shift(RIGHT)))
+
+    with self.voiceover(text="""For the flops we have to split our function into suboperations""") as trk:
+        pass
+
+    with self.voiceover(text="""First we calculate <bookmark mark='1'/>the maximum, giving us <bookmark mark='2'/>N operations""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Write(m))
+      self.wait_until_bookmark("2")
+      self.play(Write(flops[2].set_color(m.color)))
+
+    with self.voiceover(text="""We then subtract <bookmark mark='1'/>the maximum from our vector giving us <bookmark mark='2'/> another N operations""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Write(x))
+      self.wait_until_bookmark("2")
+      self.play(Write(flops[3]))
+      self.play(Write(flops[4].set_color(x.color)))
+
+    with self.voiceover(text="""This is followed by an<bookmark mark='1'/> exponent <bookmark mark='2'/> for the next N operations""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Write(e))
+      self.wait_until_bookmark("2")
+      self.play(Write(flops[5]))
+      self.play(Write(flops[6].set_color(e.color)))
+
+    with self.voiceover(text="""The next operation is sum<bookmark mark='1'/> across all elements <bookmark mark='2'/> so the next N operations""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Write(s))
+      self.wait_until_bookmark("2")
+      self.play(Write(flops[7]))
+      self.play(Write(flops[8].set_color(s.color)))
+
+    with self.voiceover(text="""And for the final output<bookmark mark='1'/> each element needs to be divied by the sum<bookmark mark='2'/> giving us the next N operations""") as trk:
+      self.wait_until_bookmark("1")
+      self.play(Write(out))
+      self.wait_until_bookmark("2")
+      self.play(Write(flops[9]))
+      self.play(Write(flops[10].set_color(out.color)))
