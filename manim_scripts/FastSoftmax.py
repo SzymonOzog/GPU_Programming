@@ -238,3 +238,45 @@ class FastSoftmax (VoiceoverScene):
       self.wait_until_bookmark("2")
       self.play(Write(flops[9]))
       self.play(Write(flops[10].set_color(out.color)))
+
+    with self.voiceover(text="""This leaves us with 5 N FLOPS per 8 Bytes loaded""") as trk:
+        self.play(Transform(flops, 
+                            Tex("FLOPS", "=", "5*N", font_size=48).next_to(out, DOWN).align_to(formula2, LEFT).shift(LEFT)))
+
+    axes = Axes(
+            x_range=[10, 18, 1],
+            y_range=[0, 700, 100],
+            x_length=7,
+            y_length=5,
+            axis_config={"include_tip": False, "include_numbers": True},
+            x_axis_config={"scaling": LogBase(2)},
+            )
+    x_text =  MathTex("N")
+    y_text = MathTex("Performance[GFLOPS]")
+    x_label = axes.get_x_axis_label(x_text)
+    y_label = axes.get_y_axis_label(y_text.rotate(PI/2), edge=LEFT, direction=LEFT)
+
+    theoretical_performance = Line(start=axes.c2p(2**10, 625), end=axes.c2p(2**18, 625), color=GREEN).set_opacity(0.7)
+
+    graph = VGroup(axes, x_label, y_label, theoretical_performance)
+
+    theoretical = Tex("$TheoreticalMaximum =$", "$\\frac{5}{8}$", "$*1\\frac{TB}{s}$", "$= 625\\,GFLOPs$").next_to(graph, DOWN)
+
+    with self.voiceover(text="""With this info we can calculate<bookmark mark='1'/> a theoretical maximum of a performance
+                        that we can get out of this kernel. With <bookmark mark='2'/> 5 floating point operations per 8
+                        loaded bytes we are bottlenecked by memory bandwith which is <bookmark mark='3'/> 1 TB/s
+                        on my gpu, and that gives us a theoretical maximum <bookmark mark='4'/>of 625 GFLOPS""") as trk:
+        self.wait_until_bookmark("1")
+        self.play(Write(theoretical[0]))
+        self.wait_until_bookmark("2")
+        self.play(Transform(VGroup(flops, bytes_loaded), theoretical[1], replace_mobject_with_target_in_scene=True))
+        self.wait_until_bookmark("3")
+        self.play(Write(theoretical[2]))
+        self.wait_until_bookmark("4")
+        self.play(Write(theoretical[3]))
+
+    with self.voiceover(text="""We can now compare the speed of different implementations""") as trk:
+        self.play(Transform(VGroup(formula2,m,x,e,s,out),
+                            axes,
+                            replace_mobject_with_target_in_scene=True))
+        self.play(Transform(theoretical, theoretical_performance, replace_mobject_with_target_in_scene=True))
