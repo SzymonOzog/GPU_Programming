@@ -304,3 +304,20 @@ class FastSoftmax (VoiceoverScene):
 
     with self.voiceover(text="""You are probably screaming right now, looking at the result""") as trk:
         pass
+
+    mem_chart = ImageMobject("image.png").scale(1.75)
+    # c = NumberPlane().add_coordinates()
+    # self.play(Write(c))
+    with self.voiceover(text="""And I pulled my hair on it for quite a while, until I took out the profiler and did some reaserch on how 
+                        are cuda stores done""") as trk:
+        self.play(FadeIn(mem_chart))
+    
+    w1 = Rectangle(width=2, height=1, color=RED).shift(0.8*UP + RIGHT)
+    w2 = Rectangle(width=2, height=1, color=BLUE).shift(4.2*RIGHT + 0.3*UP)
+    with self.voiceover(text="""Nvidia GPUs use something called write back cache, this essentially means that we are writing to <bookmark mark='1'/> L2 
+                        cache only during kernel execution and the global<bookmark mark='2'/> memory recieves the data later, when we discard the cache block""") as trk:
+        self.wait_until_bookmark("1")
+        self.play(Create(w1))
+        self.wait_until_bookmark("2")
+        self.play(Create(w2))
+
