@@ -244,7 +244,6 @@ class FastSoftmax (VoiceoverScene):
                             Tex("FLOPS", "=", "5*N", font_size=48).next_to(out, DOWN).align_to(formula2, LEFT).shift(LEFT)))
 
     x_range = list(range(10, 18))
-    print(x_range)
     ns = [2**x for x in x_range]
     axes = Axes(
             x_range=[10, 17, 1],
@@ -254,13 +253,13 @@ class FastSoftmax (VoiceoverScene):
             axis_config={"include_tip": False, "include_numbers": True},
             x_axis_config={"scaling": LogBase(2)},
             ).shift(LEFT)
-    x_text =  MathTex("N")
+    x_text = MathTex("N")
     y_text = MathTex("Performance[GFLOPS]")
-    x_label = axes.get_x_axis_label(x_text)
+    x_label = axes.get_x_axis_label(x_text, edge=DR, direction=DR)
     y_label = axes.get_y_axis_label(y_text.rotate(PI/2), edge=LEFT, direction=LEFT)
 
-    theoretical_performance = Line(start=axes.c2p(2**10, 625), end=axes.c2p(2**17, 625), color=GREEN).set_opacity(0.7)
-    theoretical_text = Text("Theoretical Maximum 625 GFLOPS", color=GREEN, font_size=18).next_to(theoretical_performance, RIGHT)
+    theoretical_performance = Line(start=axes.c2p(2**10, 625), end=axes.c2p(2**17, 625), color=GREEN)
+    theoretical_text = Text("Theoretical Maximum 625 GFLOPS", color=GREEN, font_size=18).next_to(theoretical_performance, RIGHT, buff=0.1)
 
     graph = VGroup(axes, x_label, y_label, theoretical_performance)
 
@@ -293,8 +292,8 @@ class FastSoftmax (VoiceoverScene):
     flops_triton = [(128*n*5)/(t*1e3) for (t,n) in zip(times_triton, ns)]
     graph_torch = axes.plot_line_graph(ns, flops_torch, line_color=ORANGE, add_vertex_dots=False)
     graph_triton = axes.plot_line_graph(ns, flops_triton, line_color=BLUE, add_vertex_dots=False)
-    text_torch=Text("Torch", color=ORANGE, font_size=36).next_to(graph_torch, RIGHT).shift(UP)
-    text_triton=Text("Triton", color=BLUE, font_size=36).next_to(graph_triton, RIGHT).shift(DOWN)
+    text_torch=Text("Torch", color=ORANGE, font_size=18).move_to(axes.c2p(2**17, flops_torch[-1])+0.1*RIGHT, LEFT)
+    text_triton=Text("Triton", color=BLUE, font_size=18).move_to(axes.c2p(2**17, flops_triton[-1])+0.1*RIGHT, LEFT)
     with self.voiceover(text="""And as a reference point, I took the <bookmark mark='1'/>pytorch kernel, as well as a triton kernel <bookmark mark='2'/>that was available 
                         in their documentation as an example""") as trk:
         self.wait_until_bookmark("1")
@@ -320,4 +319,31 @@ class FastSoftmax (VoiceoverScene):
         self.play(Create(w1))
         self.wait_until_bookmark("2")
         self.play(Create(w2))
+
+    axes_t = Axes(
+            x_range=[10, 17, 1],
+            y_range=[0, 1400, 200],
+            x_length=7,
+            y_length=5,
+            axis_config={"include_tip": False, "include_numbers": True},
+            x_axis_config={"scaling": LogBase(2)},
+            ).shift(LEFT)
+    theoretical_performance_t = Line(start=axes_t.c2p(2**10, 2*625), end=axes_t.c2p(2**17, 2*625), color=GREEN)
+    theoretical_text_t = Text("Theoretical Maximum 1250 GFLOPS", color=GREEN, font_size=18).next_to(theoretical_performance, RIGHT, buff=0.1)
+    graph_torch_t = axes_t.plot_line_graph(ns, flops_torch, line_color=ORANGE, add_vertex_dots=False)
+    graph_triton_t = axes_t.plot_line_graph(ns, flops_triton, line_color=BLUE, add_vertex_dots=False)
+    with self.voiceover(text="""And since our L2 write speed is much higher than our global memory read spead, the only bottleneck is reads from global memory,
+                        so our theoretical maximum increases by 2x""") as trk:
+        self.play(Uncreate(w1), Uncreate(w2))
+        self.play(FadeOut(mem_chart))
+        self.play(Transform(axes, axes_t),
+                  Transform(theoretical_performance, theoretical_performance_t),
+                  Transform(theoretical_text, theoretical_text_t),
+                  Transform(graph_torch, graph_torch_t),
+                  Transform(graph_triton, graph_triton_t),
+                  text_torch.animate.move_to(axes_t.c2p(2**17, flops_torch[-1])+0.1*RIGHT, LEFT),
+                  text_triton.animate.move_to(axes_t.c2p(2**17, flops_triton[-1])+0.1*RIGHT, LEFT),
+                  y_label.animate.shift(0.2*LEFT))
+
+
 
