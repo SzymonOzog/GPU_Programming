@@ -243,8 +243,11 @@ class FastSoftmax (VoiceoverScene):
         self.play(Transform(flops, 
                             Tex("FLOPS", "=", "5*N", font_size=48).next_to(out, DOWN).align_to(formula2, LEFT).shift(LEFT)))
 
+    x_range = list(range(10, 18))
+    print(x_range)
+    ns = [2**x for x in x_range]
     axes = Axes(
-            x_range=[10, 18, 1],
+            x_range=[10, 17, 1],
             y_range=[0, 700, 100],
             x_length=7,
             y_length=5,
@@ -256,7 +259,7 @@ class FastSoftmax (VoiceoverScene):
     x_label = axes.get_x_axis_label(x_text)
     y_label = axes.get_y_axis_label(y_text.rotate(PI/2), edge=LEFT, direction=LEFT)
 
-    theoretical_performance = Line(start=axes.c2p(2**10, 625), end=axes.c2p(2**18, 625), color=GREEN).set_opacity(0.7)
+    theoretical_performance = Line(start=axes.c2p(2**10, 625), end=axes.c2p(2**17, 625), color=GREEN).set_opacity(0.7)
 
     graph = VGroup(axes, x_label, y_label, theoretical_performance)
 
@@ -280,3 +283,14 @@ class FastSoftmax (VoiceoverScene):
                             axes,
                             replace_mobject_with_target_in_scene=True))
         self.play(Transform(theoretical, theoretical_performance, replace_mobject_with_target_in_scene=True))
+
+    times_torch = [4.768, 4.352, 5.888, 9.088, 16.64, 31.808, 64.64, 175.04]
+    times_triton = [3.072, 3.68, 5.344, 8.672, 15.616, 28.32, 70.272, 630.24]
+    flops_torch = [(128*n*5)/(t*1e3) for (t,n) in zip(times_torch, ns)]
+    flops_triton = [(128*n*5)/(t*1e3) for (t,n) in zip(times_triton, ns)]
+    print(flops_torch)
+    print(flops_triton)
+    
+    
+
+        
