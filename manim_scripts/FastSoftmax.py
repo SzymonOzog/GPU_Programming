@@ -253,13 +253,14 @@ class FastSoftmax (VoiceoverScene):
             y_length=5,
             axis_config={"include_tip": False, "include_numbers": True},
             x_axis_config={"scaling": LogBase(2)},
-            )
+            ).shift(LEFT)
     x_text =  MathTex("N")
     y_text = MathTex("Performance[GFLOPS]")
     x_label = axes.get_x_axis_label(x_text)
     y_label = axes.get_y_axis_label(y_text.rotate(PI/2), edge=LEFT, direction=LEFT)
 
     theoretical_performance = Line(start=axes.c2p(2**10, 625), end=axes.c2p(2**17, 625), color=GREEN).set_opacity(0.7)
+    theoretical_text = Text("Theoretical Maximum 625 GFLOPS", color=GREEN, font_size=18).next_to(theoretical_performance, RIGHT)
 
     graph = VGroup(axes, x_label, y_label, theoretical_performance)
 
@@ -283,14 +284,23 @@ class FastSoftmax (VoiceoverScene):
                             axes,
                             replace_mobject_with_target_in_scene=True))
         self.play(Transform(theoretical, theoretical_performance, replace_mobject_with_target_in_scene=True))
+        self.play(Write(theoretical_text))
+        self.play(Write(x_text), Write(y_text))
 
     times_torch = [4.768, 4.352, 5.888, 9.088, 16.64, 31.808, 64.64, 175.04]
     times_triton = [3.072, 3.68, 5.344, 8.672, 15.616, 28.32, 70.272, 630.24]
     flops_torch = [(128*n*5)/(t*1e3) for (t,n) in zip(times_torch, ns)]
     flops_triton = [(128*n*5)/(t*1e3) for (t,n) in zip(times_triton, ns)]
-    print(flops_torch)
-    print(flops_triton)
-    
-    
+    graph_torch = axes.plot_line_graph(ns, flops_torch, line_color=ORANGE, add_vertex_dots=False)
+    graph_triton = axes.plot_line_graph(ns, flops_triton, line_color=BLUE, add_vertex_dots=False)
+    text_torch=Text("Torch", color=ORANGE, font_size=36).next_to(graph_torch, RIGHT).shift(UP)
+    text_triton=Text("Triton", color=BLUE, font_size=36).next_to(graph_triton, RIGHT).shift(DOWN)
+    with self.voiceover(text="""And as a reference point, I took the <bookmark mark='1'/>pytorch kernel, as well as a triton kernel <bookmark mark='2'/>that was available 
+                        in their documentation as an example""") as trk:
+        self.wait_until_bookmark("1")
+        self.play(Create(graph_torch), Write(text_torch))
+        self.wait_until_bookmark("2")
+        self.play(Create(graph_triton), Write(text_triton))
 
-        
+    with self.voiceover(text="""You are probably screaming right now, looking at the result""") as trk:
+        pass
