@@ -110,70 +110,7 @@ class FastSoftmax (VoiceoverScene):
                 Transform(softmax_t, softmax_t_t))
     self.wait(1)
 
-    softmax_code="""__global__ void softmax(int w, int h, float* input, float* output)
-{
-  int col = blockIdx.x*blockDim.x + threadIdx.x;
-  int row = blockIdx.y*blockDim.y + threadIdx.y;
-  if (row < h && col < w)
-  {
-    float maxval = input[row*w];
-    for (int i = 1; i<w; i++)
-    {
-      maxval = max(maxval, input[row*w + i]);
-    }
-    float divisor = 0.f;
-    for (int i = 0; i<w; i++)
-    {
-      divisor += exp(input[row*w + i] - maxval);
-    }
-    output[row*w + col] = exp(input[row*w + col]-maxval)/(divisor);
-  }
-}"""
 
-
-    code_obj = Code(code=softmax_code, tab_width=2, language="c", font_size=12, line_no_buff=0.1, corner_radius=0.1)
-    code_obj.code = remove_invisible_chars(code_obj.code)
-
-    with self.voiceover(text="""If you watched the episode on neural networks, we wrote a very simple softmax kernel there""") as trk:
-        self.play(*[FadeOut(x) for x in self.mobjects])
-        self.play(Create(code_obj))
-
-    with self.voiceover(text="""In it each thread calculates one output element of a softmax, 
-                        so we create as many threads as there are elements in our input matrix""") as trk:
-        self.play(code_obj.animate.to_edge(UP))
-        m2 = Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
-                     ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
-                     ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                     ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
-        self.play(Create(m2))
-
-    hl = SurroundingRectangle(code_obj.code[7:11], buff=0.03, stroke_width=2, fill_opacity=0.3)
-    hl2 = SurroundingRectangle(code_obj.code[12:16], buff=0.03, stroke_width=2, fill_opacity=0.3)
-    with self.voiceover(text="""There is one major bottleneck in this kernel, each thread in the row recalculates the maxval and the divisor""") as trk:
-        self.play(Create(hl))
-        self.play(Create(hl2))
-        
-    with self.voiceover(text="""While this wasn't really a big problem in our MNIST solver, 
-                        where the height of the input was much bigger than the width""") as trk:
-        self.play(Transform(m2, 
-                            Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
-                                    ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
-                                    ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                    ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], v_buff=1.2, element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
-                            )
-                  )
-
-    with self.voiceover(text="""But in recent trends, the amount of classes that we are predicting
-                        is much bigger than the batch size we are feeding the model""") as trk:
-        self.play(Transform(m2, 
-                            Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
-                                    ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
-                                    ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                    ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], h_buff=2.8, element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
-                            )
-                  )
-
-    formula2.to_edge(UP)
     m = Tex("$m = max(x)$", color=YELLOW)
     x = Tex("$x = x - m$", color=BLUE)
     e = Tex("$exp = e^x$", color=RED)
@@ -185,9 +122,7 @@ class FastSoftmax (VoiceoverScene):
 
     with self.voiceover(text="""To have an estimate for how fast our kenel can theoretically be we need to calculate how <bookmark mark='1'/>much floating 
                         point operations are we calculating, <bookmark mark='2'/>and how much memory are we accessing""") as trk:
-        self.play(FadeOut(m2))
-        self.play(Uncreate(code_obj), Uncreate(hl), Uncreate(hl2))
-        self.play(Create(formula2))
+        self.play(Uncreate(v0), Uncreate(a1), Uncreate(softmax_t), Uncreate(v1), Uncreate(v2), Uncreate(eq))
         self.wait_until_bookmark("1")
         self.play(Write(flops[:2]))
         self.wait_until_bookmark("2")
@@ -252,7 +187,7 @@ class FastSoftmax (VoiceoverScene):
             y_length=5,
             axis_config={"include_tip": False, "include_numbers": True},
             x_axis_config={"scaling": LogBase(2)},
-            ).shift(LEFT)
+            ).shift(LEFT+UP)
     x_text = MathTex("N")
     y_text = MathTex("Performance[GFLOPS]")
     x_label = axes.get_x_axis_label(x_text, edge=DR, direction=DR)
@@ -279,7 +214,7 @@ class FastSoftmax (VoiceoverScene):
         self.play(Write(theoretical[3]))
 
     with self.voiceover(text="""We can now compare the speed of different implementations""") as trk:
-        self.play(Transform(VGroup(formula2,m,x,e,s,out),
+        self.play(Transform(VGroup(formula,m,x,e,s,out),
                             axes,
                             replace_mobject_with_target_in_scene=True))
         self.play(Transform(theoretical, theoretical_performance, replace_mobject_with_target_in_scene=True))
@@ -327,7 +262,7 @@ class FastSoftmax (VoiceoverScene):
             y_length=5,
             axis_config={"include_tip": False, "include_numbers": True},
             x_axis_config={"scaling": LogBase(2)},
-            ).shift(LEFT)
+            ).shift(LEFT+UP)
     theoretical_performance_t = Line(start=axes_t.c2p(2**10, 2*625), end=axes_t.c2p(2**17, 2*625), color=GREEN)
     theoretical_text_t = Text("Theoretical Maximum 1250 GFLOPS", color=GREEN, font_size=18).next_to(theoretical_performance, RIGHT, buff=0.1)
     graph_torch_t = axes_t.plot_line_graph(ns, flops_torch, line_color=ORANGE, add_vertex_dots=False)
@@ -346,4 +281,65 @@ class FastSoftmax (VoiceoverScene):
                   y_label.animate.shift(0.2*LEFT))
 
 
+    softmax_code="""__global__ void softmax(int w, int h, float* input, float* output)
+{
+  int col = blockIdx.x*blockDim.x + threadIdx.x;
+  int row = blockIdx.y*blockDim.y + threadIdx.y;
+  if (row < h && col < w)
+  {
+    float maxval = input[row*w];
+    for (int i = 1; i<w; i++)
+    {
+      maxval = max(maxval, input[row*w + i]);
+    }
+    float divisor = 0.f;
+    for (int i = 0; i<w; i++)
+    {
+      divisor += exp(input[row*w + i] - maxval);
+    }
+    output[row*w + col] = exp(input[row*w + col]-maxval)/(divisor);
+  }
+}"""
 
+
+    code_obj = Code(code=softmax_code, tab_width=2, language="c", font_size=12, line_no_buff=0.1, corner_radius=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""If you watched the episode on neural networks, we wrote a very simple softmax kernel there""") as trk:
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.play(Create(code_obj))
+
+    with self.voiceover(text="""In it each thread calculates one output element of a softmax, 
+                        so we create as many threads as there are elements in our input matrix""") as trk:
+        self.play(code_obj.animate.to_edge(UP))
+        m2 = Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
+                     ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
+                     ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                     ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
+        self.play(Create(m2))
+
+    hl = SurroundingRectangle(code_obj.code[7:11], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    hl2 = SurroundingRectangle(code_obj.code[12:16], buff=0.03, stroke_width=2, fill_opacity=0.3)
+    with self.voiceover(text="""There is one major bottleneck in this kernel, each thread in the row recalculates the maxval and the divisor""") as trk:
+        self.play(Create(hl))
+        self.play(Create(hl2))
+        
+    with self.voiceover(text="""While this wasn't really a big problem in our MNIST solver, 
+                        where the height of the input was much bigger than the width""") as trk:
+        self.play(Transform(m2, 
+                            Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
+                                    ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
+                                    ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                    ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], v_buff=1.2, element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
+                            )
+                  )
+
+    with self.voiceover(text="""But in recent trends, the amount of classes that we are predicting
+                        is much bigger than the batch size we are feeding the model""") as trk:
+        self.play(Transform(m2, 
+                            Matrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,w}"],
+                                    ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,w}"],
+                                    ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                    ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], h_buff=2.8, element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
+                            )
+                  )
