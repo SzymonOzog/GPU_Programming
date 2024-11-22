@@ -213,7 +213,8 @@ class FastSoftmax (VoiceoverScene):
         self.wait_until_bookmark("4")
         self.play(Write(theoretical[3]))
 
-    with self.voiceover(text="""We can now compare the speed of different implementations""") as trk:
+    with self.voiceover(text="""We can now compare the speed of different implementations, for different widths of the input.
+                        The height or batch size in case of neural networks will be fixed at 128""") as trk:
         self.play(Transform(VGroup(formula,m,x,e,s,out),
                             axes,
                             replace_mobject_with_target_in_scene=True))
@@ -343,3 +344,9 @@ class FastSoftmax (VoiceoverScene):
                                     ["x_{h,0}", "x_{h,1}", "\\cdots", "x_{h,w}"]], h_buff=2.8, element_alignment_corner=ORIGIN).scale(0.8).next_to(code_obj, DOWN)
                             )
                   )
+    results = Text("8.9 GFLOPS", color=RED).next_to(m2, DOWN)
+    with self.voiceover(text="""I'm not patient enough to run it for all of the shapes, but for just 1024 elements, it achieves a 
+                        magnificent<bookmark mark='1'/> 8.9 GFLOPS""") as trk:
+        self.play(Write(results))
+
+
