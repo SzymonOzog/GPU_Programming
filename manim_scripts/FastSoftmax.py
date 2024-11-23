@@ -447,3 +447,62 @@ class FastSoftmax (VoiceoverScene):
         self.play(*[Transform(op,
                               Text("+", font_size=24).move_to(op))
                     for op in ops])
+
+    with self.voiceover(text="""Now with this prerequisite taken of, we need to look at speeding up our algorithm""") as trk:
+        self.play(LaggedStart(*uncreate_anims))
+        self.play(VGroup(*objs).animate.shift(DOWN))
+
+    l1 = Line(UP, 10*DOWN).next_to(objs[3], RIGHT, buff=0).shift(4.3*DOWN)
+    l2 = Line(UP, 10*DOWN).next_to(objs[7], RIGHT, buff=0).shift(3.6*DOWN)
+    l3 = Line(UP, 10*DOWN).next_to(objs[11], RIGHT, buff=0).shift(4.3*DOWN)
+    b1 = Text("Block 1", color=BLUE, font_size=36).next_to(l1, UP)
+    b2 = Text("Block 2", color=BLUE, font_size=36).next_to(l3, UP)
+
+    t_fs = 24
+    t1 = Text("Thread 1", color=YELLOW, font_size=t_fs).next_to(VGroup(*objs[:4]), UP)
+    t2 = Text("Thread 2", color=GREEN, font_size=t_fs).next_to(VGroup(*objs[4:8]), UP)
+    t3 = Text("Thread 3", color=ORANGE, font_size=t_fs).next_to(VGroup(*objs[8:12]), UP)
+    t4 = Text("Thread 4", color=TEAL, font_size=t_fs).next_to(VGroup(*objs[12:]), UP)
+    with self.voiceover(text="""And to do that, we need to think more deeply about how do we behave on a thread 
+                        and block level""") as trk:
+        self.play(Create(l1), Create(l2), Create(l3))
+        self.play(Write(b1), Write(b2))
+        self.play(Write(t1), Write(t2), Write(t3), Write(t4))
+
+    w1 = VGroup(*objs).copy()
+    w2 = VGroup(*objs).copy()
+    w3 = VGroup(*objs).copy()
+    w4 = VGroup(*objs).copy()
+
+    with self.voiceover(text="""In our naive kernel, each thread operates on the entirety of the data""") as trk:
+        self.play(w1.animate.scale(0.23).next_to(VGroup(*objs[:4]), DOWN),
+                  w2.animate.scale(0.23).next_to(VGroup(*objs[4:8]), DOWN),
+                  w3.animate.scale(0.23).next_to(VGroup(*objs[8:12]), DOWN),
+                  w4.animate.scale(0.23).next_to(VGroup(*objs[12:]), DOWN))
+
+    def find_end(o1, o2):
+        y = min(o1.get_y(), o2.get_y()) - 0.5
+        end = (o1.get_center() + o2.get_center())/2
+        end[1] = y
+        return end
+    anims = []
+    uncreate_anims = []
+    for x in [w1, w2, w3, w4]:
+        step = x
+        while len(step) > 1:
+            next_step = []
+            for i in range(0, len(step), 2):
+                o1 = step[i]
+                o2 = step[i+1]
+                end = find_end(o1, o2)
+                op = Text("Op", font_size=10).move_to(end)
+                l1 = Line(o1.get_corner(DOWN), op.get_corner(UL))
+                l2 = Line(o2.get_corner(DOWN), op.get_corner(UR))
+                anims.extend([Create(l1), Create(l2), Write(op)])
+                uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+                next_step.append(op)
+            step = next_step
+
+    with self.voiceover(text="""And independently performs a reduction""") as trk:
+        self.play(LaggedStart(*anims))
+
