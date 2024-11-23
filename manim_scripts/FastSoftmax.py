@@ -349,4 +349,87 @@ class FastSoftmax (VoiceoverScene):
                         magnificent<bookmark mark='1'/> 8.9 GFLOPS""") as trk:
         self.play(Write(results))
 
+    objs = [Square(side_length=0.5) for _ in range(16)]
+    VGroup(*objs).arrange(RIGHT,buff=0.02).move_to(ORIGIN+3*UP)
+
+    with self.voiceover(text="""The key to making a fast softmax algorithm is understanding how to perform a fast reduction
+                        algorithm""") as trk:
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.play(LaggedStart(*[Create(x) for x in objs]))
+    self.camera.background_color = GREY
+
+    def find_end(o1, o2):
+        y = min(o1.get_y(), o2.get_y()) - 0.5
+        end = (o1.get_center() + o2.get_center())/2
+        end[1] = y
+        end = o1.get_bottom() + 0.3*DOWN + 0.25 * RIGHT
+        return end
+
+    start = objs[0]
+    anims = []
+    uncreate_anims = []
+    for obj in objs[1:]:
+        end = find_end(start, obj)
+        op = Text("Op", font_size=14).move_to(end)
+        l1 = Line(start.get_corner(DOWN), op.get_corner(UL))
+        l2 = Line(obj.get_corner(DOWN), op.get_corner(UR))
+        start = op
+        anims.extend([Create(l1), Create(l2), Write(op)])
+        uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+
+    with self.voiceover(text="""A reduction algorithm is a type of algorithm where we need to perform
+                        an operation on every input element where the input to the operation is a result of the previous input""") as trk:
+        self.play(LaggedStart(*anims))
+
+
+    def find_end(o1, o2):
+        end = o1.get_bottom() + 0.3*DOWN + 0.25 * LEFT
+        return end
+
+    with self.voiceover(text="""In order for this to parallelize nicely, the operator need to be associative""") as trk:
+        self.play(LaggedStart(*uncreate_anims))
+    anims = []
+    uncreate_anims = []
+    start = objs[-1]
+    for obj in reversed(objs[:-1]):
+        end = find_end(start, obj)
+        op = Text("Op", font_size=14).move_to(end)
+        l1 = Line(start.get_corner(DOWN), op.get_corner(UR))
+        l2 = Line(obj.get_corner(DOWN), op.get_corner(UL))
+        start = op
+        anims.extend([Create(l1), Create(l2), Write(op)])
+        uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+
+    with self.voiceover(text="""That means that no matter the order of the operations, the result will be the same""") as trk:
+        self.play(LaggedStart(*anims))
+    self.wait(1)
+    with self.voiceover(text="""This also gives us a wonderful property""") as trk:
+        self.play(LaggedStart(*uncreate_anims))
+
+    def find_end(o1, o2):
+        y = min(o1.get_y(), o2.get_y()) - 1
+        end = (o1.get_center() + o2.get_center())/2
+        end[1] = y
+        return end
+
+    anims = []
+    uncreate_anims = []
+    step = objs
+    while len(step) > 1:
+        next_step = []
+        for i in range(0, len(step), 2):
+            o1 = step[i]
+            o2 = step[i+1]
+            end = find_end(o1, o2)
+            op = Text("Op", font_size=20).move_to(end)
+            l1 = Line(o1.get_corner(DOWN), op.get_corner(UL))
+            l2 = Line(o2.get_corner(DOWN), op.get_corner(UR))
+            anims.extend([Create(l1), Create(l2), Write(op)])
+            uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+            next_step.append(op)
+        step = next_step
+
+    with self.voiceover(text="""Where we don't need to calculate sequentially, but we can do it in a tree like manner""") as trk:
+        self.play(LaggedStart(*anims))
+    self.wait(1)
 
