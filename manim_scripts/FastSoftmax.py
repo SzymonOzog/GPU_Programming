@@ -450,19 +450,21 @@ class FastSoftmax (VoiceoverScene):
 
     with self.voiceover(text="""Now with this prerequisite taken of, we need to look at speeding up our algorithm""") as trk:
         self.play(LaggedStart(*uncreate_anims))
-        self.play(VGroup(*objs).animate.shift(DOWN))
 
-    l1 = Line(UP, 10*DOWN).next_to(objs[3], RIGHT, buff=0).shift(4.3*DOWN)
-    l2 = Line(UP, 10*DOWN).next_to(objs[7], RIGHT, buff=0).shift(3.6*DOWN)
-    l3 = Line(UP, 10*DOWN).next_to(objs[11], RIGHT, buff=0).shift(4.3*DOWN)
+    l1 = Line(UP, 10*DOWN).next_to(objs[1], DOWN).shift(DOWN)
+    l2 = Line(UP, 10*DOWN).next_to((objs[7].get_center() + objs[8].get_center())/2, DOWN).shift(DOWN)
+    l3 = Line(UP, 10*DOWN).next_to(objs[-2], DOWN).shift(DOWN)
+
     b1 = Text("Block 1", color=BLUE, font_size=36).next_to(l1, UP)
     b2 = Text("Block 2", color=BLUE, font_size=36).next_to(l3, UP)
 
     t_fs = 24
-    t1 = Text("Thread 1", color=YELLOW, font_size=t_fs).next_to(VGroup(*objs[:4]), UP)
-    t2 = Text("Thread 2", color=GREEN, font_size=t_fs).next_to(VGroup(*objs[4:8]), UP)
-    t3 = Text("Thread 3", color=ORANGE, font_size=t_fs).next_to(VGroup(*objs[8:12]), UP)
-    t4 = Text("Thread 4", color=TEAL, font_size=t_fs).next_to(VGroup(*objs[12:]), UP)
+    dir = (l3.get_center() - l1.get_center()) / 4
+    start = l1.get_corner(UP) + DOWN
+    t1 = Text("Thread 1", color=YELLOW, font_size=t_fs).move_to(start - dir)
+    t2 = Text("Thread 2", color=GREEN, font_size=t_fs).move_to(start + dir)
+    t3 = Text("Thread 3", color=ORANGE, font_size=t_fs).move_to(start + 3*dir)
+    t4 = Text("Thread 4", color=TEAL, font_size=t_fs).move_to(start  + 5*dir)
     with self.voiceover(text="""And to do that, we need to think more deeply about how do we behave on a thread 
                         and block level""") as trk:
         self.play(Create(l1), Create(l2), Create(l3))
@@ -475,10 +477,10 @@ class FastSoftmax (VoiceoverScene):
     w4 = VGroup(*objs).copy()
 
     with self.voiceover(text="""In our naive kernel, each thread operates on the entirety of the data""") as trk:
-        self.play(w1.animate.scale(0.23).next_to(VGroup(*objs[:4]), DOWN),
-                  w2.animate.scale(0.23).next_to(VGroup(*objs[4:8]), DOWN),
-                  w3.animate.scale(0.23).next_to(VGroup(*objs[8:12]), DOWN),
-                  w4.animate.scale(0.23).next_to(VGroup(*objs[12:]), DOWN))
+        self.play(w1.animate.scale(0.33).next_to(t1, DOWN),
+                  w2.animate.scale(0.33).next_to(t2, DOWN),
+                  w3.animate.scale(0.33).next_to(t3, DOWN),
+                  w4.animate.scale(0.33).next_to(t4, DOWN))
 
     def find_end(o1, o2):
         y = min(o1.get_y(), o2.get_y()) - 0.5
@@ -505,4 +507,7 @@ class FastSoftmax (VoiceoverScene):
 
     with self.voiceover(text="""And independently performs a reduction""") as trk:
         self.play(LaggedStart(*anims))
+
+    with self.voiceover(text="""it doesn't take much effort to notice that this is a lot of repeated work""") as trk:
+        pass
 
