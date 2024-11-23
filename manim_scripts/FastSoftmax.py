@@ -415,6 +415,7 @@ class FastSoftmax (VoiceoverScene):
     anims = []
     uncreate_anims = []
     step = objs
+    ops = []
     while len(step) > 1:
         next_step = []
         for i in range(0, len(step), 2):
@@ -426,6 +427,7 @@ class FastSoftmax (VoiceoverScene):
             l2 = Line(o2.get_corner(DOWN), op.get_corner(UR))
             anims.extend([Create(l1), Create(l2), Write(op)])
             uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+            ops.append(op)
             next_step.append(op)
         step = next_step
 
@@ -433,3 +435,15 @@ class FastSoftmax (VoiceoverScene):
         self.play(LaggedStart(*anims))
     self.wait(1)
 
+    with self.voiceover(text="""In the case of our softmax we perform 2 associative reductions""") as trk:
+        pass
+
+    with self.voiceover(text="""One is finding a maximum""") as trk:
+        self.play(*[Transform(op,
+                              Text("Max", font_size=16).move_to(op))
+                    for op in ops])
+
+    with self.voiceover(text="""And the second one is summing all elements to calculate our divisor""") as trk:
+        self.play(*[Transform(op,
+                              Text("+", font_size=24).move_to(op))
+                    for op in ops])
