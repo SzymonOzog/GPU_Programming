@@ -460,7 +460,7 @@ class FastSoftmax (VoiceoverScene):
 
     t_fs = 24
     dir = (l3.get_center() - l1.get_center()) / 4
-    start = l1.get_corner(UP) + DOWN
+    start = l1.get_corner(UP) + 0.5*DOWN
     t1 = Text("Thread 1", color=YELLOW, font_size=t_fs).move_to(start - dir)
     t2 = Text("Thread 2", color=GREEN, font_size=t_fs).move_to(start + dir)
     t3 = Text("Thread 3", color=ORANGE, font_size=t_fs).move_to(start + 3*dir)
@@ -497,7 +497,7 @@ class FastSoftmax (VoiceoverScene):
                 o1 = step[i]
                 o2 = step[i+1]
                 end = find_end(o1, o2)
-                op = Text("Op", font_size=10).move_to(end)
+                op = Circle(radius=0.05, color=BLUE).move_to(end)
                 l1 = Line(o1.get_corner(DOWN), op.get_corner(UL))
                 l2 = Line(o2.get_corner(DOWN), op.get_corner(UR))
                 anims.extend([Create(l1), Create(l2), Write(op)])
