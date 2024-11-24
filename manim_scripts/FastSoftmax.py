@@ -451,23 +451,23 @@ class FastSoftmax (VoiceoverScene):
     with self.voiceover(text="""Now with this prerequisite taken of, we need to look at speeding up our algorithm""") as trk:
         self.play(LaggedStart(*uncreate_anims))
 
-    l1 = Line(UP, 10*DOWN).next_to(objs[1], DOWN).shift(DOWN)
-    l2 = Line(UP, 10*DOWN).next_to((objs[7].get_bottom() + objs[8].get_bottom())/2, DOWN).shift(DOWN)
-    l3 = Line(UP, 10*DOWN).next_to(objs[-2], DOWN).shift(DOWN)
+    ln1 = Line(UP, 10*DOWN).next_to(objs[1], DOWN).shift(DOWN)
+    ln2 = Line(UP, 10*DOWN).next_to((objs[7].get_bottom() + objs[8].get_bottom())/2, DOWN).shift(DOWN)
+    ln3 = Line(UP, 10*DOWN).next_to(objs[-2], DOWN).shift(DOWN)
 
     # b1 = Text("Block 1", color=BLUE, font_size=36).next_to(l1, UP)
     # b2 = Text("Block 2", color=BLUE, font_size=36).next_to(l3, UP)
 
     t_fs = 24
-    dir = (l3.get_center() - l1.get_center()) / 4
-    start = l1.get_corner(UP) + 0.5*DOWN
+    dir = (ln3.get_center() - ln1.get_center()) / 4
+    start = ln1.get_corner(UP) + 0.5*DOWN
     t1 = Text("Thread 1", color=YELLOW, font_size=t_fs).move_to(start - dir)
     t2 = Text("Thread 2", color=GREEN, font_size=t_fs).move_to(start + dir)
     t3 = Text("Thread 3", color=ORANGE, font_size=t_fs).move_to(start + 3*dir)
     t4 = Text("Thread 4", color=TEAL, font_size=t_fs).move_to(start  + 5*dir)
     with self.voiceover(text="""And to do that, we need to think more deeply about how do we behave on a thread 
                         and block level""") as trk:
-        self.play(Create(l1), Create(l2), Create(l3))
+        self.play(Create(ln1), Create(ln2), Create(ln3))
         # self.play(Write(b1), Write(b2))
         self.play(Write(t1), Write(t2), Write(t3), Write(t4))
 
@@ -579,6 +579,46 @@ class FastSoftmax (VoiceoverScene):
     lines = [Line(op.get_corner(DR), t) for t in transmitted]
     with self.voiceover(text="""And in the case of softmax, we need to finalize by transmitting the data to all other threads""") as trk:
         self.play(LaggedStart(*[Create(x) for x in lines + transmitted]))
+    all = VGroup(*(ws+ts+thread_level_reduction+shared_mem_reduction+transmitted+lines), ln1, ln2, ln3)
+    all.save_state()
+    self.play(all.animate.scale(0.5).to_edge(LEFT).shift(3*UP))
 
+    reduction_code = """__shared__ float reduction[BLOCK_DIM_Y]; 
+float maxval = 0;
+for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i+=1)
+{
+  maxval = fmaxf(maxval, a[row*w + i]);
+}
 
+reduction[ty] = maxval;
+for(int stride = BLOCK_DIM_Y/2; stride>=1; stride/=2)
+{
+  __syncthreads();
+  if (ty < stride)
+  {
+    reduction[ty] = fmaxf(reduction[ty], reduction[ty+stride]);
+  }
+}
 
+__syncthreads();
+maxval = reduction[0];
+"""
+    code_obj = Code(code=reduction_code, tab_width=2, language="c", font_size=12, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False).to_edge(RIGHT, buff=0.25)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    with self.voiceover(text="""This is how the code for this reduction looks like""") as trk:
+        self.play(Create(code_obj))
+
+    hl1 = Rectangle(width=6.5, height=VGroup(*ws, *thread_level_reduction).height+0.05, color=RED_A, fill_color=RED_A, fill_opacity=0.25, stroke_width=2).move_to(VGroup(*ws, *thread_level_reduction)).shift(0.05*UP)
+    hl2 = SurroundingRectangle(code_obj.code[2:6], color=RED_A, fill_color=RED_A, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    with self.voiceover(text="""For the first step we perform the reduction on a thread level""") as trk:
+        self.play(Create(hl1), Create(hl2))
+
+    hl3 = Rectangle(width=6.5, height=VGroup(*shared_mem_reduction).height+0.05, color=BLUE_A, fill_color=BLUE_A, fill_opacity=0.25, stroke_width=2).next_to(hl1, DOWN, buff=0)
+    hl4 = SurroundingRectangle(code_obj.code[7:16], color=BLUE_A, fill_color=BLUE_A, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    with self.voiceover(text="""We then exchange the data between the threads in shared memory and perform the reduction on a block level""") as trk:
+        self.play(Create(hl3), Create(hl4))
+
+    hl5 = Rectangle(width=6.5, height=VGroup(*(transmitted+lines)).height+0.05, color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.25, stroke_width=2).next_to(hl3, DOWN, buff=0)
+    hl6 = SurroundingRectangle(code_obj.code[17:], color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    with self.voiceover(text="""And finally, we broadcast the data to all other threads""") as trk:
+        self.play(Create(hl5), Create(hl6))
