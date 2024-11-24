@@ -511,3 +511,74 @@ class FastSoftmax (VoiceoverScene):
     with self.voiceover(text="""it doesn't take much effort to notice that this is a lot of repeated work""") as trk:
         pass
 
+    with self.voiceover(text="""We're going to need to be able to distribute the work between our threads""") as trk:
+        self.play(LaggedStart(*uncreate_anims, Uncreate(w1), Uncreate(w2), Uncreate(w3), Uncreate(w4)))
+
+    ws=[]
+    for i in range(4):
+        ws.append(VGroup(*objs[i*4:(i+1)*4]).copy())
+
+    ts = [t1, t2, t3, t4]
+    with self.voiceover(text="""The first thing is to distribute the input equally between the threads""") as trk:
+        for w, t in zip(ws, ts):
+            self.play(w.animate.set_color(t.color).next_to(t, DOWN))
+
+    last = []
+    thread_level_reduction = []
+    for w, t in zip(ws, ts):
+        step = w
+        while len(step) > 1:
+            next_step = []
+            for i in range(0, len(step), 2):
+                o1 = step[i]
+                o2 = step[i+1]
+                end = find_end(o1, o2)
+                op = Circle(radius=0.1, color=t.color).move_to(end)
+                l1 = Line(o1.get_corner(DOWN), op.get_corner(UL))
+                l2 = Line(o2.get_corner(DOWN), op.get_corner(UR))
+                anims.extend([Create(l1), Create(l2), Write(op)])
+                uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+                next_step.append(op)
+                thread_level_reduction.extend([l1, l2, op])
+            step = next_step
+        last.extend(step)
+
+    with self.voiceover(text="""then we can perform the reduction on those inputs like we did before""") as trk:
+        self.play(LaggedStart(*anims))
+
+    def find_end(o1, o2):
+        y = min(o1.get_y(), o2.get_y()) - 1 
+        end = (o1.get_center())
+        end[1] = y
+        return end
+
+    step = last
+    anims = []
+    shared_mem_reduction = []
+    while len(step) > 1:
+        next_step = []
+        for i in range(0, len(step), 2):
+            o1 = step[i]
+            o2 = step[i+1]
+            end = find_end(o1, o2)
+            op = Circle(radius=0.1, color=o1.color).move_to(end)
+            l1 = Line(o1.get_corner(DOWN), op.get_corner(UP))
+            l2 = Line(o2.get_corner(DOWN), op.get_corner(UR))
+            anims.extend([Create(l1), Create(l2), Write(op)])
+            uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+            next_step.append(op)
+            shared_mem_reduction.extend([l1, l2, op])
+        step = next_step
+
+    with self.voiceover(text="""Afterwards, we transmit the data between the threads and finalize the reduction""") as trk:
+        self.play(LaggedStart(*anims))
+
+
+    end = op.get_center() + DOWN
+    transmitted = [Circle(radius=0.1, color=ts[i].color).move_to(end + dir*i*2) for i in range(1, 4)]
+    lines = [Line(op.get_corner(DR), t) for t in transmitted]
+    with self.voiceover(text="""And in the case of softmax, we need to finalize by transmitting the data between the threads""") as trk:
+        self.play(LaggedStart(*[Create(x) for x in lines + transmitted]))
+
+
+
