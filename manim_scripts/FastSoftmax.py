@@ -452,11 +452,11 @@ class FastSoftmax (VoiceoverScene):
         self.play(LaggedStart(*uncreate_anims))
 
     l1 = Line(UP, 10*DOWN).next_to(objs[1], DOWN).shift(DOWN)
-    l2 = Line(UP, 10*DOWN).next_to((objs[7].get_center() + objs[8].get_center())/2, DOWN).shift(DOWN)
+    l2 = Line(UP, 10*DOWN).next_to((objs[7].get_bottom() + objs[8].get_bottom())/2, DOWN).shift(DOWN)
     l3 = Line(UP, 10*DOWN).next_to(objs[-2], DOWN).shift(DOWN)
 
-    b1 = Text("Block 1", color=BLUE, font_size=36).next_to(l1, UP)
-    b2 = Text("Block 2", color=BLUE, font_size=36).next_to(l3, UP)
+    # b1 = Text("Block 1", color=BLUE, font_size=36).next_to(l1, UP)
+    # b2 = Text("Block 2", color=BLUE, font_size=36).next_to(l3, UP)
 
     t_fs = 24
     dir = (l3.get_center() - l1.get_center()) / 4
@@ -468,7 +468,7 @@ class FastSoftmax (VoiceoverScene):
     with self.voiceover(text="""And to do that, we need to think more deeply about how do we behave on a thread 
                         and block level""") as trk:
         self.play(Create(l1), Create(l2), Create(l3))
-        self.play(Write(b1), Write(b2))
+        # self.play(Write(b1), Write(b2))
         self.play(Write(t1), Write(t2), Write(t3), Write(t4))
 
     w1 = VGroup(*objs).copy()
@@ -577,7 +577,7 @@ class FastSoftmax (VoiceoverScene):
     end = op.get_center() + DOWN
     transmitted = [Circle(radius=0.1, color=ts[i].color).move_to(end + dir*i*2) for i in range(1, 4)]
     lines = [Line(op.get_corner(DR), t) for t in transmitted]
-    with self.voiceover(text="""And in the case of softmax, we need to finalize by transmitting the data between the threads""") as trk:
+    with self.voiceover(text="""And in the case of softmax, we need to finalize by transmitting the data to all other threads""") as trk:
         self.play(LaggedStart(*[Create(x) for x in lines + transmitted]))
 
 
