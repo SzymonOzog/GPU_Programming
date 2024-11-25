@@ -281,6 +281,7 @@ class FastSoftmax (VoiceoverScene):
                   text_triton.animate.move_to(axes_t.c2p(2**17, flops_triton[-1])+0.1*RIGHT, LEFT),
                   y_label.animate.shift(0.2*LEFT))
 
+    axes = axes_t
 
     softmax_code="""__global__ void softmax(int w, int h, float* input, float* output)
 {
@@ -651,3 +652,18 @@ divisor = reduction[0];
                   Transform(hl2, SurroundingRectangle(code_obj.code[2:6], color=RED_A, fill_color=RED_A, fill_opacity=0.25, buff=0.03, stroke_width=2)),
                   Transform(hl4, SurroundingRectangle(code_obj.code[7:16], color=BLUE_A, fill_color=BLUE_A, fill_opacity=0.25, buff=0.03, stroke_width=2)),
                   Transform(hl6, SurroundingRectangle(code_obj.code[17:], color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.25, buff=0.03, stroke_width=2)))
+
+    graph = VGroup(axes, theoretical_performance, theoretical_text, graph_torch, graph_triton, text_torch, text_triton, y_text, x_text)
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    times_cuda = [9.12, 10.976, 14.976, 18.944, 34.176, 65.568, 120.288, 310.688]
+    flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
+    print(flops_cuda)
+    print(flops_torch)
+    graph_cuda = axes.plot_line_graph(ns, flops_cuda, line_color=RED, add_vertex_dots=False)
+    text_cuda = Text("Fast Recuction", color=RED, font_size=18).move_to(axes.c2p(2**17, flops_cuda[-1])+0.1*RIGHT, LEFT)
+    with self.voiceover(text="""We can now check the speed of our kernel""") as trk:
+        self.play(FadeIn(graph))
+
+    with self.voiceover(text="""And even though we are much better than the initial 8 GFLOPs, we're still off compared to real world implementations""") as trk:
+        self.play(Create(graph_cuda))
+        self.play(Write(text_cuda))
