@@ -622,3 +622,32 @@ maxval = reduction[0];
     hl6 = SurroundingRectangle(code_obj.code[17:], color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.25, buff=0.03, stroke_width=2)
     with self.voiceover(text="""And finally, we broadcast the data to all other threads""") as trk:
         self.play(Create(hl5), Create(hl6))
+
+    reduction_code = """__shared__ float reduction[BLOCK_DIM_Y]; 
+float divisor = 0.f;
+for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i+=1)
+{
+  divisor += __expf(a[row*w + i] - maxval);
+}
+
+reduction[ty] = divisor;
+for(int stride = BLOCK_DIM_Y/2; stride>=1; stride/=2)
+{
+  __syncthreads();
+  if (ty < stride)
+  {
+    reduction[ty] = reduction[ty] + reduction[ty+stride];
+  }
+}
+
+__syncthreads();
+divisor = reduction[0];
+"""
+
+    code_obj_t = Code(code=reduction_code, tab_width=2, language="c", font_size=12, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False).to_edge(RIGHT, buff=0.25)
+    code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+    with self.voiceover(text="""And in the same way that we found our maximum, we can fix calculating the divisor""") as trk:
+        self.play(Transform(code_obj, code_obj_t),
+                  Transform(hl2, SurroundingRectangle(code_obj.code[2:6], color=RED_A, fill_color=RED_A, fill_opacity=0.25, buff=0.03, stroke_width=2)),
+                  Transform(hl4, SurroundingRectangle(code_obj.code[7:16], color=BLUE_A, fill_color=BLUE_A, fill_opacity=0.25, buff=0.03, stroke_width=2)),
+                  Transform(hl6, SurroundingRectangle(code_obj.code[17:], color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.25, buff=0.03, stroke_width=2)))
