@@ -653,7 +653,7 @@ divisor = reduction[0];
                   Transform(hl4, SurroundingRectangle(code_obj.code[7:16], color=BLUE_A, fill_color=BLUE_A, fill_opacity=0.25, buff=0.03, stroke_width=2)),
                   Transform(hl6, SurroundingRectangle(code_obj.code[17:], color=GREEN_A, fill_color=GREEN_A, fill_opacity=0.25, buff=0.03, stroke_width=2)))
 
-    graph = VGroup(axes, theoretical_performance, theoretical_text, graph_torch, graph_triton, text_torch, text_triton, y_text, x_text)
+    graph = VGroup(axes, theoretical_performance, theoretical_text, graph_torch, graph_triton, text_torch, text_triton, y_text, x_text).shift(DOWN)
     self.play(*[FadeOut(x) for x in self.mobjects])
     times_cuda = [9.12, 10.976, 14.976, 18.944, 34.176, 65.568, 120.288, 310.688]
     flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
@@ -667,3 +667,7 @@ divisor = reduction[0];
     with self.voiceover(text="""And even though we are much better than the initial 8 GFLOPs, we're still off compared to real world implementations""") as trk:
         self.play(Create(graph_cuda))
         self.play(Write(text_cuda))
+
+    graph.add(graph_cuda)
+    graph.add(text_cuda)
+
