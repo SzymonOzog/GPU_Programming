@@ -590,7 +590,7 @@ class FastSoftmax (VoiceoverScene):
 
     reduction_code = """__shared__ float reduction[BLOCK_DIM_Y]; 
 float maxval = 0;
-for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i+=1)
+for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i++)
 {
   maxval = fmaxf(maxval, a[row*w + i]);
 }
@@ -630,7 +630,7 @@ maxval = reduction[0];
 
     reduction_code = """__shared__ float reduction[BLOCK_DIM_Y]; 
 float divisor = 0.f;
-for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i+=1)
+for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i++)
 {
   divisor += __expf(a[row*w + i] - maxval);
 }
@@ -697,4 +697,27 @@ divisor = reduction[0];
             self.wait(1)
             anims.extend([objs[i*4 + j].animate.set_fill(WHITE, 0) for j in range(4)])
 
+    mem_access = """for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i++)
+{
+  maxval = fmaxf(maxval, a[row*w + i]);
+}"""
 
+    code_obj = Code(code=mem_access, tab_width=2, language="c", font_size=24, line_no_buff=0.1, corner_radius=0.1).shift(UP)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+
+    mem_access2 = """for (int i = ty; i<w; i+=BLOCK_DIM_Y)
+{
+  maxval = fmaxf(maxval, a[row*w + i]);
+}"""
+
+    code_obj2 = Code(code=mem_access2, tab_width=2, language="c", font_size=24, line_no_buff=0.1, corner_radius=0.1).next_to(code_obj, DOWN)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+    with self.voiceover(text="""And the code change is actually very simple""") as trk:
+        self.play(*[FadeOut(x) for x in self.mobjects])
+
+    with self.voiceover(text="""We just need to change our for loop when reading the values from a stride of 1""") as trk:
+        self.play(Create(code_obj))
+
+    with self.voiceover(text="""To a stride of BLODK_DIM""") as trk:
+        self.play(Transform(code_obj.copy(), code_obj2, replace_mobject_with_target_in_scene=True))
