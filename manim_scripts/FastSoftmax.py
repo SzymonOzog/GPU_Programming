@@ -686,3 +686,15 @@ divisor = reduction[0];
             self.play(*[objs[i + j*4].animate.set_fill(objs[i + j*4].color, 0.5) for j in range(4)], *anims)
             self.wait(1)
             anims.extend([objs[i + j*4].animate.set_fill(WHITE, 0) for j in range(4)])
+    self.play(*anims)
+    anims = []
+
+    with self.voiceover(text="""Essentially, we need to change our access pattern, so that each thread accesses values that are adjacent in memory""") as trk:
+        for i, t in enumerate(ts * 4): 
+            objs[i].set_color(t.color)
+        for i in range(4):
+            self.play(*[objs[i*4 + j].animate.set_fill(objs[i*4 + j].color, 0.5) for j in range(4)], *anims)
+            self.wait(1)
+            anims.extend([objs[i*4 + j].animate.set_fill(WHITE, 0) for j in range(4)])
+
+
