@@ -351,7 +351,7 @@ class FastSoftmax (VoiceoverScene):
         self.play(Write(results))
 
     objs = [Square(side_length=0.5) for _ in range(16)]
-    VGroup(*objs).arrange(RIGHT,buff=0.02).move_to(ORIGIN+3*UP)
+    VGroup(*objs).arrange(RIGHT,buff=0.06).move_to(ORIGIN+3*UP)
 
     with self.voiceover(text="""The key to making a fast softmax algorithm is understanding how to perform a fast reduction
                         algorithm""") as trk:
@@ -516,13 +516,17 @@ class FastSoftmax (VoiceoverScene):
         self.play(LaggedStart(*uncreate_anims, Uncreate(w1), Uncreate(w2), Uncreate(w3), Uncreate(w4)))
 
     ws=[]
+    ogs=[]
+    color_anims=[]
     for i in range(4):
+        ogs.append(VGroup(*objs[i*4:(i+1)*4]))
         ws.append(VGroup(*objs[i*4:(i+1)*4]).copy())
 
     ts = [t1, t2, t3, t4]
     with self.voiceover(text="""The first thing is to distribute the input equally between the threads""") as trk:
-        for w, t in zip(ws, ts):
-            self.play(w.animate.set_color(t.color).next_to(t, DOWN))
+        for w, t, og in zip(ws, ts, ogs):
+            self.play(w.animate.set_color(t.color).next_to(t, DOWN),
+                      og.animate.set_color(t.color))
 
     last = []
     thread_level_reduction = []
@@ -670,4 +674,15 @@ divisor = reduction[0];
 
     graph.add(graph_cuda)
     graph.add(text_cuda)
+    with self.voiceover(text="""Another thing that we can do to improve the speed of our kernel is to investigate our memory access pattern""") as trk:
+        self.play(FadeOut(graph), FadeOut(graph_cuda), FadeOut(text_cuda))
+        all.restore()
+        self.play(FadeIn(all), *[FadeIn(x) for x in objs])
 
+    anims = []
+    with self.voiceover(text="""And we can see that we are accessing our data with a stride of BLOCK_SIZE, if you watched
+                        the video on DRAM and memory coalescing you know that this is a very bad access pattern""") as trk:
+        for i in range(4):
+            self.play(*[objs[i + j*4].animate.set_fill(objs[i + j*4].color, 0.5) for j in range(4)], *anims)
+            self.wait(1)
+            anims.extend([objs[i + j*4].animate.set_fill(WHITE, 0) for j in range(4)])
