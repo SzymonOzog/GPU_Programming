@@ -661,8 +661,6 @@ divisor = reduction[0];
     self.play(*[FadeOut(x) for x in self.mobjects])
     times_cuda = [9.12, 10.976, 14.976, 18.944, 34.176, 65.568, 120.288, 310.688]
     flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
-    print(flops_cuda)
-    print(flops_torch)
     graph_cuda = axes.plot_line_graph(ns, flops_cuda, line_color=RED, add_vertex_dots=False)
     text_cuda = Text("Fast Recuction", color=RED, font_size=18).move_to(axes.c2p(2**17, flops_cuda[-1])+0.1*RIGHT, LEFT)
     with self.voiceover(text="""We can now check the speed of our kernel""") as trk:
@@ -721,3 +719,14 @@ divisor = reduction[0];
 
     with self.voiceover(text="""To a stride of BLODK_DIM""") as trk:
         self.play(Transform(code_obj.copy(), code_obj2, replace_mobject_with_target_in_scene=True))
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    times_cuda = [3.712, 4.608, 6.496, 9.824, 16.8, 34.304, 67.68, 184.16]
+    flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
+    graph_coalesced = axes.plot_line_graph(ns, flops_cuda, line_color=TEAL, add_vertex_dots=False)
+    text_coalesced = Text("+ Coalescing", color=TEAL, font_size=18).next_to(text_torch, DOWN, aligned_edge=LEFT, buff=0.1)
+    with self.voiceover(text="""By adding coalescing, we've taken a big step into getting simillar performance to torch and triton kenrels""") as trk:
+        self.play(FadeIn(graph))
+        self.play(Create(graph_coalesced))
+        self.play(Write(text_coalesced))
+
