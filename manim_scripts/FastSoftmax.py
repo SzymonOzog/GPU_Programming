@@ -737,13 +737,15 @@ divisor = reduction[0];
         self.play(FadeOut(graph), FadeOut(graph_coalesced), FadeOut(text_coalesced))
         self.play(FadeIn(all), *[FadeIn(x) for x in objs])
     hl = Rectangle(width = (ws[-1].get_right() - ws[0].get_left())[0], height=VGroup(*shared_mem_reduction).height, color=RED, fill_color=RED, fill_opacity=0.5).move_to(VGroup(*shared_mem_reduction))
+    smr_t = Text("Shared memory reduction", color=RED).move_to(hl)
     with self.voiceover(text="""so far, most of our reduction was happening in shared memory, which is fast, but not as fast as our registers""") as trk:
         self.play(Create(hl))
+        self.play(Write(smr_t))
 
-    ws = Rectangle(width=3, height=0.5, color=YELLOW_A, fill_color=YELLOW_A, fill_opacity=0.5).to_edge(UP)
-    ws_t = Text("Warp Scheduler", color=YELLOW_A, font_size=32).scale(0.6).move_to(ws)
+    wrs = Rectangle(width=3, height=0.5, color=YELLOW_A, fill_color=YELLOW_A, fill_opacity=0.5).to_edge(UP)
+    wrs_t = Text("Warp Scheduler", color=YELLOW_A, font_size=32).scale(0.6).move_to(wrs)
 
-    du = Rectangle(width=3, height=0.5, color=YELLOW_B, fill_color=YELLOW_B, fill_opacity=0.5).next_to(ws, DOWN, buff=0.2)
+    du = Rectangle(width=3, height=0.5, color=YELLOW_B, fill_color=YELLOW_B, fill_opacity=0.5).next_to(wrs, DOWN, buff=0.2)
     du_t = Text("Dispatch Unit", color=YELLOW_B, font_size=32).scale(0.6).move_to(du)
 
     ic = Rectangle(width=3, height=0.5, color=YELLOW_C, fill_color=YELLOW_C, fill_opacity=0.5).next_to(du, DOWN, buff=0.2)
@@ -812,11 +814,50 @@ divisor = reduction[0];
     with self.voiceover(text="""If you watched our episode on GPU architecture, you know that threads in a processing block
                         have a <bookmark mark='1'/> shared register file""") as trk:
         self.play(*[FadeOut(x) for x in self.mobjects])
-        self.play(*[Create(x) for x in [ws, du, ic, tc, rf] + fpcs + fpcis + lsus + sfus])
-        self.play(*[Write(x) for x in [ws_t, du_t, ic_t, tc_t, rf_t, fpc_t, fpci_t] + lsu_ts + sfu_ts])
+        self.play(*[Create(x) for x in [wrs, du, ic, tc, rf] + fpcs + fpcis + lsus + sfus])
+        self.play(*[Write(x) for x in [wrs_t, du_t, ic_t, tc_t, rf_t, fpc_t, fpci_t] + lsu_ts + sfu_ts])
         self.wait_until_bookmark("1")
         self.play(FadeIn(spotlight))
 
     with self.voiceover(text="""So there is nothing stopping us from using this fact to share data between the threads faster""") as trk:
         self.wait(1)
         self.play(FadeOut(spotlight))
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    self.play(FadeIn(all), *[FadeIn(x) for x in objs], FadeIn(hl), FadeIn(smr_t))
+
+    w1t = Text("Warp 1", color=BLUE).next_to(ln1, UP)
+    w2t = Text("Warp 2", color=BLUE).next_to(ln3, UP)
+    with self.voiceover(text="""In our imaginary scenario a warp will consist of 2 threads but remember that in reality its 32 threads""") as trk:
+        self.play(ln2.animate.shift(UP))
+        self.play(Write(w1t), Write(w2t))
+
+    with self.voiceover(text="""What we want is instead of doing the second step in shared memory""") as trk:
+        self.play(*[Uncreate(x) for x in transmitted + lines], uncreate_anims[-2], Uncreate(hl), Unwrite(smr_t))
+
+    
+    hl = Rectangle(width = (ws[1].get_right() - ws[0].get_left())[0], height=1.1, color=BLUE, fill_color=BLUE, fill_opacity=0.3).move_to(ln1).shift(2.9*UP)
+    hl2 = Rectangle(width = (ws[3].get_right() - ws[2].get_left())[0], height=1.1, color=BLUE, fill_color=BLUE, fill_opacity=0.3).move_to(ln3).shift(2.9*UP)
+    t1 = Text("Register reduction", color=BLUE_E, font_size=32).move_to(hl)
+    t2 = Text("Register reduction", color=BLUE_E, font_size=32).move_to(hl2)
+    self.play(Create(hl), Create(hl2))
+    self.play(Write(t1), Write(t2))
+
+
+    op = Circle(radius=0.1, color=t2.color).move_to(shared_mem_reduction[-1].get_center() + 2 * dir)
+    l1 = Line(shared_mem_reduction[-4].get_corner(DL), op.get_corner(UR))
+    hl3 = SurroundingRectangle(VGroup(op, l1, shared_mem_reduction[-1]), color=RED, fill_color=RED, fill_opacity=0.3, buff=0)
+    t3 = Text("Shared memory sync", color=RED, font_size=32).move_to(hl3)
+    with self.voiceover(text="""We then move all of the reduced values to one warp in shared memory""") as trk:
+        self.play(Create(op), Create(l1))
+        self.play(Create(hl3), Write(t3))
+
+    op2 = Circle(radius=0.1, color=t1.color).move_to(shared_mem_reduction[-1].get_center() + DOWN)
+    l1 = Line(shared_mem_reduction[-1].get_corner(DOWN), op2.get_corner(UP))
+    l2 = Line(op.get_corner(DL), op2.get_corner(UR))
+    hl4 = SurroundingRectangle(VGroup(op2, l1, l2), color=GREEN, fill_color=GREEN, fill_opacity=0.3, buff=0)
+    t4 = Text("Register reduction", color=GREEN_E, font_size=30).move_to(hl4)
+    with self.voiceover(text="""And we perform another reduction in registers to get our final value""") as trk:
+        self.play(Create(op2), Create(l1), Create(l2))
+        self.play(Create(hl4), Write(t4))
+
