@@ -990,3 +990,15 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
         self.wait_until_bookmark("1")
         self.play(Transform(code_obj2, code_obj))
 
+    times_cuda = [3.072, 3.872, 5.504, 8.672, 15.104, 28.992, 63.392, 171.296]
+    flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
+    graph_finetune = axes.plot_line_graph(ns, flops_cuda, line_color=YELLOW, add_vertex_dots=False)
+    text_finetune = Text("finetuned", color=YELLOW, font_size=18).next_to(text_float4, UP, aligned_edge=LEFT, buff=0.1)
+    graph.add(graph_finetune, text_finetune)
+    with self.voiceover(text="""And by running a search over all of the reasonable combinations of unrolling, and block dimensions""") as trk:
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.play(FadeIn(graph))
+
+    with self.voiceover(text="""We get a kernel that has a better performance to torch and triton""") as trk:
+        self.play(Create(graph_finetune))
+        self.play(Write(text_finetune))
