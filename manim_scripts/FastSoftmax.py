@@ -258,14 +258,14 @@ class FastSoftmax (VoiceoverScene):
 
     axes_t = Axes(
             x_range=[10, 17, 1],
-            y_range=[0, 1400, 200],
+            y_range=[0, 1280, 200],
             x_length=7,
             y_length=5,
             axis_config={"include_tip": False, "include_numbers": True},
             x_axis_config={"scaling": LogBase(2)},
             ).shift(LEFT+UP)
     theoretical_performance_t = Line(start=axes_t.c2p(2**10, 2*625), end=axes_t.c2p(2**17, 2*625), color=GREEN)
-    theoretical_text_t = Text("Theoretical Maximum 1250 GFLOPS", color=GREEN, font_size=18).next_to(theoretical_performance, RIGHT, buff=0.1)
+    theoretical_text_t = Text("Theoretical Maximum 1250 GFLOPS", color=GREEN, font_size=18).next_to(theoretical_performance_t, RIGHT, buff=0.1)
     graph_torch_t = axes_t.plot_line_graph(ns, flops_torch, line_color=ORANGE, add_vertex_dots=False)
     graph_triton_t = axes_t.plot_line_graph(ns, flops_triton, line_color=BLUE, add_vertex_dots=False)
     with self.voiceover(text="""And since our L2 write speed is much higher than our global memory read spead, the only bottleneck is reads from global memory,
