@@ -966,3 +966,27 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
         self.play(Create(graph_float4))
         self.play(Write(text_float4))
     graph.add(graph_float4, text_float4)
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    code_obj2.move_to(ORIGIN)
+    unroll = """float maxval = 0;
+#pragma unroll UNROLL_FACTOR
+for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
+{
+  float4 val = reinterpret_cast<float4*>(&a[row*w + i*4])[0];
+  maxval = fmaxf(maxval, val.x);
+  maxval = fmaxf(maxval, val.y);
+  maxval = fmaxf(maxval, val.z);
+  maxval = fmaxf(maxval, val.w);
+}
+    """
+    code_obj = Code(code=unroll, tab_width=2, language="c", font_size=14.5, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1).move_to(code_obj2)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    code_obj.code[1].set_color(RED_B)
+    with self.voiceover(text="""The next step is to unroll our loops, the compiler usually does that for you, but you 
+                        can controll this behaviour <bookmark mark='1'/>by using a pragma directive
+                        that takes in the amout of unrolls we want the compiler to do""") as trk:
+        self.play(FadeIn(code_obj2))
+        self.wait_until_bookmark("1")
+        self.play(Transform(code_obj2, code_obj))
+
