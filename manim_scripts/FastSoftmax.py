@@ -921,3 +921,37 @@ if (warp_id == 0)
         self.play(Create(graph_register))
         self.play(Write(text_register))
     graph.add(graph_register, text_register)
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+
+    float_load = """float maxval = 0;
+for (int i = ty; i<w; i+=BLOCK_DIM_Y)
+{
+  maxval = fmaxf(maxval, a[row*w + i]);
+}
+"""
+
+    float4_load = """float maxval = 0;
+for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
+{
+  float4 val = reinterpret_cast<float4*>(&a[row*w + i*4])[0];
+  maxval = fmaxf(maxval, val.x);
+  maxval = fmaxf(maxval, val.y);
+  maxval = fmaxf(maxval, val.z);
+  maxval = fmaxf(maxval, val.w);
+}
+    """
+    code_obj = Code(code=float_load, tab_width=2, language="c", font_size=14.5, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    code_obj2 = Code(code=float4_load, tab_width=2, language="c", font_size=14.5, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+    VGroup(code_obj, code_obj2).arrange(RIGHT).move_to(ORIGIN)
+
+    with self.voiceover(text="""Our next step is to utilize loading in float4""") as trk:
+        self.play(Create(code_obj), Create(code_obj2))
+
+    with self.voiceover(text="""This holds multiple very low level benefits we issue one instruction for 
+                        4 memory loads, reducing the amount of instructions issued and it also
+                        reduces the amount of index calculations that we are doing for memory access""") as trk:
+        pass
+
