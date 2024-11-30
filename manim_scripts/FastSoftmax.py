@@ -955,3 +955,14 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
                         reduces the amount of index calculations that we are doing for memory access""") as trk:
         pass
 
+    self.play(*[FadeOut(x) for x in self.mobjects])
+
+    times_cuda = [3.232, 3.968, 5.536, 9.12, 15.456, 30.528, 64.288, 176.544]
+    flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
+    graph_float4 = axes.plot_line_graph(ns, flops_cuda, line_color=MAROON, add_vertex_dots=False)
+    text_float4 = Text("+ float4", color=MAROON, font_size=18).next_to(text_register, UP, aligned_edge=LEFT, buff=0.1)
+    with self.voiceover(text="""With float4 utilisation we are finally getting a kernel that is on par with torch and triton kernels""") as trk:
+        self.play(FadeIn(graph))
+        self.play(Create(graph_float4))
+        self.play(Write(text_float4))
+    graph.add(graph_float4, text_float4)
