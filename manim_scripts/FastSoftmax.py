@@ -909,3 +909,15 @@ if (warp_id == 0)
 
     with self.voiceover(text="""And in the end we finish the sync using registers of the first warp""") as trk:
         self.play(Create(hl3))
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+
+    times_cuda = [3.424, 4.256, 5.76, 9.12, 15.808, 32.096, 66.784, 183.04]
+    flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
+    graph_register = axes.plot_line_graph(ns, flops_cuda, line_color=PURPLE, add_vertex_dots=False)
+    text_register = Text("+ Register Reduction", color=PURPLE, font_size=18).next_to(text_torch, UP, aligned_edge=LEFT, buff=0.1)
+    with self.voiceover(text="""With this, we take another step closer to the performance of torch and triton""") as trk:
+        self.play(FadeIn(graph))
+        self.play(Create(graph_register))
+        self.play(Write(text_register))
+    graph.add(graph_register, text_register)
