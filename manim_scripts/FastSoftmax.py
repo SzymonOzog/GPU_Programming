@@ -838,26 +838,74 @@ divisor = reduction[0];
     
     hl = Rectangle(width = (ws[1].get_right() - ws[0].get_left())[0], height=1.1, color=BLUE, fill_color=BLUE, fill_opacity=0.3).move_to(ln1).shift(2.9*UP)
     hl2 = Rectangle(width = (ws[3].get_right() - ws[2].get_left())[0], height=1.1, color=BLUE, fill_color=BLUE, fill_opacity=0.3).move_to(ln3).shift(2.9*UP)
-    t1 = Text("Register reduction", color=BLUE_E, font_size=32).move_to(hl)
-    t2 = Text("Register reduction", color=BLUE_E, font_size=32).move_to(hl2)
+    tx1 = Text("Register reduction", color=BLUE_A, font_size=32).move_to(hl)
+    tx2 = Text("Register reduction", color=BLUE_A, font_size=32).move_to(hl2)
     self.play(Create(hl), Create(hl2))
-    self.play(Write(t1), Write(t2))
+    self.play(Write(tx1), Write(tx2))
 
 
     op = Circle(radius=0.1, color=t2.color).move_to(shared_mem_reduction[-1].get_center() + 2 * dir)
     l1 = Line(shared_mem_reduction[-4].get_corner(DL), op.get_corner(UR))
     hl3 = SurroundingRectangle(VGroup(op, l1, shared_mem_reduction[-1]), color=RED, fill_color=RED, fill_opacity=0.3, buff=0)
-    t3 = Text("Shared memory sync", color=RED, font_size=32).move_to(hl3)
+    t3 = Text("Shared memory sync", color=RED_A, font_size=32).move_to(hl3)
     with self.voiceover(text="""We then move all of the reduced values to one warp in shared memory""") as trk:
         self.play(Create(op), Create(l1))
         self.play(Create(hl3), Write(t3))
+    all.add(l1, op)
 
     op2 = Circle(radius=0.1, color=t1.color).move_to(shared_mem_reduction[-1].get_center() + DOWN)
     l1 = Line(shared_mem_reduction[-1].get_corner(DOWN), op2.get_corner(UP))
     l2 = Line(op.get_corner(DL), op2.get_corner(UR))
     hl4 = SurroundingRectangle(VGroup(op2, l1, l2), color=GREEN, fill_color=GREEN, fill_opacity=0.3, buff=0)
-    t4 = Text("Register reduction", color=GREEN_E, font_size=30).move_to(hl4)
+    t4 = Text("Register reduction", color=GREEN_A, font_size=30).move_to(hl4)
     with self.voiceover(text="""And we perform another reduction in registers to get our final value""") as trk:
         self.play(Create(op2), Create(l1), Create(l2))
         self.play(Create(hl4), Write(t4))
 
+    all.add(w1t, w2t, hl, hl2, hl3, hl4, tx1, tx2, t3, t4, l1, l2, op2)
+    self.play(all.animate.scale(0.5).to_edge(LEFT, buff=0.1).shift(2*UP))
+    register_reduction = """#define MASK 0xffffffff
+float maxval = 0;
+for (int i = ty; i<w; i+=BLOCK_DIM_Y)
+{
+  maxval = fmaxf(maxval, a[row*w + i]);
+}
+for (int i = 16; i>0; i/=2)
+{
+  maxval = fmaxf(maxval, __shfl_xor_sync(MASK, maxval, i, 32));
+}
+
+if (ty%32 == 0)
+{
+  reduction[warp_id] = maxval;
+}
+__syncthreads();
+if (warp_id == 0)
+{
+    maxval = ty < BLOCK_DIM_Y/32 ? reduction[ty] : 0;
+
+    for (int i = 16; i>0; i/=2)
+    {
+      maxval = fmaxf(maxval, __shfl_xor_sync(MASK, maxval, i, 32));
+    }
+}
+"""
+    code_obj = Code(code=register_reduction, tab_width=2, language="c", font_size=12, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1).to_edge(RIGHT, buff=0.1).shift(DOWN)
+    code_obj.code[0].set_color(RED_B)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    with self.voiceover(text="""To achieve this we have to rewrite our reduction code in this way""") as trk:
+        self.play(Create(code_obj))
+
+    hl1 = SurroundingRectangle(code_obj.code[6:10], color=BLUE, fill_color=BLUE, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    hl2 = SurroundingRectangle(code_obj.code[11:19], color=RED, fill_color=RED, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    hl3 = SurroundingRectangle(code_obj.code[20:24], color=GREEN, fill_color=GREEN, fill_opacity=0.25, buff=0.03, stroke_width=2)
+
+    with self.voiceover(text="""In the first part we use our sync function to perform a reduction on a warp level""") as trk:
+        self.play(Create(hl1))
+
+    with self.voiceover(text="""We then do the synchronization in shared memory, the first if statement checks if we are the 
+                        first thread in a warp that holds our final reduction value""") as trk:
+        self.play(Create(hl2))
+
+    with self.voiceover(text="""And in the end we finish the sync using registers of the first warp""") as trk:
+        self.play(Create(hl3))
