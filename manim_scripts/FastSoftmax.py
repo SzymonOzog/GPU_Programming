@@ -1002,3 +1002,54 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
     with self.voiceover(text="""We get a kernel that has a better performance to torch and triton""") as trk:
         self.play(Create(graph_finetune))
         self.play(Write(text_finetune))
+
+
+    with self.voiceover(text="""This is the best that I have been able to achieve in terms of this softmax kernel style""") as trk:
+        pass
+
+    code = """if (row < h)
+{
+  float maxval = 0.f;
+  for (int i = ty; i<w; i+=BLOCK_DIM_Y)
+  {
+    maxval = fmaxf(maxval, a[row*w + i]);
+  }
+
+  ...
+
+  __syncthreads();
+  maxval = reduction[0];
+
+  float divisor = 0.f;
+  for (int i = ty; i<w; i+=BLOCK_DIM_Y)
+  {
+    divisor += __expf(a[row*w + i] - maxval);
+  }
+  ...
+
+  __syncthreads();
+  divisor = reduction[0];
+
+  for (int i = ty; i<w; i+=BLOCK_DIM_Y)
+  {
+    b[row*w + i] = __expf(a[row*w + i]-maxval)/divisor;
+  }
+}
+"""
+
+    code_obj = Code(code=code, tab_width=2, language="c", font_size=14.5, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    with self.voiceover(text="""But there is a possibility to change the format of our kernel<bookmark mark='1'/> and for this I'm going to 
+                        return to our simpler kernel and remove some parts just so they fit on screen and we can highlight the issue""") as trk:
+        self.wait_until_bookmark("1")
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.play(Create(code_obj))
+
+    hl1 = SurroundingRectangle(code_obj.code[2:7], color=BLUE, fill_color=BLUE, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    hl2 = SurroundingRectangle(code_obj.code[13:18], color=YELLOW, fill_color=YELLOW, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    with self.voiceover(text="""The issue is that we are loading our input twice<bookmark mark='1'/> once when we are finding the max value,
+                        and the other time when we are <bookmark mark='2'/>calculating the divisor""") as trk:
+        self.wait_until_bookmark("1")
+        self.play(Create(hl1))
+        self.wait_until_bookmark("2")
+        self.play(Create(hl2))
