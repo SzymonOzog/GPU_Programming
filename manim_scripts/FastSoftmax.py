@@ -1167,3 +1167,21 @@ if (ty%32 == 0)
     with self.voiceover(text="""And the importatnt change here is that we need to determine which value to fix, if the incoming 
                         maximum if bigger than our maximum, we need to fix our divisor, and else we need to fix the incoming divisor""") as trk:
         self.play(Create(hl))
+
+    times_cuda = [3.744, 4.48, 5.824, 8.896, 15.296, 28.0, 54.88, 156.256]
+    flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
+    graph_online = axes.plot_line_graph(ns, flops_cuda, line_color=GOLD, add_vertex_dots=False)
+    text_online = Text("finetuned", color=GOLD, font_size=18).next_to(text_finetune, UP, aligned_edge=LEFT, buff=0.1)
+    graph.add(graph_online, text_online)
+
+    with self.voiceover(text="""With this kernel we can see that we are getting a much better performance, for the 
+                        bigger input sizes""") as trk:
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.play(FadeIn(graph))
+        self.play(Create(graph_online))
+        self.play(Write(text_online))
+
+    with self.voiceover(text="""We are a bit slower for the smaller input sizes, and the reason is that they 
+                        fully fit in our cache so the cost of doing extra calculations outweighs the benefits 
+                        of reduced memory accesses""") as trk:
+        pass
