@@ -1171,7 +1171,7 @@ if (ty%32 == 0)
     times_cuda = [3.744, 4.48, 5.824, 8.896, 15.296, 28.0, 54.88, 156.256]
     flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
     graph_online = axes.plot_line_graph(ns, flops_cuda, line_color=GOLD, add_vertex_dots=False)
-    text_online = Text("finetuned", color=GOLD, font_size=18).next_to(text_finetune, UP, aligned_edge=LEFT, buff=0.1)
+    text_online = Text("online", color=GOLD, font_size=18).next_to(text_finetune, UP, aligned_edge=LEFT, buff=0.1)
     graph.add(graph_online, text_online)
 
     with self.voiceover(text="""With this kernel we can see that we are getting a much better performance, for the 
