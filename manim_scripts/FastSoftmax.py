@@ -1079,7 +1079,7 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
         self.play(Write(d2))
 
     d3 = MathTex("d_2"," = ","d_1",  "\\frac{d_2}{d_1}", "=", "d_1\\frac{e^{x_1- max_2}}{e^{x_1- max_1}}").next_to(d2, DOWN, aligned_edge=LEFT)
-    d4 = MathTex("=", "d_1e^{(x_1- max_2)-(x_1- max_1)}").next_to(d3[1], DOWN, aligned_edge=LEFT).shift(0.3*DOWN)
+    d4 = MathTex("=", "d_1e^{(x_1- max_2)-(x_1- max_1)}").next_to(d3[1], DOWN, aligned_edge=LEFT).shift(0.4*DOWN)
     d5 = MathTex("=", "d_1e^{(max_1- max_2)}").next_to(d4, DOWN, aligned_edge=LEFT)
     with self.voiceover(text="""The question that we need to ask is how did the value change after finding the new maximum""") as trk:
         pass
@@ -1098,4 +1098,72 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
                         maximum value""") as trk:
         self.play(Write(d5))
 
+    part1 = """for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
+{
+    float4 val = reinterpret_cast<float4*>(&a[row*w + i*4])[0];
+    maxval = fmaxf(maxval, val.x);
+    maxval = fmaxf(maxval, val.y);
+    maxval = fmaxf(maxval, val.z);
+    maxval = fmaxf(maxval, val.w);
+    if (maxval > old_maxval)
+    {
+      divisor *= __expf(old_maxval - maxval);
+      old_maxval = maxval;
+    }
+    divisor += __expf(val.x - maxval);
+    divisor += __expf(val.y - maxval);
+    divisor += __expf(val.z - maxval);
+    divisor += __expf(val.w - maxval);
+}"""
 
+    part2 = """float incoming_divisor = 0;
+float incoming_maxval = 0;
+for (int i = 16; i>0; i/=2)
+{
+  incoming_maxval = __shfl_xor_sync(0xffffffff, maxval, i, 32);
+  incoming_divisor = __shfl_xor_sync(0xffffffff, divisor, i, 32);
+  if (incoming_maxval > maxval)
+  {
+    divisor *= __expf(maxval - incoming_maxval);
+    maxval = incoming_maxval;
+  }
+  else 
+  {
+    incoming_divisor *= __expf(incoming_maxval - maxval);
+  }
+  divisor += incoming_divisor;
+}
+
+if (ty%32 == 0)
+{
+  reduction_max[warp_id] = maxval;
+  reduction_div[warp_id] = divisor;
+}"""
+
+    code_obj = Code(code=part1, tab_width=2, language="c", font_size=14.5, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+
+    with self.voiceover(text="""And the incorporation into our code requires us to change two parts""") as trk:
+        pass
+    self.play(*[FadeOut(x) for x in self.mobjects])
+    with self.voiceover(text="""The first part when we do the initial recuction in one thread""") as trk:
+        self.play(Create(code_obj))
+    hl = SurroundingRectangle(code_obj.code[7:12], color=BLUE, fill_color=BLUE, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    with self.voiceover(text="""Where the only difference is that if we find a new maximum we perform 
+                        a fix of our initial divisor estimate""") as trk:
+        self.play(Create(hl))
+
+    with self.voiceover(text="""Theoretically we don't need to do the if statement, but exponents are expensive so it's 
+                        best to avoid doing them if we don't need to""") as trk:
+        pass
+
+    code_obj2 = Code(code=part2, tab_width=2, language="c", font_size=14.5, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+    with self.voiceover(text="""The second part that we need to change is how we do the reduction across a warp""") as trk:
+        self.play(Uncreate(hl))
+        self.play(Transform(code_obj, code_obj2))
+
+    hl = SurroundingRectangle(code_obj2.code[6:15], color=BLUE, fill_color=BLUE, fill_opacity=0.25, buff=0.03, stroke_width=2)
+    with self.voiceover(text="""And the importatnt change here is that we need to determine which value to fix, if the incoming 
+                        maximum if bigger than our maximum, we need to fix our divisor, and else we need to fix the incoming divisor""") as trk:
+        self.play(Create(hl))
