@@ -1053,3 +1053,49 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
         self.play(Create(hl1))
         self.wait_until_bookmark("2")
         self.play(Create(hl2))
+
+    with self.voiceover(text="""It would be really great if we could do that in one loop so that we don't waste our precious memory bandwidth""") as trk:
+        pass
+
+    with self.voiceover(text="""The problem is that the calculations of the second loop depend on the result of the first one""") as trk:
+        pass
+
+    with self.voiceover(text="""But there is a solution proposed by the brilliant guys from NVIDIA, in a paper called 'online normalizer calculation for softmax'""") as trk:
+        pass
+
+
+    with self.voiceover(text="""Let's see how it works and how we could come up with the idea""") as trk:
+        pass
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
+
+    d1 = MathTex("d_1 = ", "e^{x_1- max_1}").shift(UP)
+    d2 = MathTex("d_2 = ", "e^{x_1- max_2}").next_to(d1, DOWN)
+    with self.voiceover(text="""If we would be calculating the divisor in the first loop, the initial value that we got would be this""") as trk:
+        self.play(Write(d1[0])) 
+    self.play(Write(d1[1])) 
+
+    with self.voiceover(text="""But in another iteration we find a new maximum, leaving us with a new value for the contribution of x1 to the divisor""") as trk:
+        self.play(Write(d2))
+
+    d3 = MathTex("d_2"," = ","d_1",  "\\frac{d_2}{d_1}", "=", "d_1\\frac{e^{x_1- max_2}}{e^{x_1- max_1}}").next_to(d2, DOWN, aligned_edge=LEFT)
+    d4 = MathTex("=", "d_1e^{(x_1- max_2)-(x_1- max_1)}").next_to(d3[1], DOWN, aligned_edge=LEFT).shift(0.3*DOWN)
+    d5 = MathTex("=", "d_1e^{(max_1- max_2)}").next_to(d4, DOWN, aligned_edge=LEFT)
+    with self.voiceover(text="""The question that we need to ask is how did the value change after finding the new maximum""") as trk:
+        pass
+
+    with self.voiceover(text="""We could write it in this form, where our new contribution is equal to the previous contribution fixed by 
+                        some amount""") as trk:
+        self.play(Write(d3[:4]))
+
+    with self.voiceover(text="""If we write out the equation""") as trk:
+        self.play(Write(d3[4:]))
+
+    with self.voiceover(text="""And simplify it""") as trk:
+        self.play(Write(d4))
+
+    with self.voiceover(text="""We get to a result that is independant of the value in our vector, and only depends on the old maximum value and the new
+                        maximum value""") as trk:
+        self.play(Write(d5))
+
+
