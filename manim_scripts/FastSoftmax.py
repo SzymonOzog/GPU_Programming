@@ -64,8 +64,8 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
     formula2 = MathTex(
         r"\text{softmax}(x_i) = \frac{e^{x_i - max(x)}}{\sum_{j=1}^{K} e^{x_j - max(x)}}"
     ).move_to(formula)
-    vec = [[3025], [3020], [3000]]
-    formulas = [["\\frac{e^{3025}}{e^{3025}+e^{3020}+e^{3000}}"], ["\\frac{e^{3020}}{e^{3025}+e^{3020}+e^{3000}}"], ["\\frac{e^{3000}}{e^{3025}+e^{3020}+e^{3000}}"]]
+    vec = [[999], [988], [997]]
+    formulas = [["\\frac{e^{999}}{e^{999}+e^{988}+e^{997}}"], ["\\frac{e^{988}}{e^{999}+e^{988}+e^{997}}"], ["\\frac{e^{997}}{e^{999}+e^{988}+e^{997}}"]]
     results = np.expand_dims(softmax(np.array(vec).flatten()), axis=1).tolist()
     vbuff=1.5
     v0_t = Matrix(vec, v_buff=vbuff)
@@ -86,9 +86,9 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
                 Transform(eq, eq_t),
                 Transform(softmax_t, softmax_t_t))
       
-    vec = [[3025], [3020], [3000]]
-    formulas = [["\\frac{e^{3025-3025}}{e^{3025-3025}+e^{3020-3025}+e^{3000-3025}}"], ["\\frac{e^{3020-3025}}{e^{3025-3025}+e^{3020-3025}+e^{3000-3025}}"], ["\\frac{e^{3000-3025}}{e^{3025-3025}+e^{3020-3025}+e^{3000-3025}}"]]
-    results = np.expand_dims(softmax(np.array(vec).flatten() - 3025), axis=1).tolist()
+    vec = [[999], [988], [997]]
+    formulas = [["\\frac{e^{999-999}}{e^{999-999}+e^{988-999}+e^{997-999}}"], ["\\frac{e^{988-999}}{e^{999-999}+e^{988-999}+e^{997-999}}"], ["\\frac{e^{997-999}}{e^{999-999}+e^{988-999}+e^{997-999}}"]]
+    results = np.expand_dims(softmax(np.array(vec).flatten() - 999), axis=1).tolist()
     results = [[f"{r[0]:.3f}"] for r in results]
     vbuff=1.5
     v0_t = Matrix(vec, v_buff=vbuff)
