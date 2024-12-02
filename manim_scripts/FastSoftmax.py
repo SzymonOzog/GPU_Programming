@@ -272,14 +272,20 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
                         so our theoretical maximum increases by 2x""") as trk:
         self.play(Uncreate(w1), Uncreate(w2))
         self.play(FadeOut(mem_chart))
-        self.play(Transform(axes, axes_t),
-                  Transform(theoretical_performance, theoretical_performance_t),
-                  Transform(theoretical_text, theoretical_text_t),
-                  Transform(graph_torch, graph_torch_t),
-                  Transform(graph_triton, graph_triton_t),
-                  text_torch.animate.move_to(axes_t.c2p(2**17, flops_torch[-1])+0.1*RIGHT, LEFT),
-                  text_triton.animate.move_to(axes_t.c2p(2**17, flops_triton[-1])+0.1*RIGHT, LEFT),
-                  y_label.animate.shift(0.2*LEFT))
+        rt = 3
+        self.play(Transform(axes, axes_t, run_time=rt),
+                  Transform(theoretical_performance, theoretical_performance_t, run_time=rt),
+                  Transform(theoretical_text, theoretical_text_t, run_time=rt),
+                  Transform(graph_torch, graph_torch_t, run_time=rt),
+                  Transform(graph_triton, graph_triton_t, run_time=rt),
+                  text_torch.animate(run_time=rt).move_to(axes_t.c2p(2**17, flops_torch[-1])+0.1*RIGHT, LEFT),
+                  text_triton.animate(run_time=rt).move_to(axes_t.c2p(2**17, flops_triton[-1])+0.1*RIGHT, LEFT),
+                  y_label.animate(run_time=rt).shift(0.2*LEFT))
+
+    with self.voiceover(text="""Note that the increase is only valid for those kernels that actually fit in the L2 entirely,
+                        for those that don't we still pay the cost of gointg to main memory hence the slowdown on biggest
+                        input sizes""") as trk:
+        pass
 
     axes = axes_t
 
