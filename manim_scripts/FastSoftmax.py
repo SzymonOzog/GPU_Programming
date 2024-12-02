@@ -58,8 +58,8 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
     with self.voiceover(text="""The usual way of calculating it is by replacing each element with an exponent, raised to the power of said element
                         divided by the sum of exponents of all elements in our vector""") as trk:
       self.play(FadeOut(chart), FadeOut(chart2))
-      self.play(Create(v0), Create(a1), Write(softmax_t), Create(v1), Write(eq), Create(v2))
       self.play(Transform(func, formula, replace_mobject_with_target_in_scene=True))
+      self.play(Create(v0), Create(a1), Write(softmax_t), Create(v1), Write(eq), Create(v2))
 
     formula2 = MathTex(
         r"\text{softmax}(x_i) = \frac{e^{x_i - max(x)}}{\sum_{j=1}^{K} e^{x_j - max(x)}}"
