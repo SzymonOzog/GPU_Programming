@@ -363,7 +363,6 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
                         algorithm""") as trk:
         self.play(*[FadeOut(x) for x in self.mobjects])
         self.play(LaggedStart(*[Create(x) for x in objs]))
-    self.camera.background_color = GREY
 
     def find_end(o1, o2):
         y = min(o1.get_y(), o2.get_y()) - 0.5
