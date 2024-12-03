@@ -700,6 +700,8 @@ divisor = reduction[0];
             self.play(*[objs[i*4 + j].animate.set_fill(objs[i*4 + j].color, 0.5) for j in range(4)], *anims)
             self.wait(1)
             anims.extend([objs[i*4 + j].animate.set_fill(WHITE, 0) for j in range(4)])
+    self.play(*anims)
+    anims = []
 
     mem_access = """for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i++)
 {
