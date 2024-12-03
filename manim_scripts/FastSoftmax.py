@@ -1204,11 +1204,17 @@ if (ty%32 == 0)
     bmac = Text("https://buymeacoffee.com/simonoz", font_size=48, color=YELLOW)
     alex = Text("Alex", font_size=50).next_to(bmac, DOWN)
     udit = Text("Udit Ransaria", font_size=50).next_to(alex, DOWN)
-    stuart = Text("stuartmcvicar.bsky.social", font_size=60).next_to(udit, DOWN)
+    stuart = Text("stuartmcvicar.bsky.social", font_size=50).next_to(udit, DOWN)
     ilgwon = Text("Ilgwon Ha", font_size=50).next_to(stuart, DOWN)
     unknown = Text("Anonymous x3", font_size=50).next_to(ilgwon, DOWN)
+
+    subscribe = SVGMobject("icons/subscribe.svg")
+    like = SVGMobject("icons/like.svg")
+    share = SVGMobject("icons/share.svg")
+    VGroup(subscribe, like, share).arrange(RIGHT).next_to(unknown, DOWN).scale(0.7)
+
+    self.camera.auto_zoom(VGroup(bmac, alex, unknown, share, like, subscribe), margin=4, animate=False)
     with self.voiceover(text="""I'm hosting a buy me a coffe for those that want to support this channel. A shoutout to Alex, Udit Ransaria and three anonymous donors that supported so far""") as trk:
-      self.camera.auto_zoom(VGroup(bmac, alex, unknown), margin=3, animate=False)
       self.play(Write(bmac))
       self.play(Write(alex))
       self.play(Write(udit))
@@ -1216,10 +1222,6 @@ if (ty%32 == 0)
       self.play(Write(ilgwon))
       self.play(Write(unknown))
 
-    subscribe = SVGMobject("icons/subscribe.svg")
-    like = SVGMobject("icons/like.svg")
-    share = SVGMobject("icons/share.svg")
-    VGroup(subscribe, like, share).arrange(RIGHT).next_to(unknown, DOWN).scale(0.7)
 
     with self.voiceover(text="""But you can always support me for fre by <bookmark mark='1'/>subscribing, <bookmark mark='2'/>leaving a like, <bookmark mark='3'/>commenting and sharing this video with your friends""") as trk:
       self.play(Create(like), Create(subscribe), Create(share))
