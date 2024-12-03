@@ -1194,8 +1194,9 @@ if (ty%32 == 0)
                         of reduced memory accesses""") as trk:
         pass
 
-    with self.voiceover(text="""We've come to the end of another episode, related to memory - by now you should see how imortant
-                        efficient memory managment is to performance of our kernels""") as trk:
+    with self.voiceover(text="""This was the last kernel that I've been able to come up with but hey, maybe you can
+                        make one that goes even faster, the code for all of the benchmarks is available on my github
+                        and I encourage you to play with it""") as trk:
       pass
 
     self.play(*[FadeOut(x) for x in self.mobjects])
@@ -1207,7 +1208,7 @@ if (ty%32 == 0)
     ilgwon = Text("Ilgwon Ha", font_size=50).next_to(stuart, DOWN)
     unknown = Text("Anonymous x3", font_size=50).next_to(ilgwon, DOWN)
     with self.voiceover(text="""I'm hosting a buy me a coffe for those that want to support this channel. A shoutout to Alex, Udit Ransaria and three anonymous donors that supported so far""") as trk:
-      self.camera.auto_zoom(VGroup(bmac, alex, unknown), margin=4, animate=False)
+      self.camera.auto_zoom(VGroup(bmac, alex, unknown), margin=3, animate=False)
       self.play(Write(bmac))
       self.play(Write(alex))
       self.play(Write(udit))
