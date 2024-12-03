@@ -1001,7 +1001,6 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
     flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
     graph_finetune = axes.plot_line_graph(ns, flops_cuda, line_color=YELLOW, add_vertex_dots=False)
     text_finetune = Text("finetuned", color=YELLOW, font_size=18).next_to(text_float4, UP, aligned_edge=LEFT, buff=0.1)
-    graph.add(graph_finetune, text_finetune)
     with self.voiceover(text="""And by running a search over all of the reasonable combinations of unrolling, and block dimensions""") as trk:
         self.play(*[FadeOut(x) for x in self.mobjects])
         self.play(FadeIn(graph))
@@ -1009,6 +1008,8 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
     with self.voiceover(text="""We get a kernel that has a better performance to torch and triton""") as trk:
         self.play(Create(graph_finetune))
         self.play(Write(text_finetune))
+
+    graph.add(graph_finetune, text_finetune)
 
 
     with self.voiceover(text="""This is the best that I have been able to achieve in terms of this softmax kernel style""") as trk:
