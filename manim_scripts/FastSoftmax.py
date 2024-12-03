@@ -513,13 +513,13 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
             step = next_step
 
     with self.voiceover(text="""And independently performs a reduction""") as trk:
-        self.play(LaggedStart(*anims))
+        self.play(LaggedStart(*anims, lag_ratio=0.01))
 
     with self.voiceover(text="""it doesn't take much effort to notice that this is a lot of repeated work""") as trk:
         pass
 
     with self.voiceover(text="""We're going to need to be able to distribute the work between our threads""") as trk:
-        self.play(LaggedStart(*uncreate_anims, Uncreate(w1), Uncreate(w2), Uncreate(w3), Uncreate(w4)))
+        self.play(LaggedStart(*uncreate_anims, Uncreate(w1), Uncreate(w2), Uncreate(w3), Uncreate(w4), lag_ratio=0.01))
 
     ws=[]
     ogs=[]
