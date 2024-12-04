@@ -831,6 +831,29 @@ divisor = reduction[0];
         self.play(FadeOut(spotlight))
 
     self.play(*[FadeOut(x) for x in self.mobjects])
+    shfl_sync = """#define MASK 0xffffffff
+__shfl_xor_sync(MASK, variable, offset, warp_size)"""
+    code_obj = Code(code=shfl_sync, tab_width=2, language="c", font_size=12, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1).shift(1.5*UP)
+    code_obj.code[0].set_color(RED_B)
+    code_obj.code = remove_invisible_chars(code_obj.code)
+    pseudocode = """laneId = threadId%32
+if laneid & MASK and laneId < warp_size:
+    target_lane_id = laneId ^ offset
+    return get_variable_from_other(variable, target_lane_id)
+"""
+    with self.voiceover(text="""The way we can share values between threads is by using this operation""") as trk:
+        self.play(Create(code_obj))
+    code_obj2 = Code(code=pseudocode, tab_width=2, language="c", font_size=12, line_no_buff=0.1, corner_radius=0.1, insert_line_no=False, margin=0.1).next_to(code_obj, DOWN)
+    code_obj2.code = remove_invisible_chars(code_obj2.code)
+    with self.voiceover(text="""And this is the pseudocode of what it does""") as trk:
+        self.play(Create(code_obj2))
+
+    with self.voiceover(text="""We pass in a mask depicting which threads should participate in the exchange, what variable we want to get
+                        from the other thread, an offset that will be used to calculate the lane index of a thread we want to get the value from 
+                        and the warp size that we are using""") as trk:
+        pass
+
+    self.play(*[FadeOut(x) for x in self.mobjects])
     self.play(FadeIn(all), *[FadeIn(x) for x in objs], FadeIn(hl), FadeIn(smr_t))
 
     w1t = Text("Warp 1", color=BLUE).next_to(ln1, UP)
