@@ -495,7 +495,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
         return end
     anims = []
     uncreate_anims = []
-    for x in [w1, w2, w3, w4]:
+    for x, t in zip([w1, w2, w3, w4],[t1, t2, t3, t4]):
         step = x
         while len(step) > 1:
             next_step = []
@@ -503,7 +503,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
                 o1 = step[i]
                 o2 = step[i+1]
                 end = find_end(o1, o2)
-                op = Circle(radius=0.05, color=BLUE).move_to(end)
+                op = Circle(radius=0.05, color=t.color).move_to(end)
                 l1 = Line(o1.get_corner(DOWN), op.get_corner(UL))
                 l2 = Line(o2.get_corner(DOWN), op.get_corner(UR))
                 anims.extend([Create(l1), Create(l2), Write(op)])
