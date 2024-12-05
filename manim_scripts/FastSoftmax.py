@@ -382,6 +382,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
         start = op
         anims.extend([Create(l1), Create(l2), Write(op)])
         uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+    uncreate_anims = list(reversed(uncreate_anims))
 
     with self.voiceover(text="""A reduction algorithm is a type of algorithm where we need to perform
                         an operation on every input element where the input to the operation is a result of the previous input""") as trk:
@@ -405,6 +406,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
         start = op
         anims.extend([Create(l1), Create(l2), Write(op)])
         uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
+    uncreate_anims = list(reversed(uncreate_anims))
 
     with self.voiceover(text="""That means that no matter the order of the operations, the result will be the same""") as trk:
         self.play(LaggedStart(*anims))
@@ -436,6 +438,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
             ops.append(op)
             next_step.append(op)
         step = next_step
+    uncreate_anims = list(reversed(uncreate_anims))
 
     with self.voiceover(text="""Where we don't need to calculate sequentially, but we can do it in a tree like manner""") as trk:
         self.play(LaggedStart(*anims))
@@ -510,6 +513,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
                 uncreate_anims.extend([Uncreate(l1), Uncreate(l2), Unwrite(op)])
                 next_step.append(op)
             step = next_step
+    uncreate_anims = list(reversed(uncreate_anims))
 
     with self.voiceover(text="""And independently performs a reduction""") as trk:
         self.play(LaggedStart(*anims, lag_ratio=0.01))
