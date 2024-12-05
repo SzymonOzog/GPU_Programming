@@ -598,7 +598,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
     self.play(all.animate.scale(0.5).to_edge(LEFT).shift(3*UP))
 
     reduction_code = """__shared__ float reduction[BLOCK_DIM_Y]; 
-float maxval = 0;
+float maxval = FLOAT_MIN;
 for (int i = ty*BLOCK_DIM_Y; i<min(w, (ty+1)*BLOCK_DIM_Y); i++)
 {
   maxval = fmaxf(maxval, a[row*w + i]);
@@ -899,7 +899,7 @@ if laneid & MASK and laneId < warp_size:
     all.add(w1t, w2t, hl, hl2, hl3, hl4, tx1, tx2, t3, t4, l1, l2, op2)
     self.play(all.animate.scale(0.5).to_edge(LEFT, buff=0.1).shift(2*UP))
     register_reduction = """#define MASK 0xffffffff
-float maxval = 0;
+float maxval = FLOAT_MIN;
 for (int i = ty; i<w; i+=BLOCK_DIM_Y)
 {
   maxval = fmaxf(maxval, a[row*w + i]);
@@ -958,14 +958,14 @@ if (warp_id == 0)
 
     self.play(*[FadeOut(x) for x in self.mobjects])
 
-    float_load = """float maxval = 0;
+    float_load = """float maxval = FLOAT_MIN;
 for (int i = ty; i<w; i+=BLOCK_DIM_Y)
 {
   maxval = fmaxf(maxval, a[row*w + i]);
 }
 """
 
-    float4_load = """float maxval = 0;
+    float4_load = """float maxval = FLOAT_MIN;
 for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
 {
   float4 val = reinterpret_cast<float4*>(&a[row*w + i*4])[0];
@@ -1003,7 +1003,7 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
 
     self.play(*[FadeOut(x) for x in self.mobjects])
     code_obj2.move_to(ORIGIN)
-    unroll = """float maxval = 0;
+    unroll = """float maxval = FLOAT_MIN;
 #pragma unroll UNROLL_FACTOR
 for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
 {
@@ -1044,7 +1044,7 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
 
     code = """if (row < h)
 {
-  float maxval = 0.f;
+  float maxval = FLOAT_MIN;
   for (int i = ty; i<w; i+=BLOCK_DIM_Y)
   {
     maxval = fmaxf(maxval, a[row*w + i]);
@@ -1151,8 +1151,8 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
     divisor += __expf(val.w - maxval);
 }"""
 
-    part2 = """float incoming_divisor = 0;
-float incoming_maxval = 0;
+    part2 = """float incoming_divisor;
+float incoming_maxval;
 for (int i = 16; i>0; i/=2)
 {
   incoming_maxval = __shfl_xor_sync(0xffffffff, maxval, i, 32);
