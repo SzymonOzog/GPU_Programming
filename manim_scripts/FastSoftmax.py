@@ -1265,7 +1265,7 @@ if (ty%32 == 0)
     VGroup(subscribe, like, share).arrange(RIGHT).next_to(unknown, DOWN).scale(0.7)
 
     self.camera.auto_zoom(VGroup(bmac, alex, unknown, share, like, subscribe), margin=4, animate=False)
-    with self.voiceover(text="""I'm hosting a buy me a coffe for those that want to support this channel. A shoutout to Alex, Udit Ransaria and three anonymous donors that supported so far""") as trk:
+    with self.voiceover(text="""I'm hosting a buy me a coffe for those that want to support this channel. A shoutout to Alex, Udit Ransaria, Stuart McVicar, Ilgwon Ha and three anonymous donors that supported so far""") as trk:
       self.play(Write(bmac))
       self.play(Write(alex))
       self.play(Write(udit))
