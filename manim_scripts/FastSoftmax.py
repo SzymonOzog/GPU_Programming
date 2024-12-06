@@ -272,7 +272,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
                         so our theoretical maximum increases by 2x""") as trk:
         self.play(Uncreate(w1), Uncreate(w2))
         self.play(FadeOut(mem_chart))
-        rt = 3
+        rt = 2
         self.play(Transform(axes, axes_t, run_time=rt),
                   Transform(theoretical_performance, theoretical_performance_t, run_time=rt),
                   Transform(theoretical_text, theoretical_text_t, run_time=rt),
@@ -286,6 +286,29 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
                         for those that don't we still pay the cost of gointg to main memory hence the slowdown on biggest
                         input sizes""") as trk:
         pass
+
+    axes_t = Axes(
+            x_range=[10, 17, 1],
+            y_range=[0, 800, 100],
+            x_length=7,
+            y_length=5,
+            axis_config={"include_tip": False, "include_numbers": True},
+            x_axis_config={"scaling": LogBase(2)},
+            ).shift(LEFT+UP)
+    theoretical_performance_t = Line(start=axes_t.c2p(2**10, 2*625), end=axes_t.c2p(2**17, 2*625), color=GREEN)
+    theoretical_text_t = Text("Theoretical Maximum 1250 GFLOPS", color=GREEN, font_size=18).next_to(theoretical_performance_t, RIGHT, buff=0.1)
+    graph_torch_t = axes_t.plot_line_graph(ns, flops_torch, line_color=ORANGE, add_vertex_dots=False)
+    graph_triton_t = axes_t.plot_line_graph(ns, flops_triton, line_color=BLUE, add_vertex_dots=False)
+
+    rt=1
+    with self.voiceover(text="""Keep the theoretical max performance in mind. I'm gonna remove it from the graph for now for readability""") as trk:
+        self.play(Transform(axes, axes_t, run_time=rt),
+                  Transform(theoretical_performance, theoretical_performance_t, run_time=rt),
+                  Transform(theoretical_text, theoretical_text_t, run_time=rt),
+                  Transform(graph_torch, graph_torch_t, run_time=rt),
+                  Transform(graph_triton, graph_triton_t, run_time=rt),
+                  text_torch.animate(run_time=rt).move_to(axes_t.c2p(2**17, flops_torch[-1])+0.1*RIGHT, LEFT),
+                  text_triton.animate(run_time=rt).move_to(axes_t.c2p(2**17, flops_triton[-1])+0.1*RIGHT, LEFT))
 
     axes = axes_t
 
