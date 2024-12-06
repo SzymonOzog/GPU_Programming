@@ -770,6 +770,7 @@ divisor = reduction[0];
     with self.voiceover(text="""The next area of improvement is in the way we haldle our reduction in memory""") as trk:
         self.play(FadeOut(graph), FadeOut(graph_coalesced), FadeOut(text_coalesced))
         self.play(FadeIn(all), *[FadeIn(x) for x in objs])
+    VGroup(text_torch, text_coalesced).shift(0.5*DOWN)
     hl = Rectangle(width = (ws[-1].get_right() - ws[0].get_left())[0], height=VGroup(*shared_mem_reduction).height, color=RED, fill_color=RED, fill_opacity=0.5).move_to(VGroup(*shared_mem_reduction))
     smr_t = Text("Shared memory reduction", color=RED).move_to(hl)
     with self.voiceover(text="""so far, most of our reduction was happening in shared memory, which is fast, but not as fast as our registers""") as trk:
