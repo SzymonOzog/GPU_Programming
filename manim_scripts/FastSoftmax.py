@@ -757,8 +757,8 @@ divisor = reduction[0];
     self.play(*[FadeOut(x) for x in self.mobjects])
     times_cuda = [3.712, 4.608, 6.496, 9.824, 16.8, 34.304, 67.68, 184.16]
     flops_cuda = [(128*n*5)/(t*1e3) for (t,n) in zip(times_cuda, ns)]
-    graph_coalesced = axes.plot_line_graph(ns, flops_cuda, line_color=TEAL, add_vertex_dots=False)
-    text_coalesced = Text("+ Coalescing", color=TEAL, font_size=18).next_to(text_torch, DOWN, aligned_edge=LEFT, buff=0.1)
+    graph_coalesced = axes.plot_line_graph(ns, flops_cuda, line_color=GREEN, add_vertex_dots=False)
+    text_coalesced = Text("+ Coalescing", color=GREEN, font_size=18).next_to(text_torch, DOWN, aligned_edge=LEFT, buff=0.1)
     with self.voiceover(text="""By adding coalescing, we've taken a big step into getting simillar performance to torch and triton kenrels""") as trk:
         self.play(FadeIn(graph))
         self.play(Create(graph_coalesced))
