@@ -1136,6 +1136,7 @@ for (int i = ty; i<w/4; i+=BLOCK_DIM_Y)
     self.play(Write(d1[1])) 
 
     with self.voiceover(text="""But in another iteration we find a new maximum, leaving us with a new value for the contribution of x1 to the divisor""") as trk:
+        self.wait(1)
         self.play(Write(d2))
 
     d3 = MathTex("d_2"," = ","d_1",  "\\frac{d_2}{d_1}", "=", "d_1\\frac{e^{x_1- max_2}}{e^{x_1- max_1}}").next_to(d2, DOWN, aligned_edge=LEFT)
