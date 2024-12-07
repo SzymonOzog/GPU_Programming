@@ -560,6 +560,7 @@ class FastSoftmax (VoiceoverScene, ZoomedScene):
             self.play(w.animate.set_color(t.color).next_to(t, DOWN),
                       og.animate.set_color(t.color))
 
+    anims = []
     last = []
     thread_level_reduction = []
     for w, t in zip(ws, ts):
