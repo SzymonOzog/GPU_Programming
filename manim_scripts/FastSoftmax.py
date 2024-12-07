@@ -899,8 +899,9 @@ if laneid & MASK and laneId < warp_size:
     hl2 = Rectangle(width = (ws[3].get_right() - ws[2].get_left())[0], height=1.1, color=BLUE, fill_color=BLUE, fill_opacity=0.3).move_to(ln3).shift(2.9*UP)
     tx1 = Text("Register reduction", color=BLUE_A, font_size=32).move_to(hl)
     tx2 = Text("Register reduction", color=BLUE_A, font_size=32).move_to(hl2)
-    self.play(Create(hl), Create(hl2))
-    self.play(Write(tx1), Write(tx2))
+    with self.voiceover(text="""We perform as much reduction as we can on the register level""") as trk:
+        self.play(Create(hl), Create(hl2))
+        self.play(Write(tx1), Write(tx2))
 
 
     op = Circle(radius=0.1, color=t2.color).move_to(shared_mem_reduction[-1].get_center() + 2 * dir)
