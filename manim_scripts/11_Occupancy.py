@@ -13,6 +13,27 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         self.set_speech_service(
                 GTTSService(transcription_model="base")
                 )
+        cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.5) for _ in range(2048)]
+        VGroup(*cores).arrange_in_grid(32, 64).move_to(ORIGIN)
+        self.camera.auto_zoom(VGroup(*cores), animate=False)
+        # it's late when I'm writing this, there must be a smarter way
+        corner = cores[0].get_corner(UL)
+        radius = 1
+        nicely_animated = []
+        while len(nicely_animated) != len(cores):
+            for c in cores:
+                center = c.get_center()
+                if c not in nicely_animated and np.sqrt(np.sum((center-corner)**2)) < radius:
+                    nicely_animated.append(c)
+            radius+=2
+
+
+        self.play(LaggedStart(*[Create(x) for x in nicely_animated], lag_ratio=0.001))
+        all = SurroundingRectangle(VGroup(*cores), color=GREEN, fill_color=GREEN, fill_opacity=0.5)
+        self.play(FadeIn(all), FadeOut(VGroup(*cores)))
+        self.wait(1)
+        return
+
         gpu = Rectangle(height=6, width=12, color=GREEN)
         gpu_t = Text("GPU", color=GREEN, font_size=24).next_to(gpu, UP, buff=0.1, aligned_edge=LEFT)
 
