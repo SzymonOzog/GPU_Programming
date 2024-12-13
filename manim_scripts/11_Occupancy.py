@@ -8,7 +8,7 @@ import random
 import math
 from math import radians
 
-class Coalescing(VoiceoverScene, ZoomedScene):
+class Occupancy(VoiceoverScene, ZoomedScene):
     def construct(self):
         self.set_speech_service(
                 GTTSService(transcription_model="base")
