@@ -16,6 +16,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.5) for _ in range(2048)]
         VGroup(*cores).arrange_in_grid(32, 64).move_to(ORIGIN)
         self.camera.auto_zoom(VGroup(*cores), animate=False)
+
         # it's late when I'm writing this, there must be a smarter way
         corner = cores[0].get_corner(UL)
         radius = 1
@@ -27,11 +28,23 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                     nicely_animated.append(c)
             radius+=2
 
-
         self.play(LaggedStart(*[Create(x) for x in nicely_animated], lag_ratio=0.001))
-        all = SurroundingRectangle(VGroup(*cores), color=GREEN, fill_color=GREEN, fill_opacity=0.5)
-        self.play(FadeIn(all), FadeOut(VGroup(*cores)))
+        all = SurroundingRectangle(VGroup(*cores), color=GREEN, fill_color=GREEN, fill_opacity=0.25)
+        # self.play(FadeIn(all), FadeOut(VGroup(*cores)))
+        cores_count = Text("16384 CUDA cores", color=WHITE, font_size = 200).scale(2).move_to(all)
+        self.play(Write(cores_count))
         self.wait(1)
+        for occupancy in [0.25, 0.5,  0.75]:
+            anims = []
+            for i, core in enumerate(cores):
+                active = i / len(cores) >= occupancy
+                color = GREEN if active else GREEN_E
+                opacity = 0.75 if active else 0.25
+                anims.append(core.animate.set_fill(color, opacity=opacity))
+            anims.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+            self.play(*anims)
+            self.wait(1)
+                
         return
 
         gpu = Rectangle(height=6, width=12, color=GREEN)
