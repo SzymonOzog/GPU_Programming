@@ -59,11 +59,13 @@ class Occupancy(VoiceoverScene, ZoomedScene):
             self.wait(1)
             self.play(Write(occupancy_t2))
 
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.camera.auto_zoom(VGroup(*cores), animate=False)
         with self.voiceover(text="""In this episode we'll look into all of the factors that we need to consider
                             to ensure that our GPU's run at maximum occupancy, and spoiler alert. It's 
                             not just how much threads we tell the GPU to run""") as trk:
             self.play(FadeIn(all))
-            for occupancy in [0.25, 0.5,  0.75]:
+            for occupancy in [0.5,  0.25, 0.125, 0]:
                 anims = []
                 for i, core in enumerate(cores):
                     active = i / len(cores) >= occupancy
