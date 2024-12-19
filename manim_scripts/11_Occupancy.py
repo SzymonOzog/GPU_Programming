@@ -28,23 +28,52 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                     nicely_animated.append(c)
             radius+=2
 
-        self.play(LaggedStart(*[Create(x) for x in nicely_animated], lag_ratio=0.001))
-        all = SurroundingRectangle(VGroup(*cores), color=GREEN, fill_color=GREEN, fill_opacity=0.25)
-        # self.play(FadeIn(all), FadeOut(VGroup(*cores)))
+
+        all = VGroup(*cores)
         cores_count = Text("16384 CUDA cores", color=WHITE, font_size = 200).scale(2).move_to(all)
-        self.play(Write(cores_count))
-        self.wait(1)
-        for occupancy in [0.25, 0.5,  0.75]:
-            anims = []
-            for i, core in enumerate(cores):
-                active = i / len(cores) >= occupancy
-                color = GREEN if active else GREEN_E
-                opacity = 0.75 if active else 0.25
-                anims.append(core.animate.set_fill(color, opacity=opacity))
-            anims.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
-            self.play(*anims)
+
+        with self.voiceover(text="""There are 16384 cores inside my gpu""") as trk:
+            self.play(LaggedStart(*[Create(x) for x in nicely_animated], lag_ratio=0.001))
             self.wait(1)
+            self.play(Write(cores_count))
+
+        with self.voiceover(text="""But not all are active when I launch my kernel""") as trk:
+            for occupancy in [0.25, 0.5,  0.75]:
+                anims = []
+                for i, core in enumerate(cores):
+                    active = i / len(cores) >= occupancy
+                    color = GREEN if active else GREEN_E
+                    opacity = 0.75 if active else 0.25
+                    anims.append(core.animate.set_fill(color, opacity=opacity))
+                anims.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+                self.play(*anims)
+                self.wait(1)
                 
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        occupancy_t = Text("Occupancy")
+        occupancy_t2 = Tex("$\\frac{active\\;threads}{total\\;threads}$").next_to(occupancy_t, DOWN)
+        self.camera.auto_zoom(VGroup(occupancy_t, occupancy_t2), animate=False, margin=5)
+        with self.voiceover(text="""This is what we call occupancy, the ratio of active threads
+                            to all threads on our device""") as trk:
+            self.play(Write(occupancy_t))
+            self.wait(1)
+            self.play(Write(occupancy_t2))
+
+        with self.voiceover(text="""In this episode we'll look into all of the factors that we need to consider
+                            to ensure that our GPU's run at maximum occupancy, and spoiler alert. It's 
+                            not just how much threads we tell the GPU to run""") as trk:
+            self.play(FadeIn(all))
+            for occupancy in [0.25, 0.5,  0.75]:
+                anims = []
+                for i, core in enumerate(cores):
+                    active = i / len(cores) >= occupancy
+                    color = GREEN if active else GREEN_E
+                    opacity = 0.75 if active else 0.25
+                    anims.append(core.animate.set_fill(color, opacity=opacity))
+                anims.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+                self.play(*anims)
+                self.wait(1)
+
         return
 
         gpu = Rectangle(height=6, width=12, color=GREEN)
