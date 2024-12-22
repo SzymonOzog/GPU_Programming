@@ -45,8 +45,13 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                     color = GREEN if active else GREEN_E
                     opacity = 0.75 if active else 0.25
                     anims.append(core.animate.set_fill(color, opacity=opacity))
-                anims.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
-                self.play(*anims)
+                groups = []
+                for i in range(2048//64):
+                    groups.append(AnimationGroup(*anims[i*64:(i+1)*64]))
+                self.play(LaggedStart(*groups,
+                                      Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)),
+                                      lag_ratio=0.1),
+                          )
                 self.wait(1)
                 
         self.play(*[FadeOut(x) for x in self.mobjects])
@@ -72,8 +77,15 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                     color = GREEN if active else GREEN_E
                     opacity = 0.75 if active else 0.25
                     anims.append(core.animate.set_fill(color, opacity=opacity))
-                anims.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
-                self.play(*anims)
+                groups = []
+                for i in range(2048//64):
+                    groups.append(AnimationGroup(*anims[i*64:(i+1)*64]))
+                groups = list(reversed(groups))
+
+                self.play(LaggedStart(*groups,
+                                      Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)),
+                                      lag_ratio=0.1),
+                          )
                 self.wait(1)
 
         return
