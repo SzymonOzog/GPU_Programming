@@ -13,7 +13,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         self.set_speech_service(
                 GTTSService(transcription_model="base")
                 )
-        cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.5) for _ in range(2048)]
+        cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.75) for _ in range(2048)]
         VGroup(*cores).arrange_in_grid(32, 64).move_to(ORIGIN)
         self.camera.auto_zoom(VGroup(*cores), animate=False)
 
@@ -37,6 +37,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
             self.wait(1)
             self.play(Write(cores_count))
 
+        rows = 2048//64
         with self.voiceover(text="""But not all are active when I launch my kernel""") as trk:
             for occupancy in [0.25, 0.5,  0.75]:
                 anims = []
@@ -46,12 +47,12 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                     opacity = 0.75 if active else 0.25
                     anims.append(core.animate.set_fill(color, opacity=opacity))
                 groups = []
-                for i in range(2048//64):
-                    groups.append(AnimationGroup(*anims[i*64:(i+1)*64]))
-                self.play(LaggedStart(*groups,
-                                      Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)),
-                                      lag_ratio=0.1),
-                          )
+                for i in range(rows):
+                    current = anims[i*64:(i+1)*64]
+                    if i == rows//2:
+                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+                    groups.append(AnimationGroup(*current))
+                self.play(LaggedStart(*groups, lag_ratio=0.1))
                 self.wait(1)
                 
         self.play(*[FadeOut(x) for x in self.mobjects])
@@ -78,14 +79,14 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                     opacity = 0.75 if active else 0.25
                     anims.append(core.animate.set_fill(color, opacity=opacity))
                 groups = []
-                for i in range(2048//64):
-                    groups.append(AnimationGroup(*anims[i*64:(i+1)*64]))
+                for i in range(rows):
+                    current = anims[i*64:(i+1)*64]
+                    if i == rows//2:
+                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+                    groups.append(AnimationGroup(*current))
                 groups = list(reversed(groups))
 
-                self.play(LaggedStart(*groups,
-                                      Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)),
-                                      lag_ratio=0.1),
-                          )
+                self.play(LaggedStart(*groups, lag_ratio=0.1))
                 self.wait(1)
 
         return
