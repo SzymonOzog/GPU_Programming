@@ -13,83 +13,6 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         self.set_speech_service(
                 GTTSService(transcription_model="base")
                 )
-        cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.75) for _ in range(2048)]
-        VGroup(*cores).arrange_in_grid(32, 64).move_to(ORIGIN)
-        self.camera.auto_zoom(VGroup(*cores), animate=False)
-
-        # it's late when I'm writing this, there must be a smarter way
-        corner = cores[0].get_corner(UL)
-        radius = 1
-        nicely_animated = []
-        while len(nicely_animated) != len(cores):
-            for c in cores:
-                center = c.get_center()
-                if c not in nicely_animated and np.sqrt(np.sum((center-corner)**2)) < radius:
-                    nicely_animated.append(c)
-            radius+=2
-
-
-        all = VGroup(*cores)
-        cores_count = Text("16384 CUDA cores", color=WHITE, font_size = 200).scale(2).move_to(all)
-
-        with self.voiceover(text="""There are 16384 cores inside my gpu""") as trk:
-            self.play(LaggedStart(*[Create(x) for x in nicely_animated], lag_ratio=0.001))
-            self.wait(1)
-            self.play(Write(cores_count))
-
-        rows = 2048//64
-        with self.voiceover(text="""But not all are active when I launch my kernel""") as trk:
-            for occupancy in [0.25, 0.5,  0.75]:
-                anims = []
-                for i, core in enumerate(cores):
-                    active = i / len(cores) >= occupancy
-                    color = GREEN if active else GREEN_E
-                    opacity = 0.75 if active else 0.25
-                    anims.append(core.animate.set_fill(color, opacity=opacity))
-                groups = []
-                for i in range(rows):
-                    current = anims[i*64:(i+1)*64]
-                    if i == rows//2:
-                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
-                    groups.append(AnimationGroup(*current))
-                self.play(LaggedStart(*groups, lag_ratio=0.1))
-                self.wait(1)
-                
-        self.play(*[FadeOut(x) for x in self.mobjects])
-        occupancy_t = Text("Occupancy")
-        occupancy_t2 = Tex("$\\frac{active\\;threads}{total\\;threads}$").next_to(occupancy_t, DOWN)
-        self.camera.auto_zoom(VGroup(occupancy_t, occupancy_t2), animate=False, margin=5)
-        with self.voiceover(text="""This is what we call occupancy, the ratio of active threads
-                            to all threads on our device""") as trk:
-            self.play(Write(occupancy_t))
-            self.wait(1)
-            self.play(Write(occupancy_t2))
-
-        self.play(*[FadeOut(x) for x in self.mobjects])
-        self.camera.auto_zoom(VGroup(*cores), animate=False)
-        with self.voiceover(text="""In this episode we'll look into all of the factors that we need to consider
-                            to ensure that our GPU's run at maximum occupancy, and spoiler alert. It's 
-                            not just how much threads we tell the GPU to run""") as trk:
-            self.play(FadeIn(all))
-            for occupancy in [0.5,  0.25, 0.125, 0]:
-                anims = []
-                for i, core in enumerate(cores):
-                    active = i / len(cores) >= occupancy
-                    color = GREEN if active else GREEN_E
-                    opacity = 0.75 if active else 0.25
-                    anims.append(core.animate.set_fill(color, opacity=opacity))
-                groups = []
-                for i in range(rows):
-                    current = anims[i*64:(i+1)*64]
-                    if i == rows//2:
-                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
-                    groups.append(AnimationGroup(*current))
-                groups = list(reversed(groups))
-
-                self.play(LaggedStart(*groups, lag_ratio=0.1))
-                self.wait(1)
-
-        return
 
         gpu = Rectangle(height=6, width=12, color=GREEN)
         gpu_t = Text("GPU", color=GREEN, font_size=24).next_to(gpu, UP, buff=0.1, aligned_edge=LEFT)
@@ -293,6 +216,107 @@ class Occupancy(VoiceoverScene, ZoomedScene):
           sfus.append(sfu)
           sfu_ts.append(Text("SFU", font_size=32, color=RED_C).scale(0.5).move_to(sfus[-1]))
 
-        self.camera.auto_zoom(sm, animate=False)
+        # self.camera.auto_zoom(sm, animate=False)
         self.play(LaggedStart(*[Create(x) for x in fpcs]), Write(fpc_t), LaggedStart(*[Create(x) for x in fpcis]), Write(fpci_t), Create(tc), Write(tc_t), Create(ws), Write(ws_t), Create(du), Write(du_t), Create(ic), Write(ic_t), Create(rf), Write(rf_t), LaggedStart(*[Create(x) for x in lsus]), LaggedStart(*[Write(x) for x in lsu_ts]), LaggedStart(*[Create(x) for x in sfus]), LaggedStart(*[Write(x) for x in sfu_ts]))
+
+        block = Rectangle(width=4.3, height=7, color=BLUE).next_to(ps[0], RIGHT)
+        block_t = Text("Block", color=BLUE, font_size=40).move_to(block, aligned_edge=UP).shift(0.2*DOWN)
+
+        threads = [Rectangle(width=0.33, height=0.33, color=GREEN, fill_color=GREEN, fill_opacity=0.5) for _ in range(96)]
+        tg = VGroup(*threads).arrange_in_grid(rows=12, buff=(0.05, 0.15)).move_to(block)
+        tmp = VGroup(*threads[:32])
+        w1_t = Text("Warp 0", font_size=24, color=PURPLE).rotate(PI/2).next_to(tmp, LEFT, buff=0.1)
+        w1 = SurroundingRectangle(VGroup(tmp, w1_t, w1_t.copy().next_to(tmp, RIGHT, buff=0.1)), buff=0.05, color=PURPLE)
+        w1.stretch_to_fit_width(w1.width*1.05)
+
+        tmp = VGroup(*threads[32:64])
+        w2_t = Text("Warp 1", font_size=24, color=PURPLE).rotate(PI/2).next_to(tmp, LEFT, buff=0.1)
+        w2 = SurroundingRectangle(VGroup(tmp, w2_t, w2_t.copy().next_to(tmp, RIGHT, buff=0.1)), buff=0.05, color=PURPLE)
+        w2.stretch_to_fit_width(w2.width*1.05)
+
+        tmp = VGroup(*threads[64:])
+        w3_t = Text("Warp 2", font_size=24, color=PURPLE).rotate(PI/2).next_to(tmp, LEFT, buff=0.1)
+        w3 = SurroundingRectangle(VGroup(tmp, w3_t, w3_t.copy().next_to(tmp, RIGHT, aligned_edge=UP, buff=0.1)), buff=0.05, color=PURPLE)
+        w3.stretch_to_fit_width(w3.width*1.05)
+
+        self.play(*[FadeOut(x) for x in ps], [FadeOut(x) for x in p_ts], FadeOut(sm), FadeOut(tpcs[0]))
+
+        self.play(Create(block), Write(block_t) ,LaggedStart(*[Create(x) for x in threads]) ,Write(w1_t), Create(w1) ,Write(w2_t), Create(w2) ,Write(w3_t), Create(w3))
         self.wait(1)
+        return
+
+        cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.75) for _ in range(2048)]
+        VGroup(*cores).arrange_in_grid(32, 64).move_to(ORIGIN)
+        self.camera.auto_zoom(VGroup(*cores), animate=False)
+
+        # it's late when I'm writing this, there must be a smarter way
+        corner = cores[0].get_corner(UL)
+        radius = 1
+        nicely_animated = []
+        while len(nicely_animated) != len(cores):
+            for c in cores:
+                center = c.get_center()
+                if c not in nicely_animated and np.sqrt(np.sum((center-corner)**2)) < radius:
+                    nicely_animated.append(c)
+            radius+=2
+
+
+        all = VGroup(*cores)
+        cores_count = Text("16384 CUDA cores", color=WHITE, font_size = 200).scale(2).move_to(all)
+
+        with self.voiceover(text="""There are 16384 cores inside my gpu""") as trk:
+            self.play(LaggedStart(*[Create(x) for x in nicely_animated], lag_ratio=0.001))
+            self.wait(1)
+            self.play(Write(cores_count))
+
+        rows = 2048//64
+        with self.voiceover(text="""But not all are active when I launch my kernel""") as trk:
+            for occupancy in [0.25, 0.5,  0.75]:
+                anims = []
+                for i, core in enumerate(cores):
+                    active = i / len(cores) >= occupancy
+                    color = GREEN if active else GREEN_E
+                    opacity = 0.75 if active else 0.25
+                    anims.append(core.animate.set_fill(color, opacity=opacity))
+                groups = []
+                for i in range(rows):
+                    current = anims[i*64:(i+1)*64]
+                    if i == rows//2:
+                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+                    groups.append(AnimationGroup(*current))
+                self.play(LaggedStart(*groups, lag_ratio=0.1))
+                self.wait(1)
+                
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        occupancy_t = Text("Occupancy")
+        occupancy_t2 = Tex("$\\frac{active\\;threads}{total\\;threads}$").next_to(occupancy_t, DOWN)
+        self.camera.auto_zoom(VGroup(occupancy_t, occupancy_t2), animate=False, margin=5)
+        with self.voiceover(text="""This is what we call occupancy, the ratio of active threads
+                            to all threads on our device""") as trk:
+            self.play(Write(occupancy_t))
+            self.wait(1)
+            self.play(Write(occupancy_t2))
+
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.camera.auto_zoom(VGroup(*cores), animate=False)
+        with self.voiceover(text="""In this episode we'll look into all of the factors that we need to consider
+                            to ensure that our GPU's run at maximum occupancy, and spoiler alert. It's 
+                            not just how much threads we tell the GPU to run""") as trk:
+            self.play(FadeIn(all))
+            for occupancy in [0.5,  0.25, 0.125, 0]:
+                anims = []
+                for i, core in enumerate(cores):
+                    active = i / len(cores) >= occupancy
+                    color = GREEN if active else GREEN_E
+                    opacity = 0.75 if active else 0.25
+                    anims.append(core.animate.set_fill(color, opacity=opacity))
+                groups = []
+                for i in range(rows):
+                    current = anims[i*64:(i+1)*64]
+                    if i == rows//2:
+                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+                    groups.append(AnimationGroup(*current))
+                groups = list(reversed(groups))
+
+                self.play(LaggedStart(*groups, lag_ratio=0.1))
+                self.wait(1)
