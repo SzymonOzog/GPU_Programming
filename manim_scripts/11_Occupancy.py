@@ -243,7 +243,6 @@ class Occupancy(VoiceoverScene, ZoomedScene):
 
         self.play(Create(block), Write(block_t) ,LaggedStart(*[Create(x) for x in threads]) ,Write(w1_t), Create(w1) ,Write(w2_t), Create(w2) ,Write(w3_t), Create(w3))
         self.wait(1)
-
         return
 
         cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.75) for _ in range(2048)]
