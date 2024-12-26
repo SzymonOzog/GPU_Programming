@@ -26,7 +26,6 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         l2 = Rectangle(height=1, width=9, color=BLUE, fill_color=BLUE, fill_opacity=0.5).shift(0.5*RIGHT)
         l2_t = Text("L2 Cache", color=BLUE, font_size=52).move_to(l2)
 
-        self.play(Create(gpu), Write(gpu_t), Create(dram), Write(dram_t), Create(chip), Write(chip_t), Create(l2), Write(l2_t))
 
         mc = Rectangle(height=4.5, width=0.25).shift(4.25*LEFT)
         mc_t = Text("6 x Memory Controller", font_size=14).move_to(mc).rotate(PI/2)
@@ -51,7 +50,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                 gpcs.append(Rectangle(height=1.5, width=1.25, color=PURPLE, fill_color=PURPLE, fill_opacity=0.5, stroke_width=2).next_to(gpcs[-1], RIGHT))
             gpc_ts.append(Text("GPC", font_size=32, color=PURPLE).move_to(gpcs[-1]))
 
-        self.play(Create(mc), Write(mc_t), Create(mc2), Write(mc_t2), LaggedStart(*[Create(gpc) for gpc in gpcs], *[Write(t) for t in gpc_ts]))
+        self.play(Create(gpu), Write(gpu_t), Create(dram), Write(dram_t), Create(chip), Write(chip_t), Create(l2), Write(l2_t), Create(mc), Write(mc_t), Create(mc2), Write(mc_t2), LaggedStart(*[Create(gpc) for gpc in gpcs], *[Write(t) for t in gpc_ts]))
 
         re = Rectangle(height=0.1, width=1.15, stroke_width=1).move_to(gpcs[0], UP).shift(0.03*DOWN)
         re_t = Text("Raster Engine", font_size=18).move_to(re).scale(0.3)
@@ -146,7 +145,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
             if isinstance(x, Rectangle):
                 x.stroke_width*=2
         all.scale(2)
-        self.camera.auto_zoom(ps[0], animate=False)
+        self.play(self.camera.auto_zoom(ps[0]))
 
         ws = Rectangle(width=3, height=0.5, color=YELLOW_A, fill_color=YELLOW_A, fill_opacity=0.5).move_to(ps[0]).shift(3.15*UP)
         ws_t = Text("Warp Scheduler", color=YELLOW_A, font_size=32).scale(0.6).move_to(ws)
@@ -241,7 +240,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
 
         self.play(*[FadeOut(x) for x in ps], [FadeOut(x) for x in p_ts], FadeOut(sm), FadeOut(tpcs[0]))
 
-        self.play(Create(block), Write(block_t) ,LaggedStart(*[Create(x) for x in threads]) ,Write(w1_t), Create(w1) ,Write(w2_t), Create(w2) ,Write(w3_t), Create(w3))
+        self.play(Create(block), Write(block_t) ,LaggedStart(*[Create(x) for x in threads], lag_ratio=0.03) ,Write(w1_t), Create(w1) ,Write(w2_t), Create(w2) ,Write(w3_t), Create(w3))
 
         anims = []
         for t, c in zip(threads[:32], fpcs+fpcis):
