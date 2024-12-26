@@ -242,6 +242,30 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         self.play(*[FadeOut(x) for x in ps], [FadeOut(x) for x in p_ts], FadeOut(sm), FadeOut(tpcs[0]))
 
         self.play(Create(block), Write(block_t) ,LaggedStart(*[Create(x) for x in threads]) ,Write(w1_t), Create(w1) ,Write(w2_t), Create(w2) ,Write(w3_t), Create(w3))
+
+        anims = []
+        for t, c in zip(threads[:32], fpcs+fpcis):
+            t.save_state()
+            anims.append(t.animate.move_to(c))
+        self.play(LaggedStart(*anims))
+        self.wait(1)
+
+        anims = []
+        for t, c in zip(threads[:32], fpcs+fpcis):
+            anims.append(Restore(t))
+        for i, (t, c) in enumerate(zip(threads[32:64], fpcs+fpcis)):
+            t.save_state()
+            anims.append(t.animate.move_to(c))
+        self.play(LaggedStart(*anims))
+        self.wait(1)
+
+        anims = []
+        for t, c in zip(threads[32:64], fpcs+fpcis):
+            anims.append(Restore(t))
+        for i, (t, c) in enumerate(zip(threads[64:], fpcs+fpcis)):
+            t.save_state()
+            anims.append(t.animate.move_to(c))
+        self.play(LaggedStart(*anims))
         self.wait(1)
         return
 
