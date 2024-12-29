@@ -300,7 +300,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
 
 
         all = VGroup(*cores)
-        cores_count = Text("64 warps", color=WHITE, font_size = 200).scale(2).move_to(all)
+        cores_count = Text("64 Warps", color=WHITE, font_size = 150, z_index=1).scale(2).move_to(all)
 
         with self.voiceover(text="""One SM can run a maximum of 64 warps on a datacenter grade GPU like the A100 or H100""") as trk:
             self.play(LaggedStart(*[Create(x) for x in nicely_animated], lag_ratio=0.001))
@@ -320,14 +320,14 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                 for i in range(rows):
                     current = anims[i*8:(i+1)*8]
                     if i == rows//2:
-                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=150, z_index=1).scale(2).move_to(all)))
                     groups.append(AnimationGroup(*current))
                 self.play(LaggedStart(*groups, lag_ratio=0.1))
                 self.wait(1)
                 
         self.play(*[FadeOut(x) for x in self.mobjects])
         occupancy_t = Text("Occupancy")
-        occupancy_t2 = Tex("$\\frac{active\\;threads}{total\\;threads}$").next_to(occupancy_t, DOWN)
+        occupancy_t2 = Tex("$\\frac{active\\;warps}{total\\;warps}$").next_to(occupancy_t, DOWN)
         self.camera.auto_zoom(VGroup(occupancy_t, occupancy_t2), animate=False, margin=5)
         with self.voiceover(text="""This is what we call occupancy, the ratio of active warps
                             to the maximum active warps on my device""") as trk:
@@ -352,7 +352,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                 for i in range(rows):
                     current = anims[i*8:(i+1)*8]
                     if i == rows//2:
-                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
+                        current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=150, z_index=1).scale(2).move_to(all)))
                     groups.append(AnimationGroup(*current))
                 groups = list(reversed(groups))
 
