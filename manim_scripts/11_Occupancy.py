@@ -276,10 +276,15 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                 t.save_state()
                 anims.append(t.animate.move_to(c))
             self.play(LaggedStart(*anims))
-            return
 
-        cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.75) for _ in range(2048)]
-        VGroup(*cores).arrange_in_grid(32, 64).move_to(ORIGIN)
+        
+        with self.voiceover(text="""This leads us to the intuitive assumtion that the more warps we launch
+                            the better the warp scheduler can be at hiding latency""") as trk:
+            pass
+        self.play(*[FadeOut(x) for x in self.mobjects])
+
+        cores = [Square(color=GREEN, fill_color=GREEN, fill_opacity=0.75) for _ in range(64)]
+        VGroup(*cores).arrange_in_grid(8, 8).move_to(ORIGIN)
         self.camera.auto_zoom(VGroup(*cores), animate=False)
 
         # it's late when I'm writing this, there must be a smarter way
@@ -295,14 +300,14 @@ class Occupancy(VoiceoverScene, ZoomedScene):
 
 
         all = VGroup(*cores)
-        cores_count = Text("16384 CUDA cores", color=WHITE, font_size = 200).scale(2).move_to(all)
+        cores_count = Text("64 warps", color=WHITE, font_size = 200).scale(2).move_to(all)
 
-        with self.voiceover(text="""There are 16384 cores inside my gpu""") as trk:
+        with self.voiceover(text="""One SM can run a maximum of 64 warps on a datacenter grade GPU like the A100 or H100""") as trk:
             self.play(LaggedStart(*[Create(x) for x in nicely_animated], lag_ratio=0.001))
             self.wait(1)
             self.play(Write(cores_count))
 
-        rows = 2048//64
+        rows = 8 
         with self.voiceover(text="""But not all are active when I launch my kernel""") as trk:
             for occupancy in [0.25, 0.5,  0.75]:
                 anims = []
@@ -313,7 +318,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                     anims.append(core.animate.set_fill(color, opacity=opacity))
                 groups = []
                 for i in range(rows):
-                    current = anims[i*64:(i+1)*64]
+                    current = anims[i*8:(i+1)*8]
                     if i == rows//2:
                         current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
                     groups.append(AnimationGroup(*current))
@@ -324,8 +329,8 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         occupancy_t = Text("Occupancy")
         occupancy_t2 = Tex("$\\frac{active\\;threads}{total\\;threads}$").next_to(occupancy_t, DOWN)
         self.camera.auto_zoom(VGroup(occupancy_t, occupancy_t2), animate=False, margin=5)
-        with self.voiceover(text="""This is what we call occupancy, the ratio of active threads
-                            to all threads on our device""") as trk:
+        with self.voiceover(text="""This is what we call occupancy, the ratio of active warps
+                            to the maximum active warps on my device""") as trk:
             self.play(Write(occupancy_t))
             self.wait(1)
             self.play(Write(occupancy_t2))
@@ -334,7 +339,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         self.camera.auto_zoom(VGroup(*cores), animate=False)
         with self.voiceover(text="""In this episode we'll look into all of the factors that we need to consider
                             to ensure that our GPU's run at maximum occupancy, and spoiler alert. It's 
-                            not just how much threads we tell the GPU to run""") as trk:
+                            not just how much warps we tell the GPU to run""") as trk:
             self.play(FadeIn(all))
             for occupancy in [0.5,  0.25, 0.125, 0]:
                 anims = []
@@ -345,7 +350,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                     anims.append(core.animate.set_fill(color, opacity=opacity))
                 groups = []
                 for i in range(rows):
-                    current = anims[i*64:(i+1)*64]
+                    current = anims[i*8:(i+1)*8]
                     if i == rows//2:
                         current.append(Transform(cores_count, Text(f"{int((1-occupancy)*100)} %", color=WHITE, font_size=200).scale(2).move_to(all)))
                     groups.append(AnimationGroup(*current))
