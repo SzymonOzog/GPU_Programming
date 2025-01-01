@@ -14,6 +14,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                 GTTSService(transcription_model="base")
                 )
 
+        self.camera.frame.save_state()
         gpu = Rectangle(height=6, width=12, color=GREEN)
         gpu_t = Text("GPU", color=GREEN, font_size=24).next_to(gpu, UP, buff=0.1, aligned_edge=LEFT)
 
@@ -367,7 +368,6 @@ class Occupancy(VoiceoverScene, ZoomedScene):
             self.play(FadeIn(scene))
 
         spotlight = Exclusion(Rectangle(width=1000, height=1000), SurroundingRectangle(rf, buff=0.3), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
-        
 
         with self.voiceover(text="""First of all, on the procesisng block level we have a register file, on my architecture
                             it's 64 KB <bookmark mark='1'/> and there are 4 of those in our streaming multiprocessor""") as trk:
@@ -419,4 +419,44 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         self.play(*[FadeOut(x) for x in self.mobjects])
         self.camera.auto_zoom(sm, animate=False)
         self.play(FadeIn(scene))
-        self.wait(1)
+
+        spotlight = Exclusion(Rectangle(width=1000, height=1000), SurroundingRectangle(l1, buff=0.3), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
+        with self.voiceover(text="""We also have a limit imposed by our shared <bookmark mark='1'/> memory""") as trk:
+            self.wait_until_bookmark("1")
+            self.play(FadeIn(spotlight))
+
+        with self.voiceover(text="""So in here the limit will be dictated by the number of active blocks""") as trk:
+            pass
+
+        self.play(FadeOut(scene))
+
+        self.camera.frame.resotre()
+
+        block = Rectangle(width=4, height=5, color=BLUE)
+        warps = [Rectangle(width=0.33, height=0.33, color=GREEN, fill_color=GREEN, fill_opacity=0.5) for _ in range(64)]
+        x = VGroup(*warps).arrange_in_grid(8,8, buff=0.1).move_to(block)
+        block_t = Text("128KB", color=BLUE).move_to(block, aligned_edge=DOWN).shift(0.1*UP)
+
+        with self.voiceover(text="""For example, if we were to fit all of our warps inside one block, we coud utilise all of our shared 
+                            memory""") as trk:
+            self.play(Create(block))
+            self.play(LaggedStart(*[Create(w) for w in warps], lag_ratio=0.02))
+            self.play(Write(block_t))
+
+
+        with self.voiceover(text="""If we were to distribute it between 2 blocks we could use half of it etc...""") as trk:
+            self.play(block.animate.shift(3*LEFT), x.animate.shift(3*LEFT), block_t.animate.shift(3*LEFT))
+            
+            block2 = Rectangle(width=4, height=5, color=BLUE).shift(3*RIGHT)
+            block2_t = Text("64KB", color=BLUE).move_to(block2, aligned_edge=DOWN).shift(0.1*UP)
+
+            self.play(Create(block2))
+            self.play(VGroup(*warps[32:]).animate.arrange_in_grid(4,8, buff=(0.1, 0.5)).move_to(block2), 
+                      VGroup(*warps[:32]).animate.arrange_in_grid(4,8, buff=(0.1, 0.5)).move_to(block))
+
+            self.play(Transform(block_t, Text("64KB", color=BLUE).move_to(block, aligned_edge=DOWN).shift(0.1*UP)),
+                      Write(block2_t))
+
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.camera.auto_zoom(sm, animate=False)
+        self.play(FadeIn(scene))
