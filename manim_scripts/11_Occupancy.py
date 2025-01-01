@@ -222,6 +222,8 @@ class Occupancy(VoiceoverScene, ZoomedScene):
             # self.camera.auto_zoom(sm, animate=False)
             self.play(LaggedStart(*[Create(x) for x in fpcs]), Write(fpc_t), LaggedStart(*[Create(x) for x in fpcis]), Write(fpci_t), Create(tc), Write(tc_t), Create(ws), Write(ws_t), Create(du), Write(du_t), Create(ic), Write(ic_t), Create(rf), Write(rf_t), LaggedStart(*[Create(x) for x in lsus]), LaggedStart(*[Write(x) for x in lsu_ts]), LaggedStart(*[Create(x) for x in sfus]), LaggedStart(*[Write(x) for x in sfu_ts]))
 
+        scene = Group(*[x for x in self.mobjects])
+
         spotlight = Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(ws, buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
 
         with self.voiceover(text="""Inside it there is a component named warp scheduler""") as trk:
@@ -358,3 +360,62 @@ class Occupancy(VoiceoverScene, ZoomedScene):
 
                 self.play(LaggedStart(*groups, lag_ratio=0.1))
                 self.wait(1)
+
+        with self.voiceover(text="""It is mostly dependant on the resources that we have available for our warps""") as trk:
+            self.play(*[FadeOut(x) for x in self.mobjects])
+            self.camera.auto_zoom(ps[0], animate=False)
+            self.play(FadeIn(scene))
+
+        spotlight = Exclusion(Rectangle(width=1000, height=1000), SurroundingRectangle(rf, buff=5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
+
+        with self.voiceover(text="""First of all, on the procesisng block level we have a register file, on my architecture
+                            it's 64 KB <bookmark mark='1'/> and there are 4 of those in our streaming multiprocessor""") as trk:
+            self.play(FadeIn(spotlight))
+            self.wait_until_bookmark("1")
+            self.play(self.camera.auto_zoom(sm))
+            self.play(FadeOut(spotlight))
+
+        self.play(FadeOut(scene))
+        
+        with self.voiceover(text="""This gives us a limit of 64 thousand 4 byte registers per block, <bookmark mark='1'/>to launch 
+                            64 warps we have a limit of 1 thousand registers per warp, that consists of 32 threads.<bookmark mark='2'/>
+                            So to achieve full occupance we can use at most 32 registers per threadd""") as trk:
+            large_rect = Rectangle(height=4, width=6, color=BLUE)
+            self.camera.auto_zoom(large_rect, margin=4, animate=False)
+            label_block = MathTex(r"65{,}536 \text{ registers per block}").next_to(large_rect, UP)
+            self.play(Create(large_rect), Write(label_block))
+            
+            warps = VGroup()
+            for _ in range(64):
+                warp = Rectangle(height=0.5, width=1.5, color=ORANGE)
+                warps.add(warp)
+            warps.arrange_in_grid(rows=8, cols=8, buff=0.1)
+            labels_warp = MathTex(r"1{,}024 \text{ registers}").scale(0.4)
+            for warp in warps:
+                warp.add(labels_warp.copy().move_to(warp))
+            self.wait_until_bookmark("1")
+            self.play(Transform(large_rect, warps, replace_mobject_with_target_in_scene=True))
+            
+            selected_warp = warps[0]
+            threads = VGroup()
+            for _ in range(32):
+                thread = Rectangle(height=0.4, width=1, color=GREEN)
+                threads.add(thread)
+            threads.arrange_in_grid(rows=4, cols=8, buff=0.05)
+            label_thread = MathTex(r"\text{thread}").scale(0.5)
+            for thread in threads:
+                thread.add(label_thread.copy().move_to(thread))
+            self.wait_until_bookmark("2")
+            self.play(selected_warp.animate.scale(3).move_to(ORIGIN-DOWN), *[FadeOut(x) for x in warps[1:]])
+            self.wait(0.3)
+            self.play(Transform(selected_warp, threads, replace_mobject_with_target_in_scene=True))
+            
+            calculation = MathTex(r"\frac{1{,}024 \text{ registers}}{32 \text{ threads}} = 32").to_edge(UP)
+            conclusion = MathTex(r"\text{at most } 32 \text{ registers per thread for full occupancy}").next_to(calculation, DOWN)
+            self.play(Transform(label_block, calculation))
+            self.play(Write(conclusion))
+
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.camera.auto_zoom(sm, animate=False)
+        self.play(FadeIn(scene))
+        self.wait(1)
