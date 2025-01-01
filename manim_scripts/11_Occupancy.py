@@ -224,7 +224,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
 
         scene = Group(*[x for x in self.mobjects])
 
-        spotlight = Exclusion(Rectangle(width=100, height=100), SurroundingRectangle(ws, buff=0.5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
+        spotlight = Exclusion(Rectangle(width=1000, height=1000), SurroundingRectangle(ws, buff=0.3), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
 
         with self.voiceover(text="""Inside it there is a component named warp scheduler""") as trk:
             self.play(FadeIn(spotlight))
@@ -366,7 +366,8 @@ class Occupancy(VoiceoverScene, ZoomedScene):
             self.camera.auto_zoom(ps[0], animate=False)
             self.play(FadeIn(scene))
 
-        spotlight = Exclusion(Rectangle(width=1000, height=1000), SurroundingRectangle(rf, buff=5), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
+        spotlight = Exclusion(Rectangle(width=1000, height=1000), SurroundingRectangle(rf, buff=0.3), color=BLACK, fill_opacity=0.7, stroke_width=0, z_index=2)
+        
 
         with self.voiceover(text="""First of all, on the procesisng block level we have a register file, on my architecture
                             it's 64 KB <bookmark mark='1'/> and there are 4 of those in our streaming multiprocessor""") as trk:
