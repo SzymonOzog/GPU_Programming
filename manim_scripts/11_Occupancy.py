@@ -458,5 +458,39 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                       Write(block2_t))
 
         self.play(*[FadeOut(x) for x in self.mobjects])
-        self.camera.auto_zoom(sm, animate=False)
-        self.play(FadeIn(scene))
+        self.camera.background_color = GREY
+        self.camera.auto_zoom(VGroup(*ps), margin=4, animate=False)
+        self.camera.frame.shift(UP)
+
+        with self.voiceover(text="""But that is just a theoretical occupancy, and it can differ from what we achieve""") as trk:
+            self.play(*[FadeIn(x) for x in fpcs], FadeIn(fpc_t), *[FadeIn(x) for x in fpcis], FadeIn(fpci_t), FadeIn(tc), FadeIn(tc_t), FadeIn(ws), FadeIn(ws_t), FadeIn(du), FadeIn(du_t), FadeIn(ic), FadeIn(ic_t), FadeIn(rf), FadeIn(rf_t), *[FadeIn(x) for x in lsus], *[FadeIn(x) for x in lsu_ts], *[FadeIn(x) for x in sfus], *[FadeIn(x) for x in sfu_ts],
+                      *[FadeIn(x) for x in ps], *[FadeIn(x) for x in p_ts[1:]])
+
+        with self.voiceover(text="""One situation where the achieved occupancy might be worse than the theoretical one is a tail effect""") as trk:
+            pass
+
+        warps = [Rectangle(width=0.33, height=0.33, color=GREEN, fill_color=GREEN, fill_opacity=0.5) for _ in range(64)]
+        
+        warps1 = VGroup(*warps[:16]).arrange_in_grid(4,4, buff=0.1).next_to(ps[0], UP)
+        warps1 = VGroup(*warps[16:32]).arrange_in_grid(4,4, buff=0.1).next_to(ps[1], UP)
+        warps1 = VGroup(*warps[32:48]).arrange_in_grid(4,4, buff=0.1).next_to(ps[2], UP)
+        warps1 = VGroup(*warps[48:]).arrange_in_grid(4,4, buff=0.1).next_to(ps[3], UP)
+
+        with self.voiceover(text="""Let's say that we are launching a perfect 64 warps across our processing blocks""") as trk:
+            self.play(LaggedStart(*[Create(w) for w in warps[:16]]),
+                      LaggedStart(*[Create(w) for w in warps[16:32]]),
+                      LaggedStart(*[Create(w) for w in warps[32:48]]),
+                      LaggedStart(*[Create(w) for w in warps[48:]]),
+                      )
+
+        anims = [[] for _ in range(4)]
+        for i in range(4):
+            anims[0].append(FadeOut(VGroup(*warps[i*4 : (i+1)*4])))
+            anims[1].append(FadeOut(VGroup(*warps[16+i*4 : 16+(i+1)*4])))
+            anims[2].append(FadeOut(VGroup(*warps[32+i*4 : 32+(i+1)*4])))
+            anims[3].append(FadeOut(VGroup(*warps[48+i*4 : 48+(i+1)*4])))
+
+        with self.voiceover(text="""If some of those warps take a longer time to finish than the other ones, we get a situation where the active blocks start decreasing because we need to
+                            wait for our block to finish before issuing a new one""") as trk:
+            self.play(LaggedStart(*anims[0], lag_ratio=6), LaggedStart(*anims[1], lag_ratio=2), LaggedStart(*anims[2], lag_ratio=2), LaggedStart(*anims[3], lag_ratio=2))
+        
