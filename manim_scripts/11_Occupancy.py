@@ -428,9 +428,9 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         with self.voiceover(text="""So in here the limit will be dictated by the number of active blocks""") as trk:
             pass
 
-        self.play(FadeOut(scene))
+        self.play(FadeOut(scene), FadeOut(spotlight))
 
-        self.camera.frame.resotre()
+        self.camera.frame.restore()
 
         block = Rectangle(width=4, height=5, color=BLUE)
         warps = [Rectangle(width=0.33, height=0.33, color=GREEN, fill_color=GREEN, fill_opacity=0.5) for _ in range(64)]
