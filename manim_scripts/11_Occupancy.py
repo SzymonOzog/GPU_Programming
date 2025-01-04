@@ -493,4 +493,33 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         with self.voiceover(text="""If some of those warps take a longer time to finish than the other ones, we get a situation where the active blocks start decreasing because we need to
                             wait for our block to finish before issuing a new one""") as trk:
             self.play(LaggedStart(*anims[0], lag_ratio=6), LaggedStart(*anims[1], lag_ratio=2), LaggedStart(*anims[2], lag_ratio=2), LaggedStart(*anims[3], lag_ratio=2))
-        
+
+        with self.voiceover(text="""For this, the only solution would be to balance the workload more efficiently between the SM's""") as trk:
+            pass
+
+        with self.voiceover(text="""This can also accur not only on a thread level but also on a block level""") as trk:
+            self.play(FadeIn(scene))
+            self.play(self.camera.auto_zoom(scene, margin=165))
+            self.play(self.camera.frame.animate.shift(30*UP))
+        blocks = [Rectangle(width=30, height=30, color=BLUE, fill_color=BLUE, fill_opacity=0.5).shift(400*UP) for _ in range(117)]
+        anim_groups = []
+        j = 0
+        for i, gpc in enumerate(gpcs):
+            anims = []
+            for k in range(7 if i == 3 else 10):
+                if k == 0:
+                    rt = 3 if i == 3 else 2
+                else:
+                    rt = 2 if i == 3 else 1
+                cp = gpc.copy().set_color(PURPLE_A)
+                anims.append(Transform(blocks[j], cp))
+                anims.append(FadeOut(blocks[j], run_time=rt))
+                j+=1
+            anim_groups.append(anims)
+
+        with self.voiceover(text="""One block might take significantly more time to finish than the other ones, reducing our achieved occupancy""") as trk:
+            self.play(*[Succession(a.pop(0), a.pop(0), lag_ratio=1.5, suspend_mobject_updating=False) for a in anim_groups])
+
+        with self.voiceover(text="""The solution to this is actually very simple, we can just increase the number of blocks, and the 
+                            time of the longer ones just gets hidden away""") as trk:
+            self.play(*[Succession(*a, lag_ratio=1.5, suspend_mobject_updating=False) for a in anim_groups])
