@@ -523,3 +523,16 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         with self.voiceover(text="""The solution to this is actually very simple, we can just increase the number of blocks, and the 
                             time of the longer ones just gets hidden away""") as trk:
             self.play(*[Succession(*a, lag_ratio=1.5, suspend_mobject_updating=False) for a in anim_groups])
+
+
+        blocks = [Rectangle(width=30, height=30, color=BLUE, fill_color=BLUE, fill_opacity=0.5).shift(400*UP) for _ in range(8)]
+        anims = []
+        for i, block in enumerate(blocks):
+            gpc = gpcs[i%len(gpcs)]
+            rt = 3 
+            cp = gpc.copy().set_color(PURPLE_A)
+            anims.append(Succession(Transform(block, cp), FadeOut(block, run_time=rt), lag_ratio=2.5))
+
+        with self.voiceover(text="""Another factor that might impact our theoretical occupancy is the obvious one of just not launching enough blocks 
+                            to fill all of our SM's with work""") as trk:
+            self.play(*anims)
