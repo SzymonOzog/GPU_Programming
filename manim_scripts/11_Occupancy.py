@@ -536,3 +536,17 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         with self.voiceover(text="""Another factor that might impact our theoretical occupancy is the obvious one of just not launching enough blocks 
                             to fill all of our SM's with work""") as trk:
             self.play(*anims)
+
+        blocks = [Rectangle(width=30, height=30, color=BLUE, fill_color=BLUE, fill_opacity=0.5).shift(400*UP) for _ in range(40)]
+        anim_groups = [[] for _ in range(len(gpcs))]
+        for i, block in enumerate(blocks):
+            gpc = gpcs[i%len(gpcs)]
+            rt = 3.5 if i > 36 else 2
+            cp = gpc.copy().set_color(PURPLE_A)
+            anim_groups[i%len(gpcs)].append(Transform(block, cp))
+            anim_groups[i%len(gpcs)].append(FadeOut(block, run_time=rt))
+
+        with self.voiceover(text="""And lastly, we can also get an effect called a partial last wave, where the ending wave of scheduled blocks
+                            is not complete enough to fill our whole GPU, but simillarly to the unbalanced workload across blocks, the efects diminish 
+                            as we launch more and more blocks""") as trk:
+            self.play(*[Succession(*a, lag_ratio=1.5, suspend_mobject_updating=False) for a in anim_groups])
