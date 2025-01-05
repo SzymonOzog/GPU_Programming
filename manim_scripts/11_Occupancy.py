@@ -458,7 +458,6 @@ class Occupancy(VoiceoverScene, ZoomedScene):
                       Write(block2_t))
 
         self.play(*[FadeOut(x) for x in self.mobjects])
-        self.camera.background_color = GREY
         self.camera.auto_zoom(VGroup(*ps), margin=4, animate=False)
         self.camera.frame.shift(UP)
 
