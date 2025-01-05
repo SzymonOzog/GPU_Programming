@@ -380,10 +380,10 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         
         with self.voiceover(text="""This gives us a limit of 64 thousand 4 byte registers per block, <bookmark mark='1'/>to launch 
                             64 warps we have a limit of 1 thousand registers per warp, that consists of 32 threads.<bookmark mark='2'/>
-                            So to achieve full occupance we can use at most 32 registers per threadd""") as trk:
+                            So to achieve full occupancy we can use at most 32 registers per threadd""") as trk:
             large_rect = Rectangle(height=4, width=6, color=BLUE)
             self.camera.auto_zoom(large_rect, margin=4, animate=False)
-            label_block = MathTex(r"65{,}536 \text{ registers per block}").next_to(large_rect, UP)
+            label_block = MathTex(r"65{,}536 \text{ registers per block}").next_to(large_rect, UP).shift(UP)
             self.play(Create(large_rect), Write(label_block))
             
             warps = VGroup()
@@ -507,7 +507,7 @@ class Occupancy(VoiceoverScene, ZoomedScene):
             anims = []
             for k in range(7 if i == 3 else 10):
                 if k == 0:
-                    rt = 3 if i == 3 else 2
+                    rt = 5 if i == 3 else 2
                 else:
                     rt = 2 if i == 3 else 1
                 cp = gpc.copy().set_color(PURPLE_A)
@@ -519,8 +519,10 @@ class Occupancy(VoiceoverScene, ZoomedScene):
         with self.voiceover(text="""One block might take significantly more time to finish than the other ones, reducing our achieved occupancy""") as trk:
             self.play(*[Succession(a.pop(0), a.pop(0), lag_ratio=1.5, suspend_mobject_updating=False) for a in anim_groups])
 
-        with self.voiceover(text="""The solution to this is actually very simple, we can just increase the number of blocks, and the 
-                            time of the longer ones just gets hidden away""") as trk:
+        with self.voiceover(text=""" The solution to this is actually very simple, we can just increase the number of blocks, and the 
+                            time of the longer ones just gets hidden away.
+                            This is usially refered to as an unbalanced workload across blocs as opposed to the previous situation
+                            where the worload was unbalanced within blocks""") as trk:
             self.play(*[Succession(*a, lag_ratio=1.5, suspend_mobject_updating=False) for a in anim_groups])
 
 
