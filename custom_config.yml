@@ -1,0 +1,19 @@
+window:
+  position_string: UR
+  monitor_index: 0
+  full_screen: False
+camera:
+  resolution: (3840, 2160)
+  background_color: "#000000"
+  fps: 30
+  background_opacity: 1.0
+file_writer:
+  saturation: 1.5
+text:
+  font: "CMU Serif"
+  alignment: "CENTER"
+tex:
+  template: "default"
+embed:
+  autoreload: True
+ignore_manimlib_modules_on_reload: True
