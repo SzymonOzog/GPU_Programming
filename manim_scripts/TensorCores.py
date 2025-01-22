@@ -11,13 +11,11 @@ class TensorCores(Scene):
         self.frame.move_to([4.5, 11, 0])
 
         g1 = Group(*mat1).arrange_in_grid(8, 8)
-        # self.play(ShowCreation(g1))
-
         g2 = Group(*mat2).arrange_in_grid(8, 8).next_to(g1, UP, buff = 2)
-        self.play(ShowCreation(g2))
+        self.play(*[ShowCreation(x) for x in mat2])
 
         g3 = Group(*mat3).arrange_in_grid(8, 8).next_to(g1, LEFT, buff = 2)
-        self.play(ShowCreation(g3))
+        self.play(*[ShowCreation(x) for x in matk])
 
         #highlight vectors
         v1 = [mat2[i*8] for i in range(8)]
