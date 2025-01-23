@@ -72,8 +72,8 @@ class TensorCores(Scene):
         self.play(self.frame.animate.set_shape(123, 69).move_to([-5.3, 2.97, -9.36]))
 
         #show index calculation
-        mat2_3d_g.shift(4*IN).shift(4*UP)
-        mat3_3d_g.shift(4*IN).shift(4*LEFT)
+        self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP))
+        self.play(mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
 
         dot_prod = []
         for i in range(8):
@@ -92,9 +92,10 @@ class TensorCores(Scene):
 
 
         #sum dot products
+        run_time=0.5
         for i in range(7):
             tmp = dot_prod[i+1].copy().set_color(to_green(i))
-            self.play(Transform(dot_prod[i], tmp), Transform(dot_prod[i+1], tmp))
+            self.play(Transform(dot_prod[i], tmp, run_time=run_time), Transform(dot_prod[i+1], tmp, run_time=run_time))
             self.remove(dot_prod[i])
 
-        self.play(dot_prod[-1].animate.move_to(mat1_3d[0].get_center()))
+        self.play(dot_prod[-1].animate(run_time=run_time).move_to(mat1_3d[0].get_center()))
