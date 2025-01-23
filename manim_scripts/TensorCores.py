@@ -44,8 +44,8 @@ class TensorCores(Scene):
         #accumulate
         def to_green(step):
             percentage_red = 1 - step/6
-            red = int(255*percentage_red)
-            return f"#{red:02x}ff00"
+            red = int(255*percentage_red + 131 * (1-percentage_red)) 
+            return f"#{red:02x}C167"
 
             
         for i in range(7):
@@ -71,3 +71,30 @@ class TensorCores(Scene):
         self.play(mat2_3d_g.animate.rotate(radians(90), axis=LEFT, about_edge=DOWN), mat3_3d_g.animate.rotate(radians(90), axis=DOWN, about_edge=RIGHT))
         self.play(self.frame.animate.set_shape(123, 69).move_to([-5.3, 2.97, -9.36]))
 
+        #show index calculation
+        mat2_3d_g.shift(4*IN).shift(4*UP)
+        mat3_3d_g.shift(4*IN).shift(4*LEFT)
+
+        dot_prod = []
+        for i in range(8):
+            pos = mat1_3d[0].get_center().copy()
+            pos[2] = mat2_3d[i*8].get_center()[2]
+            dot_prod.append(Cube(color=YELLOW).move_to(pos))
+
+        anims = []
+        for i in range(8):
+            c1 = mat3_3d[i].copy()
+            c2 = mat2_3d[i*8].copy()
+            dp = dot_prod[i]
+            anims.extend([ReplacementTransform(c1, dp),ReplacementTransform(c2, dp)])
+
+        self.play(*anims)
+
+
+        #sum dot products
+        for i in range(7):
+            tmp = dot_prod[i+1].copy().set_color(to_green(i))
+            self.play(Transform(dot_prod[i], tmp), Transform(dot_prod[i+1], tmp))
+            self.remove(dot_prod[i])
+
+        self.play(dot_prod[-1].animate.move_to(mat1_3d[0].get_center()))
