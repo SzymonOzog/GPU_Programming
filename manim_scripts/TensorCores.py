@@ -1,21 +1,23 @@
 from manimlib import *
+from math import radians
 
 class TensorCores(Scene):
     def construct(self):
         # init scene
+        self.play(*[FadeOut(x) for x in self.mobjects])
         mat1 = [Square(stroke_width=0, fill_color=GREEN, fill_opacity=0.5) for _ in range(64)]
         mat2 = [Square(stroke_width=0, fill_color=BLUE, fill_opacity=0.5) for _ in range(64)]
         mat3 = [Square(stroke_width=0, fill_color=ORANGE, fill_opacity=0.5) for _ in range(64)]
 
-        self.frame.set_shape(110, 62)
-        self.frame.move_to([4.5, 11, 0])
+        self.frame.set_shape(183, 103)
+        self.frame.move_to([-7, 24, 0])
 
-        g1 = Group(*mat1).arrange_in_grid(8, 8)
-        g2 = Group(*mat2).arrange_in_grid(8, 8).next_to(g1, UP, buff = 2)
+        g1 = Group(*mat1).arrange_in_grid(8, 8, buff=4)
+        g2 = Group(*mat2).arrange_in_grid(8, 8, buff=4).next_to(g1, UP, buff = 2)
         self.play(*[ShowCreation(x) for x in mat2])
 
-        g3 = Group(*mat3).arrange_in_grid(8, 8).next_to(g1, LEFT, buff = 2)
-        self.play(*[ShowCreation(x) for x in matk])
+        g3 = Group(*mat3).arrange_in_grid(8, 8, buff=4).next_to(g1, LEFT, buff = 2)
+        self.play(*[ShowCreation(x) for x in mat3])
 
         #highlight vectors
         v1 = [mat2[i*8] for i in range(8)]
@@ -52,4 +54,20 @@ class TensorCores(Scene):
             self.remove(v3[i])
 
         self.play(v3[-1].animate.move_to(mat1[0].get_center()))
+
+        #move to 3d
+        mat1_3d = [Cube(color=x.get_color()).move_to(x.get_center()) for x in mat1]
+        mat2_3d = [Cube(color=x.get_color()).move_to(x.get_center()).shift(2*IN) for x in mat2]
+        mat3_3d = [Cube(color=x.get_color()).move_to(x.get_center()).shift(2*IN) for x in mat3]
+
+        self.play(*[FadeOut(x)for x in mat1 + mat2 + mat3], 
+                  *[FadeIn(x)for x in mat1_3d + mat2_3d + mat3_3d])
+
+
+        #rotate matrices
+        self.play(self.frame.animate.set_euler_angles(-2.19045432,  1.22009916,  1.86961547))
+        mat2_3d_g = Group(*mat2_3d)
+        mat3_3d_g = Group(*mat3_3d)
+        self.play(mat2_3d_g.animate.rotate(radians(90), axis=LEFT, about_edge=DOWN), mat3_3d_g.animate.rotate(radians(90), axis=DOWN, about_edge=RIGHT))
+        self.play(self.frame.animate.set_shape(123, 69).move_to([-5.3, 2.97, -9.36]))
 
