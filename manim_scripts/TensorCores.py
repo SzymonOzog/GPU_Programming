@@ -66,29 +66,31 @@ class TensorCores(Scene):
                   FadeOut(v3[-1]))
 
         #rotate matrices
-        self.play(self.frame.animate.set_euler_angles(-2.19045432,  1.22009916,  1.86961547))
+        self.play(self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
         mat2_3d_g = VGroup(*mat2_3d)
         mat3_3d_g = VGroup(*mat3_3d)
         self.play(mat2_3d_g.animate.rotate(radians(90), axis=LEFT, about_edge=DOWN), mat3_3d_g.animate.rotate(radians(90), axis=DOWN, about_edge=RIGHT))
-        self.play(self.frame.animate.set_shape(123, 69).move_to([-5.3, 2.97, -9.36]))
+        self.play(self.frame.animate.set_shape(137, 77).move_to([-8.3, 4.62, -16.36]))
 
 
         #show index calculation
         self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP), mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
 
         #highlight vectors
+        self.frame.set_shape(137, 77).move_to([-8.3, 4.62, -16.36])
+        self.frame.set_euler_angles(-2.24045432,  1.17009916,  1.86961547)
         frame_start = self.frame.copy()
         frame_end = self.frame.copy().set_euler_angles(0, 0, 0)
         frame_end.saved_alpha = 0
+        self.frame.add_updater(updater)
         def updater(m, dt):
-            frame_end.saved_alpha = min(1, frame_end.saved_alpha+dt/10)
+            frame_end.saved_alpha = min(1, frame_end.saved_alpha+dt/50)
             m.interpolate(frame_start, frame_end, frame_end.saved_alpha)
             
-        self.frame.add_updater(updater)
 
         for j in range(8):
             for k in range(8):
-                run_time = 1 if i + k == 0 else 0.05
+                run_time = 1 if j + k == 0 else 0.25
                 v1 = [mat2_3d[i*8 + k] for i in range(8)]
                 v2 = [mat3_3d[j*8 + i] for i in range(8)]
 
@@ -115,12 +117,18 @@ class TensorCores(Scene):
 
 
                 #sum dot products
-                run_time=0.5 if i + k == 0 else 0.03
-                for i in range(7):
-                    tmp = dot_prod[i+1].copy().set_color(to_green(i))
-                    self.play(Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear), Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear))
-                    self.remove(dot_prod[i])
+                if j + k == 0:
+                    run_time=0.5 if j + k == 0 else 0.03
+                    for i in range(7):
+                        tmp = dot_prod[i+1].copy().set_color(to_green(i))
+                        self.play(Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear), Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear))
+                        self.remove(dot_prod[i])
 
-                dot_prod[-1].deactivate_depth_test()
-                self.play(dot_prod[-1].animate(run_time=run_time, rate_func=linear).move_to(mat1_3d[j*8 + k].get_center()))
+                    dot_prod[-1].deactivate_depth_test()
+                    self.play(dot_prod[-1].animate(run_time=run_time, rate_func=linear).move_to(mat1_3d[j*8 + k].get_center()))
+                else:
+                    run_time = 0.25 if j < 2 else 0.1
+                    dot_prod[-1].deactivate_depth_test()
+                    tmp = dot_prod[-1].copy().set_color(to_green(7)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
+                    self.play(*[Transform(x, tmp, run_time=run_time) for x in dot_prod])
         self.frame.remove_updater(updater)
