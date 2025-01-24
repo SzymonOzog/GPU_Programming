@@ -77,34 +77,50 @@ class TensorCores(Scene):
         self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP), mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
 
         #highlight vectors
-        v1 = [mat2_3d[i*8] for i in range(8)]
-        v2 = [mat3_3d[i] for i in range(8)]
+        frame_start = self.frame.copy()
+        frame_end = self.frame.copy().set_euler_angles(0, 0, 0)
+        frame_end.saved_alpha = 0
+        def updater(m, dt):
+            frame_end.saved_alpha = min(1, frame_end.saved_alpha+dt/10)
+            m.interpolate(frame_start, frame_end, frame_end.saved_alpha)
+            
+        self.frame.add_updater(updater)
 
-        self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2])
-        for v in mat2_3d_g:
-            print(v.get_center())
+        for j in range(8):
+            for k in range(8):
+                run_time = 1 if i + k == 0 else 0.05
+                v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                v2 = [mat3_3d[j*8 + i] for i in range(8)]
 
-        dot_prod = []
-        for i in range(8):
-            pos = mat1_3d[0].get_center().copy()
-            pos[2] = mat3_3d[i].get_center()[2] - (43) + i * 6
-            dot_prod.append(VCube(fill_color=YELLOW, depth_test=False).move_to(pos))
+                disable_highlight = [
+                        m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d if m not in v1+v2
+                        ]
+                
+                self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2], *disable_highlight, run_time=run_time)
 
-        anims = []
-        for i in range(8):
-            c1 = mat3_3d[i].copy()
-            c2 = mat2_3d[i*8].copy()
-            dp = dot_prod[i]
-            anims.extend([ReplacementTransform(c1, dp),ReplacementTransform(c2, dp)])
+                dot_prod = []
+                for i in range(8):
+                    pos = mat1_3d[j*8 + k].get_center().copy()
+                    pos[2] = v1[i].get_center()[2] - (43) + i * 6
+                    dot_prod.append(VCube(fill_color=YELLOW).move_to(pos))
 
-        self.play(*anims)
+                anims = []
+                for i in range(8):
+                    c1 = v1[i].copy()
+                    c2 = v2[i].copy()
+                    dp = dot_prod[i]
+                    anims.extend([ReplacementTransform(c1, dp),ReplacementTransform(c2, dp)])
+
+                self.play(*anims, run_time=run_time)
 
 
-        #sum dot products
-        run_time=0.5
-        for i in range(7):
-            tmp = dot_prod[i+1].copy().set_color(to_green(i))
-            self.play(Transform(dot_prod[i], tmp, run_time=run_time), Transform(dot_prod[i+1], tmp, run_time=run_time))
-            self.remove(dot_prod[i])
+                #sum dot products
+                run_time=0.5 if i + k == 0 else 0.03
+                for i in range(7):
+                    tmp = dot_prod[i+1].copy().set_color(to_green(i))
+                    self.play(Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear), Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear))
+                    self.remove(dot_prod[i])
 
-        self.play(dot_prod[-1].animate(run_time=run_time).move_to(mat1_3d[0].get_center()).scale(1.01))
+                dot_prod[-1].deactivate_depth_test()
+                self.play(dot_prod[-1].animate(run_time=run_time, rate_func=linear).move_to(mat1_3d[j*8 + k].get_center()))
+        self.frame.remove_updater(updater)
