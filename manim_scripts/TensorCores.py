@@ -56,30 +56,39 @@ class TensorCores(Scene):
         self.play(v3[-1].animate.move_to(mat1[0].get_center()))
 
         #move to 3d
-        mat1_3d = [Cube(color=x.get_color()).move_to(x.get_center()) for x in mat1]
-        mat2_3d = [Cube(color=x.get_color()).move_to(x.get_center()).shift(2*IN) for x in mat2]
-        mat3_3d = [Cube(color=x.get_color()).move_to(x.get_center()).shift(2*IN) for x in mat3]
+        mat1_3d = [VCube(fill_color=GREY, fill_opacity=0.1).move_to(x.get_center()) for x in mat1]
+        mat2_3d = [VCube(fill_color=x.get_color(), fill_opacity=0.3).move_to(x.get_center()).shift(2*IN) for x in mat2]
+        mat3_3d = [VCube(fill_color=x.get_color(), fill_opacity=0.3).move_to(x.get_center()).shift(2*IN) for x in mat3]
+
 
         self.play(*[FadeOut(x)for x in mat1 + mat2 + mat3], 
-                  *[FadeIn(x)for x in mat1_3d + mat2_3d + mat3_3d])
-
+                  *[FadeIn(x)for x in mat1_3d + mat2_3d + mat3_3d],
+                  FadeOut(v3[-1]))
 
         #rotate matrices
         self.play(self.frame.animate.set_euler_angles(-2.19045432,  1.22009916,  1.86961547))
-        mat2_3d_g = Group(*mat2_3d)
-        mat3_3d_g = Group(*mat3_3d)
+        mat2_3d_g = VGroup(*mat2_3d)
+        mat3_3d_g = VGroup(*mat3_3d)
         self.play(mat2_3d_g.animate.rotate(radians(90), axis=LEFT, about_edge=DOWN), mat3_3d_g.animate.rotate(radians(90), axis=DOWN, about_edge=RIGHT))
         self.play(self.frame.animate.set_shape(123, 69).move_to([-5.3, 2.97, -9.36]))
 
+
         #show index calculation
-        self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP))
-        self.play(mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
+        self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP), mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
+
+        #highlight vectors
+        v1 = [mat2_3d[i*8] for i in range(8)]
+        v2 = [mat3_3d[i] for i in range(8)]
+
+        self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2])
+        for v in mat2_3d_g:
+            print(v.get_center())
 
         dot_prod = []
         for i in range(8):
             pos = mat1_3d[0].get_center().copy()
-            pos[2] = mat2_3d[i*8].get_center()[2]
-            dot_prod.append(Cube(color=YELLOW).move_to(pos))
+            pos[2] = mat3_3d[i].get_center()[2] - (43) + i * 6
+            dot_prod.append(VCube(fill_color=YELLOW, depth_test=False).move_to(pos))
 
         anims = []
         for i in range(8):
@@ -98,4 +107,4 @@ class TensorCores(Scene):
             self.play(Transform(dot_prod[i], tmp, run_time=run_time), Transform(dot_prod[i+1], tmp, run_time=run_time))
             self.remove(dot_prod[i])
 
-        self.play(dot_prod[-1].animate(run_time=run_time).move_to(mat1_3d[0].get_center()))
+        self.play(dot_prod[-1].animate(run_time=run_time).move_to(mat1_3d[0].get_center()).scale(1.01))
