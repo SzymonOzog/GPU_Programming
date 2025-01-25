@@ -102,17 +102,24 @@ class TensorCores(Scene):
         #rotate matrices
         self.play(self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
 
-        mat2_3d_f_g = VGroup(*mat2_3d_f)
-        mat3_3d_f_g = VGroup(*mat3_3d_f)
+        mat1_3d_f_g = VGroup(*[x for x in mat1_3d_f if x not in mat1_3d])
+        mat2_3d_f_g = VGroup(*[x for x in mat2_3d_f if x not in mat2_3d])
+        mat3_3d_f_g = VGroup(*[x for x in mat3_3d_f if x not in mat3_3d])
+
+
+        mat2_3d_f_g.rotate(radians(90), axis=LEFT, about_edge=DOWN)
+        mat3_3d_f_g.rotate(radians(90), axis=DOWN, about_edge=RIGHT)
+
 
         mat2_3d_g = VGroup(*mat2_3d)
         mat3_3d_g = VGroup(*mat3_3d)
-        self.play(mat2_3d_f_g.animate.rotate(radians(90), axis=LEFT, about_edge=DOWN), mat3_3d_f_g.animate.rotate(radians(90), axis=DOWN, about_edge=RIGHT))
+        self.play(mat2_3d_g.animate.rotate(radians(90), axis=LEFT, about_edge=DOWN), mat3_3d_g.animate.rotate(radians(90), axis=DOWN, about_edge=RIGHT))
         self.play(self.frame.animate.set_shape(137, 77).move_to([-8.3, 4.62, -16.36]))
 
-
         #show index calculation
-        self.play(mat2_3d_f_g.animate.shift(4*IN).shift(4*UP), mat3_3d_f_g.animate.shift(4*IN).shift(4*LEFT))
+        mat2_3d_f_g.shift(4*IN).shift(4*UP)
+        mat3_3d_f_g.shift(4*IN).shift(4*LEFT)
+        self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP), mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
 
         #highlight vectors
         frame_start = self.frame.copy()
@@ -169,6 +176,5 @@ class TensorCores(Scene):
                     self.play(*[Transform(x, tmp, run_time=run_time) for x in dot_prod])
         self.frame.remove_updater(updater)
 
-
-        self.play(*[FadeIn(x) for x in mat1_3d_f + mat2_3d_f + mat3_3d_f])
-
+        #Show full matrix
+        self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g))
