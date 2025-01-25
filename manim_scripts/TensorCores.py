@@ -178,3 +178,48 @@ class TensorCores(Scene):
 
         #Show full matrix
         self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g))
+
+        # Show tiling
+        self.play(self.frame.animate.set_shape(329, 187).move_to([-28.3, 8.62, -25.36]))
+
+        n_tiles = total_n // tile_n
+
+        mat1_tiles = []
+        mat2_tiles = []
+        mat3_tiles = []
+
+        for tile_x in range(0, total_n, tile_n):
+            outer_tile1 = []
+            outer_tile2 = []
+            outer_tile3 = []
+            for tile_y in range(0, total_n, tile_n):
+                tile1 = []
+                tile2 = []
+                tile3 = []
+                for x in range(tile_n):
+                    for y in range(tile_n):
+                        r = tile_x + x
+                        c = tile_y + y
+                        tile1.append(mat1_3d_f[r*total_n + c])
+
+                        r = total_n - tile_n - tile_x + x
+                        c = tile_y + y
+                        tile2.append(mat2_3d_f[r*total_n + c])
+
+                        r = tile_x + x
+                        c = total_n - tile_n - tile_y + y
+                        tile3.append(mat3_3d_f[r*total_n + c])
+                outer_tile1.append(tile1)
+                outer_tile2.append(tile2)
+                outer_tile3.append(tile3)
+            mat1_tiles.append(outer_tile1)
+            mat2_tiles.append(outer_tile2)
+            mat3_tiles.append(outer_tile3)
+
+        anims = []
+        for x in range(n_tiles):
+            for y in range(n_tiles):
+                anims.append(VGroup(*mat1_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*DOWN))
+                anims.append(VGroup(*mat2_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*IN))
+                anims.append(VGroup(*mat3_tiles[x][y]).animate.shift(y*4*IN + x*4*DOWN))
+        self.play(*anims)
