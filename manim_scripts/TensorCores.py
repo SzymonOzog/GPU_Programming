@@ -4,17 +4,17 @@ from math import radians
 class TensorCores(Scene):
     def construct(self):
         # init scene
-        total_r = 32
-        start_r = 8
+        total_n = 32
+        tile_n = 8
         self.play(*[FadeOut(x) for x in self.mobjects])
-        mat1_f = [Square(stroke_width=0, fill_color=GREEN, fill_opacity=0.5) for _ in range(total_r*total_r)]
-        mat2_f = [Square(stroke_width=0, fill_color=BLUE, fill_opacity=0.5) for _ in range(total_r*total_r)]
-        mat3_f = [Square(stroke_width=0, fill_color=ORANGE, fill_opacity=0.5) for _ in range(total_r*total_r)]
+        mat1_f = [Square(stroke_width=0, fill_color=GREEN, fill_opacity=0.5) for _ in range(total_n*total_n)]
+        mat2_f = [Square(stroke_width=0, fill_color=BLUE, fill_opacity=0.5) for _ in range(total_n*total_n)]
+        mat3_f = [Square(stroke_width=0, fill_color=ORANGE, fill_opacity=0.5) for _ in range(total_n*total_n)]
 
 
-        g1 = Group(*mat1_f).arrange_in_grid(total_r, total_r, buff=4).move_to(ORIGIN, aligned_edge=UL).shift(25*UP + 15*LEFT)
-        g2 = Group(*mat2_f).arrange_in_grid(total_r, total_r, buff=4).next_to(g1, UP, buff = 2)
-        g3 = Group(*mat3_f).arrange_in_grid(total_r, total_r, buff=4).next_to(g1, LEFT, buff = 2)
+        g1 = Group(*mat1_f).arrange_in_grid(total_n, total_n, buff=4).move_to(ORIGIN, aligned_edge=UL).shift(25*UP + 15*LEFT)
+        g2 = Group(*mat2_f).arrange_in_grid(total_n, total_n, buff=4).next_to(g1, UP, buff = 2)
+        g3 = Group(*mat3_f).arrange_in_grid(total_n, total_n, buff=4).next_to(g1, LEFT, buff = 2)
 
         self.frame.set_shape(183, 103)
         self.frame.move_to([-7, 24, 0])
@@ -22,37 +22,37 @@ class TensorCores(Scene):
         mat1 = []
         mat2 = []
         mat3 = []
-        for i in range(start_r):
-            for j in range(start_r):
+        for i in range(tile_n):
+            for j in range(tile_n):
                 r = i
                 c = j
-                mat1.append(mat1_f[r*total_r + c])
-                r = total_r - start_r + i
+                mat1.append(mat1_f[r*total_n + c])
+                r = total_n - tile_n + i
                 c = j
-                mat2.append(mat2_f[r*total_r + c])
+                mat2.append(mat2_f[r*total_n + c])
                 r = i
-                c = total_r - start_r + j
-                mat3.append(mat3_f[r*total_r + c])
+                c = total_n - tile_n + j
+                mat3.append(mat3_f[r*total_n + c])
 
         self.play(*[ShowCreation(x) for x in mat2])
         self.play(*[ShowCreation(x) for x in mat3])
 
         #highlight vectors
-        v1 = [mat2[i*8] for i in range(start_r)]
-        v2 = [mat3[i] for i in range(start_r)]
+        v1 = [mat2[i*8] for i in range(tile_n)]
+        v2 = [mat3[i] for i in range(tile_n)]
 
         self.play(*[v.animate.set_opacity(1) for v in v1])
         self.play(*[v.animate.set_opacity(1) for v in v2])
 
         #interm vector
         v3 = []
-        for i in range(start_r):
+        for i in range(tile_n):
             p1 = v2[i].get_center()
             p2 = v1[i].get_center()
             pos = [p1[0], p2[1], p2[2]] 
             v3.append(Square(stroke_width=0, fill_color=YELLOW, fill_opacity=1).move_to(pos))
 
-        for i in range(start_r):
+        for i in range(tile_n):
             vv1 = v1[i].copy()
             vv2 = v2[i].copy()
             self.play(vv1.animate.move_to(v3[i].get_center()),
@@ -66,7 +66,7 @@ class TensorCores(Scene):
             return f"#{red:02x}C167"
 
             
-        for i in range(start_r-1):
+        for i in range(tile_n-1):
             self.play(v3[i].animate.move_to(v3[i+1]),
                       v3[i+1].animate.set_color(to_green(i)))
             self.remove(v3[i])
@@ -82,17 +82,17 @@ class TensorCores(Scene):
         mat2_3d = []
         mat3_3d = []
 
-        for i in range(start_r):
-            for j in range(start_r):
+        for i in range(tile_n):
+            for j in range(tile_n):
                 r = i
                 c = j
-                mat1_3d.append(mat1_3d_f[r*total_r + c])
-                r = total_r - start_r + i
+                mat1_3d.append(mat1_3d_f[r*total_n + c])
+                r = total_n - tile_n + i
                 c = j
-                mat2_3d.append(mat2_3d_f[r*total_r + c])
+                mat2_3d.append(mat2_3d_f[r*total_n + c])
                 r = i
-                c = total_r - start_r + j
-                mat3_3d.append(mat3_3d_f[r*total_r + c])
+                c = total_n - tile_n + j
+                mat3_3d.append(mat3_3d_f[r*total_n + c])
 
 
         self.play(*[FadeOut(x)for x in mat1 + mat2 + mat3], 
@@ -131,8 +131,8 @@ class TensorCores(Scene):
             
         self.frame.add_updater(updater)
 
-        for j in range(start_r):
-            for k in range(start_r):
+        for j in range(tile_n):
+            for k in range(tile_n):
                 run_time = 1 if j + k == 0 else 0.25
                 v1 = [mat2_3d[i*8 + k] for i in range(8)]
                 v2 = [mat3_3d[j*8 + i] for i in range(8)]
@@ -162,7 +162,7 @@ class TensorCores(Scene):
                 #sum dot products
                 if j + k == 0:
                     run_time=0.5 if j + k == 0 else 0.03
-                    for i in range(start_r-1):
+                    for i in range(tile_n-1):
                         tmp = dot_prod[i+1].copy().set_color(to_green(i))
                         self.play(Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear), Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear))
                         self.remove(dot_prod[i])
