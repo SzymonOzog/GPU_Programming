@@ -60,8 +60,8 @@ class TensorCores(Scene):
             self.play(FadeOut(vv1), FadeOut(vv2), FadeIn(v3[i]))
 
         #accumulate
-        def to_green(step):
-            percentage_red = 1 - step/6
+        def to_green(step, total = 6):
+            percentage_red = 1 - step/total
             red = int(255*percentage_red + 131 * (1-percentage_red)) 
             return f"#{red:02x}C167"
 
@@ -167,18 +167,19 @@ class TensorCores(Scene):
                 if j + k == 0:
                     run_time=0.5 if j + k == 0 else 0.03
                     for i in range(tile_n-1):
-                        tmp = dot_prod[i+1].copy().set_color(to_green(i))
+                        tmp = dot_prod[i+1].copy().set_color(to_green(i, total_n))
                         self.play(Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear), Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear))
                         self.remove(dot_prod[i])
 
-                    dot_prod[-1].deactivate_depth_test()
-                    self.play(dot_prod[-1].animate(run_time=run_time, rate_func=linear).move_to(mat1_3d[j*8 + k].get_center()))
+                    tmp = dot_prod[-1].copy().set_color(to_green(7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
+                    self.play(Transform(dot_prod[-1], tmp), Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
                     self.frame.add_updater(updater)
                 else:
                     run_time = 0.2 if j < 2 else 0.05
                     dot_prod[-1].deactivate_depth_test()
-                    tmp = dot_prod[-1].copy().set_color(to_green(7)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
+                    tmp = dot_prod[-1].copy().set_color(to_green(7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
                     self.play(*[Transform(x, tmp, run_time=run_time) for x in dot_prod])
+                    self.play(*[Transform(x, tmp) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
 
                 self.play(Write(thread_numbers[j*tile_n + k]), run_time=0.05)
         self.frame.remove_updater(updater)
@@ -186,8 +187,10 @@ class TensorCores(Scene):
         self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
 
         #Show full matrix
-        self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g), 
-                  self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547).set_shape(329, 187).move_to([-28.3, 8.62, -25.36]))
+        self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g),
+                  self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547).set_shape(329, 187).move_to([-28.3, 8.62, -25.36]),
+                  *[FadeOut(t) for t in thread_numbers]
+                  )
 
         # Show tiling
         self.play(self.frame.animate.set_shape(329, 187).move_to([-28.3, 8.62, -25.36]))
@@ -236,3 +239,40 @@ class TensorCores(Scene):
 
         self.play(*anims)
 
+        #play next tile
+        tile = 1
+        mat2_3d = mat2_tiles[tile][0]
+        mat3_3d = mat3_tiles[0][tile]
+        self.play(VGroup(*mat2_3d).animate.set_opacity(0.5), VGroup(*mat3_3d).animate.set_opacity(0.5))
+        anims = []
+        for j in range(tile_n):
+            for k in range(tile_n):
+                run_time = 0.1
+
+                v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                v2 = [mat3_3d[j*8 + i] for i in range(8)]
+
+                disable_highlight = [
+                        m.animate.set_opacity(0.5) for m in mat3_3d+mat2_3d if m not in v1+v2
+                        ]
+                
+                dot_prod = []
+                for i in range(8):
+                    pos = mat1_3d[j*8 + k].get_center().copy()
+                    pos[2] = v1[i].get_center()[2] # (43) + i * 6
+                    dot_prod.append(VCube(fill_color=YELLOW).move_to(pos))
+
+                anims = []
+                for i in range(8):
+                    c1 = v1[i].copy()
+                    c2 = v2[i].copy()
+                    anims.extend([ReplacementTransform(c1, dot_prod[i]),ReplacementTransform(c2, dot_prod[i])])
+
+                self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2], *disable_highlight, *anims, run_time=run_time)
+
+                run_time = 0.05
+                dot_prod[-1].deactivate_depth_test()
+                tmp = dot_prod[-1].copy().set_color(to_green(tile*8 + 7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
+
+                self.play(*[Transform(x, tmp) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
+        self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
