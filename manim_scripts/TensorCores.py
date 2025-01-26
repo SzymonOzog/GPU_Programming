@@ -172,14 +172,13 @@ class TensorCores(Scene):
                         self.remove(dot_prod[i])
 
                     tmp = dot_prod[-1].copy().set_color(to_green(7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
-                    self.play(Transform(dot_prod[-1], tmp), Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
+                    self.play(Transform(dot_prod[-1], tmp, remover=True), Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
                     self.frame.add_updater(updater)
                 else:
                     run_time = 0.2 if j < 2 else 0.05
                     dot_prod[-1].deactivate_depth_test()
                     tmp = dot_prod[-1].copy().set_color(to_green(7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
-                    self.play(*[Transform(x, tmp, run_time=run_time) for x in dot_prod])
-                    self.play(*[Transform(x, tmp) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
+                    self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
 
                 self.play(Write(thread_numbers[j*tile_n + k]), run_time=0.05)
         self.frame.remove_updater(updater)
@@ -274,5 +273,9 @@ class TensorCores(Scene):
                 dot_prod[-1].deactivate_depth_test()
                 tmp = dot_prod[-1].copy().set_color(to_green(tile*8 + 7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
 
-                self.play(*[Transform(x, tmp) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
+                self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
         self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
+
+        # reset matrix
+        self.play(VGroup(*mat1_3d).animate.set_color(GREY).set_opacity(0.3))
+        self.play(dot_prod[-1].animate.shift(10*OUT))
