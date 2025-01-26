@@ -121,19 +121,25 @@ class TensorCores(Scene):
         mat3_3d_f_g.shift(4*IN).shift(4*LEFT)
         self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP), mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
 
-        #highlight vectors
         frame_start = self.frame.copy()
+        #highlight vectors
         frame_end = self.frame.copy().set_euler_angles(0, 0, 0)
         frame_end.saved_alpha = 0
         def updater(m, dt):
-            frame_end.saved_alpha = min(1, frame_end.saved_alpha+dt/50)
+            frame_end.saved_alpha = min(1, frame_end.saved_alpha+dt/25)
             m.interpolate(frame_start, frame_end, frame_end.saved_alpha)
             
-        self.frame.add_updater(updater)
 
+        thread_numbers = [Text(str(i)).scale(3).move_to(x.get_center()) for i, x in enumerate(mat1_3d)]
         for j in range(tile_n):
             for k in range(tile_n):
-                run_time = 1 if j + k == 0 else 0.25
+                if j + k == 0:
+                    run_time = 1
+                elif j > 0:
+                    run_time = 0.1
+                else:
+                    run_time = 0.25
+
                 v1 = [mat2_3d[i*8 + k] for i in range(8)]
                 v2 = [mat3_3d[j*8 + i] for i in range(8)]
 
@@ -141,8 +147,6 @@ class TensorCores(Scene):
                         m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d if m not in v1+v2
                         ]
                 
-                self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2], *disable_highlight, run_time=run_time)
-
                 dot_prod = []
                 for i in range(8):
                     pos = mat1_3d[j*8 + k].get_center().copy()
@@ -156,7 +160,7 @@ class TensorCores(Scene):
                     dp = dot_prod[i]
                     anims.extend([ReplacementTransform(c1, dp),ReplacementTransform(c2, dp)])
 
-                self.play(*anims, run_time=run_time)
+                self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2], *disable_highlight, *anims, run_time=run_time)
 
 
                 #sum dot products
@@ -169,18 +173,25 @@ class TensorCores(Scene):
 
                     dot_prod[-1].deactivate_depth_test()
                     self.play(dot_prod[-1].animate(run_time=run_time, rate_func=linear).move_to(mat1_3d[j*8 + k].get_center()))
+                    self.frame.add_updater(updater)
                 else:
-                    run_time = 0.25 if j < 2 else 0.1
+                    run_time = 0.2 if j < 2 else 0.05
                     dot_prod[-1].deactivate_depth_test()
                     tmp = dot_prod[-1].copy().set_color(to_green(7)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
                     self.play(*[Transform(x, tmp, run_time=run_time) for x in dot_prod])
+
+                self.play(Write(thread_numbers[j*tile_n + k]), run_time=0.05)
         self.frame.remove_updater(updater)
 
+        self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
+
         #Show full matrix
-        self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g))
+        self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g), 
+                  self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547).set_shape(329, 187).move_to([-28.3, 8.62, -25.36]))
 
         # Show tiling
         self.play(self.frame.animate.set_shape(329, 187).move_to([-28.3, 8.62, -25.36]))
+        self.play(self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
 
         n_tiles = total_n // tile_n
 
@@ -222,4 +233,6 @@ class TensorCores(Scene):
                 anims.append(VGroup(*mat1_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*DOWN))
                 anims.append(VGroup(*mat2_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*IN))
                 anims.append(VGroup(*mat3_tiles[x][y]).animate.shift(y*4*IN + x*4*DOWN))
+
         self.play(*anims)
+
