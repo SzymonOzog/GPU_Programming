@@ -324,3 +324,44 @@ class TensorCores(Scene):
             tmp = mat1_3d[i].copy().set_opacity(1).set_color(to_green(7, total_n)).deactivate_depth_test()
             anims.extend([Transform(dot_prod[-1], tmp, remover=True), Transform(mat1_3d[i], tmp)])
         self.play(*anims)
+
+
+        #show tensor cores
+        for tile in range(1, n_tiles):
+            mat2_3d = mat2_tiles[tile][0]
+            mat3_3d = mat3_tiles[0][tile]
+            self.play(VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1))
+            anims = [] 
+            dot_prods = []
+            cs = []
+            for j in range(tile_n):
+                for k in range(tile_n):
+                    run_time = 1
+
+                    v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                    v2 = [mat3_3d[j*8 + i] for i in range(8)]
+
+                    dot_prod = []
+                    for i in range(8):
+                        pos = mat1_3d[j*8 + k].get_center().copy()
+                        pos[2] = v1[i].get_center()[2]
+                        dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
+                    dot_prods.append(dot_prod)
+
+                    for i in range(8):
+                        c1 = v1[i].copy()
+                        c2 = v2[i].copy()
+                        cs.extend([c1, c2])
+                        anims.extend([Transform(cs[-2], dot_prod[i], remover=True),ReplacementTransform(cs[-1], dot_prod[i])])
+
+            self.play(*anims, run_time=run_time)
+
+            #visualize accumulate
+            anims = []
+            for i, dot_prod in enumerate(dot_prods):
+                run_time = 0.5
+                tmp = dot_prod[-1].copy().set_color(to_green(tile*8 + 7, total_n)).move_to(mat1_3d[i])
+                # anims.extend([Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear, remover=True), 
+                #               Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear)])
+                anims.extend([Transform(x, tmp, remover=True) for x in dot_prod] + [Transform(mat1_3d[i], tmp)])
+            self.play(*anims)
