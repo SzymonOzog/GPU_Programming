@@ -325,6 +325,8 @@ class TensorCores(Scene):
             anims.extend([Transform(dot_prod[-1], tmp, remover=True), Transform(mat1_3d[i], tmp)])
         self.play(*anims)
 
+        self.play(VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3))
+
 
         #show tensor cores
         for tile in range(1, n_tiles):
@@ -360,8 +362,7 @@ class TensorCores(Scene):
             anims = []
             for i, dot_prod in enumerate(dot_prods):
                 run_time = 0.5
-                tmp = dot_prod[-1].copy().set_color(to_green(tile*8 + 7, total_n)).move_to(mat1_3d[i])
-                # anims.extend([Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear, remover=True), 
-                #               Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear)])
+                tmp = mat1_3d[i].copy().set_color(to_green(tile*8 + 7, total_n))
                 anims.extend([Transform(x, tmp, remover=True) for x in dot_prod] + [Transform(mat1_3d[i], tmp)])
             self.play(*anims)
+            self.play(VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3))
