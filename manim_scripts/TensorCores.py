@@ -366,3 +366,49 @@ class TensorCores(Scene):
                 anims.extend([Transform(x, tmp, remover=True) for x in dot_prod] + [Transform(mat1_3d[i], tmp)])
             self.play(*anims)
             self.play(VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3))
+
+        #play full matmul
+        for tile_o in range(1, 2):
+            anims1 = []
+            anims2 = [] 
+            anims3 = []
+            anims4 = [] 
+            dot_prods = []
+            cs = []
+            for tile_i in range(n_tiles):
+                mat2_3d = mat2_tiles[tile_o][tile_i]
+                mat3_3d = mat3_tiles[tile_i][tile_o]
+                mat1_3d = mat1_tiles[tile_o][tile_i]
+                anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
+                anims3.extend([VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3)])
+                for j in range(tile_n):
+                    for k in range(tile_n):
+                        run_time = 1
+
+                        v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                        v2 = [mat3_3d[j*8 + i] for i in range(8)]
+
+                        dot_prod = []
+                        for i in range(8):
+                            pos = mat1_3d[j*8 + k].get_center().copy()
+                            pos[2] = v1[i].get_center()[2]
+                            dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
+                        dot_prods.append(dot_prod)
+
+                        for i in range(8):
+                            c1 = v1[i].copy()
+                            c2 = v2[i].copy()
+                            cs.extend([c1, c2])
+                            anims2.extend([Transform(cs[-2], dot_prod[i], remover=True),ReplacementTransform(cs[-1], dot_prod[i])])
+
+                #visualize accumulate
+                for i, dot_prod in enumerate(dot_prods[-tile_n*tile_n:]):
+                    run_time = 0.5
+                    tmp = mat1_3d[i].copy().set_color(to_green(tile*8 + 7, total_n))
+                    anims4.extend([Transform(x, tmp, remover=True) for x in dot_prod] + [Transform(mat1_3d[i], tmp)])
+
+            self.play(*anims1, run_time=run_time)
+            self.play(*anims2, run_time=run_time)
+
+            self.play(*anims3)
+            self.play(*anims4)
