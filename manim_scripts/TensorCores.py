@@ -382,26 +382,20 @@ class TensorCores(Scene):
             for tile_i in range(n_tiles):
                 mat2_3d = mat2_tiles[tile_o][tile_i]
                 for tile_j in range(n_tiles):
-                    mat3_3d = mat3_tiles[tile_i][tile_o]
-                    mat1_3d = mat1_tiles[tile_i][tile_j]
+                    mat3_3d = mat3_tiles[tile_j][tile_o]
+                    mat1_3d = mat1_tiles[tile_j][tile_i]
                     anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
                     anims3.extend([VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3)])
                     dot_prod = []
                     for j in range(8):
                         for k in range(8):
-                            run_time = 1
-
                             v1 = [mat2_3d[i*8 + k] for i in range(8)]
                             v2 = [mat3_3d[j*8 + i] for i in range(8)]
 
                             for i in range(8):
                                 pos = mat1_3d[j*8 + k].get_center().copy()
-                                pos[2] = v1[i].get_center()[2]
+                                pos[2] = v1[i].get_center()[2] - (43) + i * 6 if tile_o == 0 and tile_i == 0 else v1[i].get_center()[2]
                                 dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
-                            # dot_prods.append(dot_prod)
-
-
-                    
 
                     acc = VGroup(*dot_prod)
 
