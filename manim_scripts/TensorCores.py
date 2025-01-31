@@ -412,3 +412,89 @@ class TensorCores(Scene):
 
             self.play(*anims4)
             self.play(*anims3)
+
+class TensorCoresCode(Scene):
+    def construct(self):
+        # init scene
+        total_n = 32
+        tile_n = 8
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        mat1_f = [Square(stroke_width=0, fill_color=GREEN, fill_opacity=0.5) for _ in range(total_n*total_n)]
+        mat2_f = [Square(stroke_width=0, fill_color=BLUE, fill_opacity=0.5) for _ in range(total_n*total_n)]
+        mat3_f = [Square(stroke_width=0, fill_color=ORANGE, fill_opacity=0.5) for _ in range(total_n*total_n)]
+
+
+        g1 = Group(*mat1_f).arrange_in_grid(total_n, total_n, buff=4).move_to(ORIGIN, aligned_edge=UL).shift(25*UP + 15*LEFT)
+        g2 = Group(*mat2_f).arrange_in_grid(total_n, total_n, buff=4).next_to(g1, UP, buff = 2)
+        g3 = Group(*mat3_f).arrange_in_grid(total_n, total_n, buff=4).next_to(g1, LEFT, buff = 2)
+
+        self.frame.set_shape(183, 103)
+        self.frame.move_to([-7, 24, 0])
+
+        #accumulate
+        def to_green(step, total = 6):
+            percentage_red = 1 - step/total
+            red = int(255*percentage_red + 131 * (1-percentage_red)) 
+            return f"#{red:02x}C167"
+
+            
+        #move to 3d
+        mat1_3d_f = [VCube(fill_color=x.get_color(), fill_opacity=0.3).move_to(x.get_center()) for x in mat1_f]
+        mat2_3d_f = [VCube(fill_color=x.get_color(), fill_opacity=0.3).move_to(x.get_center()).shift(2*IN) for x in mat2_f]
+        mat3_3d_f = [VCube(fill_color=x.get_color(), fill_opacity=0.3).move_to(x.get_center()).shift(2*IN) for x in mat3_f]
+
+
+        #rotate matrices
+        self.play(self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
+
+        mat1_3d_f_g = VGroup(*mat1_3d_f)
+        mat2_3d_f_g = VGroup(*mat2_3d_f)
+        mat3_3d_f_g = VGroup(*mat3_3d_f)
+
+
+        mat2_3d_f_g.rotate(radians(90), axis=LEFT, about_edge=DOWN)
+        mat3_3d_f_g.rotate(radians(90), axis=DOWN, about_edge=RIGHT)
+
+        n_tiles = total_n // tile_n
+
+        mat1_tiles = []
+        mat2_tiles = []
+        mat3_tiles = []
+
+        for tile_x in range(0, total_n, tile_n):
+            outer_tile1 = []
+            outer_tile2 = []
+            outer_tile3 = []
+            for tile_y in range(0, total_n, tile_n):
+                tile1 = []
+                tile2 = []
+                tile3 = []
+                for x in range(tile_n):
+                    for y in range(tile_n):
+                        r = tile_x + x
+                        c = tile_y + y
+                        tile1.append(mat1_3d_f[r*total_n + c])
+
+                        r = total_n - tile_n - tile_x + x
+                        c = tile_y + y
+                        tile2.append(mat2_3d_f[r*total_n + c])
+
+                        r = tile_x + x
+                        c = total_n - tile_n - tile_y + y
+                        tile3.append(mat3_3d_f[r*total_n + c])
+                outer_tile1.append(VGroup(*tile1))
+                outer_tile2.append(VGroup(*tile2))
+                outer_tile3.append(VGroup(*tile3))
+            mat1_tiles.append(outer_tile1)
+            mat2_tiles.append(outer_tile2)
+            mat3_tiles.append(outer_tile3)
+
+        #create first shape
+        self.play(ShowCreation(mat1_tiles[0][0]), ShowCreation(mat1_tiles[0][1]),
+                  ShowCreation(mat1_tiles[1][0]), ShowCreation(mat1_tiles[1][1]),
+
+                  ShowCreation(mat2_tiles[0][0]), ShowCreation(mat2_tiles[0][1]),
+                  ShowCreation(mat2_tiles[1][0]), ShowCreation(mat2_tiles[1][1]),
+
+                  ShowCreation(mat3_tiles[0][0]), ShowCreation(mat3_tiles[0][1]),
+                  ShowCreation(mat3_tiles[1][0]), ShowCreation(mat3_tiles[1][1]))
