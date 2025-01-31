@@ -490,11 +490,47 @@ class TensorCoresCode(Scene):
             mat3_tiles.append(outer_tile3)
 
         #create first shape
-        self.play(ShowCreation(mat1_tiles[0][0]), ShowCreation(mat1_tiles[0][1]),
-                  ShowCreation(mat1_tiles[1][0]), ShowCreation(mat1_tiles[1][1]),
+        self.play(FadeIn(mat1_tiles[0][0]), FadeIn(mat1_tiles[0][1]),
+                  FadeIn(mat1_tiles[1][0]), FadeIn(mat1_tiles[1][1]),
 
-                  ShowCreation(mat2_tiles[0][0]), ShowCreation(mat2_tiles[0][1]),
-                  ShowCreation(mat2_tiles[1][0]), ShowCreation(mat2_tiles[1][1]),
+                  FadeIn(mat2_tiles[0][0]), FadeIn(mat2_tiles[0][1]),
+                  FadeIn(mat2_tiles[1][0]), FadeIn(mat2_tiles[1][1]),
 
-                  ShowCreation(mat3_tiles[0][0]), ShowCreation(mat3_tiles[0][1]),
-                  ShowCreation(mat3_tiles[1][0]), ShowCreation(mat3_tiles[1][1]))
+                  FadeIn(mat3_tiles[0][0]), FadeIn(mat3_tiles[0][1]),
+                  FadeIn(mat3_tiles[1][0]), FadeIn(mat3_tiles[1][1]))
+        
+        #create next shape
+        self.play(FadeIn(mat1_tiles[0][2]), FadeIn(mat1_tiles[0][3]),
+                  FadeOut(mat1_tiles[1][0]), FadeOut(mat1_tiles[1][1]),
+
+                  FadeIn(mat2_tiles[0][2]), FadeIn(mat2_tiles[0][3]),
+                  FadeOut(mat2_tiles[1][0]), FadeOut(mat2_tiles[1][1]),
+
+                  # FadeIn(mat3_tiles[0][2]), FadeIn(mat3_tiles[0][3]),
+                  FadeOut(mat3_tiles[0][1]),
+                  FadeOut(mat3_tiles[1][0]), FadeOut(mat3_tiles[1][1]))
+
+        #create third shape
+        self.play(FadeOut(mat1_tiles[0][3]),
+                  FadeOut(mat1_tiles[0][1]), FadeOut(mat1_tiles[0][2]),
+
+                  FadeIn(mat2_tiles[1][0]), FadeIn(mat2_tiles[2][0]),
+                  FadeIn(mat2_tiles[3][0]), FadeOut(mat2_tiles[0][3]),
+                  FadeOut(mat2_tiles[0][1]), FadeOut(mat2_tiles[0][2]),
+
+                  # FadeIn(mat3_tiles[0][2]), FadeIn(mat3_tiles[0][3]),
+                  FadeIn(mat3_tiles[0][1]),
+                  FadeIn(mat3_tiles[0][2]), FadeIn(mat3_tiles[0][3]))
+
+        #create last shape
+        self.play(FadeIn(mat1_tiles[1][0]),
+                  FadeIn(mat1_tiles[2][0]), FadeIn(mat1_tiles[3][0]),
+
+                  FadeOut(mat2_tiles[1][0]), FadeOut(mat2_tiles[2][0]),
+                  FadeOut(mat2_tiles[3][0]),
+
+                  FadeIn(mat3_tiles[1][0]),
+                  FadeIn(mat3_tiles[2][0]), FadeIn(mat3_tiles[3][0]),
+
+                  FadeOut(mat3_tiles[0][1]),
+                  FadeOut(mat3_tiles[0][2]), FadeOut(mat3_tiles[0][3]))
