@@ -413,6 +413,8 @@ class TensorCores(Scene):
             self.play(*anims4)
             self.play(*anims3)
 
+
+
 class TensorCoresCode(Scene):
     def construct(self):
         # init scene
@@ -482,9 +484,9 @@ class TensorCoresCode(Scene):
                         r = tile_x + x
                         c = total_n - tile_n - tile_y + y
                         tile3.append(mat3_3d_f[r*total_n + c])
-                outer_tile1.append(VGroup(*tile1))
-                outer_tile2.append(VGroup(*tile2))
-                outer_tile3.append(VGroup(*tile3))
+                outer_tile1.append(tile1)
+                outer_tile2.append(tile2)
+                outer_tile3.append(tile3)
             mat1_tiles.append(outer_tile1)
             mat2_tiles.append(outer_tile2)
             mat3_tiles.append(outer_tile3)
@@ -504,36 +506,71 @@ class TensorCoresCode(Scene):
         a_tile3_3 = mat3_tiles[1][0].copy()
         a_tile3_4 = mat3_tiles[1][1].copy()
 
+        def nicely_animate(mobjects, start_dir):
+            def dist(mobj, point):
+                return np.sqrt(np.sum((mobj.get_center() - point)**2))
+            nicely_animated = []
+            radius = 1
+            while sum([len(x) for x in nicely_animated]) != len(mobjects):
+                batch = []
+                for mobj in mobjects:
+                    if dist(mobj, start_dir) < radius and not any(mobj in x for x in nicely_animated): 
+                        batch.append(mobj)
+                nicely_animated.append(batch)
+                radius += 5
+
+            return nicely_animated
+
+        def lagged_fade(mobjects, start_dir, fade_in, **kwargs):
+            nicely_animated = nicely_animate(mobjects, start_dir)
+            anim = FadeIn if fade_in else FadeOut
+            anims = [AnimationGroup(*[anim(y) for y in x]) for x in nicely_animated if len(x) > 0]
+            return LaggedStart(*anims, **kwargs)
+
+        #temp
+
+
+        crossing = (mat1_3d_f_g.get_corner(UL) + mat2_3d_f_g.get_corner(OUT+LEFT) + mat3_3d_f_g.get_corner(OUT+UP))/3
         #create first shape
-        self.play(FadeIn(a_tile1_1), FadeIn(a_tile1_2),
-                  FadeIn(a_tile1_3), FadeIn(a_tile1_4),
+        self.play(lagged_fade(mat1_tiles[0][0] + mat1_tiles[0][1] +
+                              mat1_tiles[1][0] + mat1_tiles[1][1] +
 
-                  FadeIn(a_tile2_1), FadeIn(a_tile2_2),
-                  FadeIn(a_tile2_3), FadeIn(a_tile2_4),
+                              mat2_tiles[0][0] + mat2_tiles[0][1] +
+                              mat2_tiles[1][0] + mat2_tiles[1][1] +
 
-                  FadeIn(a_tile3_1), FadeIn(a_tile3_2),
-                  FadeIn(a_tile3_3), FadeIn(a_tile3_4))
+                              mat3_tiles[0][0] + mat3_tiles[0][1] +
+                              mat3_tiles[1][0] + mat3_tiles[1][1],
+                              crossing, True, lag_ratio=0.02))
 
         #create next shape
-        self.play(Transform(a_tile1_3, mat1_tiles[0][2].copy()), Transform(a_tile1_4, mat1_tiles[0][3].copy()),
-                  Transform(a_tile2_3, mat2_tiles[0][2].copy()), Transform(a_tile2_4, mat2_tiles[0][3].copy()),
-                  FadeOut(a_tile3_2), FadeOut(a_tile3_3), FadeOut(a_tile3_4))
+        self.play(lagged_fade(mat1_tiles[0][2] + mat1_tiles[0][3] +
+                              mat2_tiles[0][2] + mat2_tiles[0][3],
+                              crossing, True),
+                  lagged_fade(mat1_tiles[1][0] + mat1_tiles[1][1],
+                              mat1_3d_f_g.get_corner(LEFT), False),
+
+                  lagged_fade(mat2_tiles[1][0] + mat2_tiles[1][1],
+                              mat2_3d_f_g.get_corner(LEFT+IN), False),
+
+                  lagged_fade(mat3_tiles[0][1] + mat3_tiles[1][0] + mat3_tiles[1][1],
+                              mat3_3d_f_g.get_corner(DOWN+IN), False))
 
         #create third shape
-        a_tile3_2 = mat3_tiles[0][1].copy()
-        a_tile3_3 = mat3_tiles[0][2].copy()
-        a_tile3_4 = mat3_tiles[0][3].copy()
-        self.play(FadeOut(a_tile1_2), FadeOut(a_tile1_3), FadeOut(a_tile1_4),
-                  Transform(a_tile2_2, mat2_tiles[1][0].copy()), Transform(a_tile2_3, mat2_tiles[2][0].copy()),
-                  Transform(a_tile2_4, mat2_tiles[3][0].copy()),
-                  FadeIn(a_tile3_2), FadeIn(a_tile3_3), FadeIn(a_tile3_4))
+        self.play(lagged_fade(mat1_tiles[0][3] + mat1_tiles[0][1] + mat1_tiles[0][2],
+                              mat1_3d_f_g.get_corner(RIGHT), False),
+                  lagged_fade(mat2_tiles[1][0] + mat2_tiles[2][0] + mat2_tiles[3][0],
+                              mat2_3d_f_g.get_corner(OUT+LEFT), True),
+                  lagged_fade(mat2_tiles[0][1] + mat2_tiles[0][2] + mat2_tiles[0][3],
+                              mat2_3d_f_g.get_corner(RIGHT), False),
+                  lagged_fade(mat3_tiles[0][1] + mat3_tiles[0][2] + mat3_tiles[0][3],
+                              crossing, True))
 
         #create last shape
-        a_tile1_2 = mat1_tiles[1][0].copy()
-        a_tile1_3 = mat1_tiles[2][0].copy()
-        a_tile1_4 = mat1_tiles[3][0].copy()
-        self.play(FadeIn(a_tile1_2), FadeIn(a_tile1_3), FadeIn(a_tile1_4),
-                  FadeOut(a_tile2_2), FadeOut(a_tile2_3), FadeOut(a_tile2_4),
-                  Transform(a_tile3_2, mat3_tiles[1][0].copy()),
-                  Transform(a_tile3_3, mat3_tiles[2][0].copy()), Transform(a_tile3_4, mat3_tiles[3][0].copy()))
-
+        self.play(lagged_fade(mat1_tiles[1][0] + mat1_tiles[2][0] + mat1_tiles[3][0],
+                              crossing, True),
+                  lagged_fade(mat2_tiles[1][0] + mat2_tiles[2][0] + mat2_tiles[3][0],
+                              mat2_3d_f_g.get_corner(IN+LEFT), False),
+                  lagged_fade(mat3_tiles[0][1] + mat3_tiles[0][2] + mat3_tiles[0][3],
+                              mat3_3d_f_g.get_corner(IN), False),
+                  lagged_fade(mat3_tiles[1][0] + mat3_tiles[2][0] + mat3_tiles[3][0],
+                              crossing, True))
