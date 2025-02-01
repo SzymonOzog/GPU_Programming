@@ -489,48 +489,51 @@ class TensorCoresCode(Scene):
             mat2_tiles.append(outer_tile2)
             mat3_tiles.append(outer_tile3)
 
+        a_tile1_1 = mat1_tiles[0][0].copy()
+        a_tile1_2 = mat1_tiles[0][1].copy()
+        a_tile1_3 = mat1_tiles[1][0].copy()
+        a_tile1_4 = mat1_tiles[1][1].copy()
+
+        a_tile2_1 = mat2_tiles[0][0].copy()
+        a_tile2_2 = mat2_tiles[0][1].copy()
+        a_tile2_3 = mat2_tiles[1][0].copy()
+        a_tile2_4 = mat2_tiles[1][1].copy()
+
+        a_tile3_1 = mat3_tiles[0][0].copy()
+        a_tile3_2 = mat3_tiles[0][1].copy()
+        a_tile3_3 = mat3_tiles[1][0].copy()
+        a_tile3_4 = mat3_tiles[1][1].copy()
+
         #create first shape
-        self.play(FadeIn(mat1_tiles[0][0]), FadeIn(mat1_tiles[0][1]),
-                  FadeIn(mat1_tiles[1][0]), FadeIn(mat1_tiles[1][1]),
+        self.play(FadeIn(a_tile1_1), FadeIn(a_tile1_2),
+                  FadeIn(a_tile1_3), FadeIn(a_tile1_4),
 
-                  FadeIn(mat2_tiles[0][0]), FadeIn(mat2_tiles[0][1]),
-                  FadeIn(mat2_tiles[1][0]), FadeIn(mat2_tiles[1][1]),
+                  FadeIn(a_tile2_1), FadeIn(a_tile2_2),
+                  FadeIn(a_tile2_3), FadeIn(a_tile2_4),
 
-                  FadeIn(mat3_tiles[0][0]), FadeIn(mat3_tiles[0][1]),
-                  FadeIn(mat3_tiles[1][0]), FadeIn(mat3_tiles[1][1]))
-        
+                  FadeIn(a_tile3_1), FadeIn(a_tile3_2),
+                  FadeIn(a_tile3_3), FadeIn(a_tile3_4))
+
         #create next shape
-        self.play(FadeIn(mat1_tiles[0][2]), FadeIn(mat1_tiles[0][3]),
-                  FadeOut(mat1_tiles[1][0]), FadeOut(mat1_tiles[1][1]),
-
-                  FadeIn(mat2_tiles[0][2]), FadeIn(mat2_tiles[0][3]),
-                  FadeOut(mat2_tiles[1][0]), FadeOut(mat2_tiles[1][1]),
-
-                  # FadeIn(mat3_tiles[0][2]), FadeIn(mat3_tiles[0][3]),
-                  FadeOut(mat3_tiles[0][1]),
-                  FadeOut(mat3_tiles[1][0]), FadeOut(mat3_tiles[1][1]))
+        self.play(Transform(a_tile1_3, mat1_tiles[0][2].copy()), Transform(a_tile1_4, mat1_tiles[0][3].copy()),
+                  Transform(a_tile2_3, mat2_tiles[0][2].copy()), Transform(a_tile2_4, mat2_tiles[0][3].copy()),
+                  FadeOut(a_tile3_2), FadeOut(a_tile3_3), FadeOut(a_tile3_4))
 
         #create third shape
-        self.play(FadeOut(mat1_tiles[0][3]),
-                  FadeOut(mat1_tiles[0][1]), FadeOut(mat1_tiles[0][2]),
-
-                  FadeIn(mat2_tiles[1][0]), FadeIn(mat2_tiles[2][0]),
-                  FadeIn(mat2_tiles[3][0]), FadeOut(mat2_tiles[0][3]),
-                  FadeOut(mat2_tiles[0][1]), FadeOut(mat2_tiles[0][2]),
-
-                  # FadeIn(mat3_tiles[0][2]), FadeIn(mat3_tiles[0][3]),
-                  FadeIn(mat3_tiles[0][1]),
-                  FadeIn(mat3_tiles[0][2]), FadeIn(mat3_tiles[0][3]))
+        a_tile3_2 = mat3_tiles[0][1].copy()
+        a_tile3_3 = mat3_tiles[0][2].copy()
+        a_tile3_4 = mat3_tiles[0][3].copy()
+        self.play(FadeOut(a_tile1_2), FadeOut(a_tile1_3), FadeOut(a_tile1_4),
+                  Transform(a_tile2_2, mat2_tiles[1][0].copy()), Transform(a_tile2_3, mat2_tiles[2][0].copy()),
+                  Transform(a_tile2_4, mat2_tiles[3][0].copy()),
+                  FadeIn(a_tile3_2), FadeIn(a_tile3_3), FadeIn(a_tile3_4))
 
         #create last shape
-        self.play(FadeIn(mat1_tiles[1][0]),
-                  FadeIn(mat1_tiles[2][0]), FadeIn(mat1_tiles[3][0]),
+        a_tile1_2 = mat1_tiles[1][0].copy()
+        a_tile1_3 = mat1_tiles[2][0].copy()
+        a_tile1_4 = mat1_tiles[3][0].copy()
+        self.play(FadeIn(a_tile1_2), FadeIn(a_tile1_3), FadeIn(a_tile1_4),
+                  FadeOut(a_tile2_2), FadeOut(a_tile2_3), FadeOut(a_tile2_4),
+                  Transform(a_tile3_2, mat3_tiles[1][0].copy()),
+                  Transform(a_tile3_3, mat3_tiles[2][0].copy()), Transform(a_tile3_4, mat3_tiles[3][0].copy()))
 
-                  FadeOut(mat2_tiles[1][0]), FadeOut(mat2_tiles[2][0]),
-                  FadeOut(mat2_tiles[3][0]),
-
-                  FadeIn(mat3_tiles[1][0]),
-                  FadeIn(mat3_tiles[2][0]), FadeIn(mat3_tiles[3][0]),
-
-                  FadeOut(mat3_tiles[0][1]),
-                  FadeOut(mat3_tiles[0][2]), FadeOut(mat3_tiles[0][3]))
