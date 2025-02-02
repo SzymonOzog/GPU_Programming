@@ -6,6 +6,7 @@ import re
 import typing as t
 
 from manim_voiceover.services.base import SpeechService
+from manim_voiceover.tracker import VoiceoverTracker
 from manim_voiceover.helper import chunks, remove_bookmarks
 
 import numpy as np
@@ -42,7 +43,7 @@ class TimeInterpolator:
 class VoiceoverTracker:
     """Class to track the progress of a voiceover in a scene."""
 
-    def __init__(self, scene: Scene, data: dict, cache_dir: str):
+    def __init__(self, scene: Scene, data: dict, cache_dir: str, dummy: bool = False):
         """Initializes a VoiceoverTracker object.
 
         Args:
@@ -52,7 +53,7 @@ class VoiceoverTracker:
         self.scene = scene
         self.data = data
         self.cache_dir = cache_dir
-        self.duration = get_duration(Path(cache_dir) / self.data["final_audio"])
+        self.duration = 0.01 if dummy else get_duration(Path(cache_dir) / self.data["final_audio"])
         last_t = scene.time
         # last_t = scene.renderer.time
         if last_t is None:
@@ -343,7 +344,9 @@ class VoiceoverScene(Scene):
             raise ValueError("Please specify either a voiceover text or SSML string.")
 
         try:
-            if text is not None:
+            if self.window is not None:
+                yield VoiceoverTracker(self, "", None, True)
+            elif text is not None:
                 yield self.add_voiceover_text(text, **kwargs)
             elif ssml is not None:
                 yield self.add_voiceover_ssml(ssml, **kwargs)
