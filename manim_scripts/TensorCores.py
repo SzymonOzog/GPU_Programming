@@ -56,8 +56,8 @@ class TensorCores(Scene):
             vv1 = v1[i].copy()
             vv2 = v2[i].copy()
             self.play(vv1.animate.move_to(v3[i].get_center()),
-                      vv2.animate.move_to(v3[i].get_center()))
-            self.play(FadeOut(vv1), FadeOut(vv2), FadeIn(v3[i]))
+                      vv2.animate.move_to(v3[i].get_center()), run_time=0.3)
+            self.play(FadeOut(vv1), FadeOut(vv2), FadeIn(v3[i]), run_time=0.3)
 
         #accumulate
         def to_green(step, total = 6):
@@ -68,10 +68,10 @@ class TensorCores(Scene):
             
         for i in range(tile_n-1):
             self.play(v3[i].animate.move_to(v3[i+1]),
-                      v3[i+1].animate.set_color(to_green(i)))
+                      v3[i+1].animate.set_color(to_green(i)), run_time=0.3)
             self.remove(v3[i])
 
-        self.play(v3[-1].animate.move_to(mat1[0].get_center()))
+        self.play(v3[-1].animate.move_to(mat1[0].get_center()), run_time=0.3)
 
         #move to 3d
         mat1_3d_f = [VCube(fill_color=GREY, fill_opacity=0.1).move_to(x.get_center()) for x in mat1_f]
@@ -95,7 +95,7 @@ class TensorCores(Scene):
                 mat3_3d.append(mat3_3d_f[r*total_n + c])
 
 
-        self.play(*[FadeOut(x)for x in mat1 + mat2 + mat3], 
+        self.play(*[FadeOut(x)for x in [mat1[0]] + mat2 + mat3], 
                   *[FadeIn(x)for x in mat1_3d + mat2_3d + mat3_3d],
                   FadeOut(v3[-1]))
 
