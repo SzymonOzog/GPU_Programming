@@ -184,6 +184,7 @@ class VoiceoverScene(Scene):
     current_tracker: Optional[VoiceoverTracker]
     create_subcaption: bool
     create_script: bool
+    voiceovers_in_embed: bool = False
 
     def set_speech_service(
         self,
@@ -344,7 +345,7 @@ class VoiceoverScene(Scene):
             raise ValueError("Please specify either a voiceover text or SSML string.")
 
         try:
-            if self.window is not None:
+            if self.window is not None and not self.voiceovers_in_embed:
                 yield VoiceoverTracker(self, "", None, True)
             elif text is not None:
                 yield self.add_voiceover_text(text, **kwargs)
