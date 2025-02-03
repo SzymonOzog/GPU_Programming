@@ -1,9 +1,21 @@
+import os
 from manimlib import *
 from math import radians
+from manim_voiceover.services.gtts import GTTSService
+from manim_voiceover.services.recorder import RecorderService
+#TODO why do I have to do this
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from voicover_gl import VoiceoverScene
 
-class TensorCores(Scene):
+class TensorCores(VoiceoverScene):
     def construct(self):
         # init scene
+        self.set_speech_service(
+            # RecorderService(transcription_model="base")
+            GTTSService(transcription_model="base")
+            )
+        self.voiceovers_in_embed = True
+
         total_n = 32
         tile_n = 8
         self.play(*[FadeOut(x) for x in self.mobjects])
@@ -34,44 +46,47 @@ class TensorCores(Scene):
                 c = total_n - tile_n + j
                 mat3.append(mat3_f[r*total_n + c])
 
-        self.play(*[ShowCreation(x) for x in mat2])
-        self.play(*[ShowCreation(x) for x in mat3])
+        with self.voiceover(text="""When discissing GPU programming, the algorithm that always pops up is matrix multiplication""") as trk:
+            self.play(*[ShowCreation(x) for x in mat2], run_time=2)
+            self.play(*[ShowCreation(x) for x in mat3], run_time=2)
 
         #highlight vectors
         v1 = [mat2[i*8] for i in range(tile_n)]
         v2 = [mat3[i] for i in range(tile_n)]
+        with self.voiceover(text="""During this operation we take the row vector of one input matrix, and take it's dot product with 
+                            a column vector of the second input matrix, to produce one element of our output matrix""") as trk:
 
-        self.play(*[v.animate.set_opacity(1) for v in v1])
-        self.play(*[v.animate.set_opacity(1) for v in v2])
+            self.play(*[v.animate.set_opacity(1) for v in v1])
+            self.play(*[v.animate.set_opacity(1) for v in v2])
 
-        #interm vector
-        v3 = []
-        for i in range(tile_n):
-            p1 = v2[i].get_center()
-            p2 = v1[i].get_center()
-            pos = [p1[0], p2[1], p2[2]] 
-            v3.append(Square(stroke_width=0, fill_color=YELLOW, fill_opacity=1).move_to(pos))
+            #interm vector
+            v3 = []
+            for i in range(tile_n):
+                p1 = v2[i].get_center()
+                p2 = v1[i].get_center()
+                pos = [p1[0], p2[1], p2[2]] 
+                v3.append(Square(stroke_width=0, fill_color=YELLOW, fill_opacity=1).move_to(pos))
 
-        for i in range(tile_n):
-            vv1 = v1[i].copy()
-            vv2 = v2[i].copy()
-            self.play(vv1.animate.move_to(v3[i].get_center()),
-                      vv2.animate.move_to(v3[i].get_center()), run_time=0.3)
-            self.play(FadeOut(vv1), FadeOut(vv2), FadeIn(v3[i]), run_time=0.3)
+            for i in range(tile_n):
+                vv1 = v1[i].copy()
+                vv2 = v2[i].copy()
+                self.play(vv1.animate.move_to(v3[i].get_center()),
+                          vv2.animate.move_to(v3[i].get_center()), run_time=0.3)
+                self.play(FadeOut(vv1), FadeOut(vv2), FadeIn(v3[i]), run_time=0.3)
 
-        #accumulate
-        def to_green(step, total = 6):
-            percentage_red = 1 - step/total
-            red = int(255*percentage_red + 131 * (1-percentage_red)) 
-            return f"#{red:02x}C167"
+            #accumulate
+            def to_green(step, total = 6):
+                percentage_red = 1 - step/total
+                red = int(255*percentage_red + 131 * (1-percentage_red)) 
+                return f"#{red:02x}C167"
 
-            
-        for i in range(tile_n-1):
-            self.play(v3[i].animate.move_to(v3[i+1]),
-                      v3[i+1].animate.set_color(to_green(i)), run_time=0.3)
-            self.remove(v3[i])
+                
+            for i in range(tile_n-1):
+                self.play(v3[i].animate.move_to(v3[i+1]),
+                          v3[i+1].animate.set_color(to_green(i)), run_time=0.3)
+                self.remove(v3[i])
 
-        self.play(v3[-1].animate.move_to(mat1[0].get_center()), run_time=0.3)
+            self.play(v3[-1].animate.move_to(mat1[0].get_center()), run_time=0.3)
 
         #move to 3d
         mat1_3d_f = [VCube(fill_color=GREY, fill_opacity=0.1).move_to(x.get_center()) for x in mat1_f]
@@ -94,106 +109,110 @@ class TensorCores(Scene):
                 c = total_n - tile_n + j
                 mat3_3d.append(mat3_3d_f[r*total_n + c])
 
+        with self.voiceover(text="""This has a very good three dimensional representation""") as trk:
 
-        self.play(*[FadeOut(x)for x in [mat1[0]] + mat2 + mat3], 
-                  *[FadeIn(x)for x in mat1_3d + mat2_3d + mat3_3d],
-                  FadeOut(v3[-1]))
+            self.play(*[FadeOut(x)for x in [mat1[0]] + mat2 + mat3], 
+                      *[FadeIn(x)for x in mat1_3d + mat2_3d + mat3_3d],
+                      FadeOut(v3[-1]))
 
-        #rotate matrices
-        self.play(self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
+            #rotate matrices
+            self.play(self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
 
-        mat1_3d_f_g = VGroup(*[x for x in mat1_3d_f if x not in mat1_3d])
-        mat2_3d_f_g = VGroup(*[x for x in mat2_3d_f if x not in mat2_3d])
-        mat3_3d_f_g = VGroup(*[x for x in mat3_3d_f if x not in mat3_3d])
-
-
-        mat2_3d_f_g.rotate(radians(90), axis=LEFT, about_edge=DOWN)
-        mat3_3d_f_g.rotate(radians(90), axis=DOWN, about_edge=RIGHT)
+            mat1_3d_f_g = VGroup(*[x for x in mat1_3d_f if x not in mat1_3d])
+            mat2_3d_f_g = VGroup(*[x for x in mat2_3d_f if x not in mat2_3d])
+            mat3_3d_f_g = VGroup(*[x for x in mat3_3d_f if x not in mat3_3d])
 
 
-        mat2_3d_g = VGroup(*mat2_3d)
-        mat3_3d_g = VGroup(*mat3_3d)
-        self.play(mat2_3d_g.animate.rotate(radians(90), axis=LEFT, about_edge=DOWN), mat3_3d_g.animate.rotate(radians(90), axis=DOWN, about_edge=RIGHT))
-        self.play(self.frame.animate.set_shape(137, 77).move_to([-8.3, 4.62, -16.36]))
+            mat2_3d_f_g.rotate(radians(90), axis=LEFT, about_edge=DOWN)
+            mat3_3d_f_g.rotate(radians(90), axis=DOWN, about_edge=RIGHT)
 
-        #show index calculation
-        mat2_3d_f_g.shift(4*IN).shift(4*UP)
-        mat3_3d_f_g.shift(4*IN).shift(4*LEFT)
-        self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP), mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
+
+            mat2_3d_g = VGroup(*mat2_3d)
+            mat3_3d_g = VGroup(*mat3_3d)
+
+            self.play(mat2_3d_g.animate.rotate(radians(90), axis=LEFT, about_edge=DOWN), mat3_3d_g.animate.rotate(radians(90), axis=DOWN, about_edge=RIGHT))
+            self.play(self.frame.animate.set_shape(137, 77).move_to([-8.3, 4.62, -16.36]))
+
+            #show index calculation
+            mat2_3d_f_g.shift(4*IN).shift(4*UP)
+            mat3_3d_f_g.shift(4*IN).shift(4*LEFT)
+            self.play(mat2_3d_g.animate.shift(4*IN).shift(4*UP), mat3_3d_g.animate.shift(4*IN).shift(4*LEFT))
 
         frame_start = self.frame.copy()
         #highlight vectors
         frame_end = self.frame.copy().set_euler_angles(0, 0, 0)
         frame_end.saved_alpha = 0
         def updater(m, dt):
-            frame_end.saved_alpha = min(1, frame_end.saved_alpha+dt/25)
+            frame_end.saved_alpha = min(1, frame_end.saved_alpha+dt/30)
             m.interpolate(frame_start, frame_end, frame_end.saved_alpha)
             
-
+        #show matmul
         thread_numbers = [Text(str(i)).scale(3).move_to(x.get_center()) for i, x in enumerate(mat1_3d)]
-        for j in range(tile_n):
-            for k in range(tile_n):
-                if j + k == 0:
-                    run_time = 1
-                elif j > 0:
-                    run_time = 0.1
-                else:
-                    run_time = 0.25
+        with self.voiceover(text="""Here we can clearly see what vectors of each input matrices correspont to each entry
+                            in the outpup matrix and how we can calculate it's dot product. The naive way to to do this on a GPU, that we discussed
+                            in one of the first episodes of the GPU programming series had each output element calculated by one thread.
+                            So thread 0 would calculate the element at row 0 column 0, thread 1 would calculate the element at row 1 colum one etc..""") as trk:
+            for j in range(tile_n):
+                for k in range(tile_n):
+                    if j + k == 0:
+                        run_time = 1
+                    elif j > 0:
+                        run_time = 0.1
+                    else:
+                        run_time = 0.25
 
-                v1 = [mat2_3d[i*8 + k] for i in range(8)]
-                v2 = [mat3_3d[j*8 + i] for i in range(8)]
+                    v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                    v2 = [mat3_3d[j*8 + i] for i in range(8)]
 
-                disable_highlight = [
-                        m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d if m not in v1+v2
-                        ]
-                
-                dot_prod = []
-                for i in range(8):
-                    pos = mat1_3d[j*8 + k].get_center().copy()
-                    pos[2] = v1[i].get_center()[2] - (43) + i * 6
-                    dot_prod.append(VCube(fill_color=YELLOW).move_to(pos))
+                    disable_highlight = [
+                            m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d if m not in v1+v2
+                            ]
+                    
+                    dot_prod = []
+                    for i in range(8):
+                        pos = mat1_3d[j*8 + k].get_center().copy()
+                        pos[2] = v1[i].get_center()[2] - (43) + i * 6
+                        dot_prod.append(VCube(fill_color=YELLOW).move_to(pos))
 
-                anims = []
-                for i in range(8):
-                    c1 = v1[i].copy()
-                    c2 = v2[i].copy()
-                    dp = dot_prod[i]
-                    anims.extend([ReplacementTransform(c1, dp),ReplacementTransform(c2, dp)])
+                    anims = []
+                    for i in range(8):
+                        c1 = v1[i].copy()
+                        c2 = v2[i].copy()
+                        dp = dot_prod[i]
+                        anims.extend([ReplacementTransform(c1, dp),ReplacementTransform(c2, dp)])
 
-                self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2], *disable_highlight, *anims, run_time=run_time)
+                    self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2], *disable_highlight, *anims, run_time=run_time)
 
 
-                #sum dot products
-                if j + k == 0:
-                    run_time=0.5 if j + k == 0 else 0.03
-                    for i in range(tile_n-1):
-                        tmp = dot_prod[i+1].copy().set_color(to_green(i, total_n))
-                        self.play(Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear), Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear))
-                        self.remove(dot_prod[i])
+                    #sum dot products
+                    if j + k == 0:
+                        run_time=0.5 if j + k == 0 else 0.03
+                        for i in range(tile_n-1):
+                            tmp = dot_prod[i+1].copy().set_color(to_green(i, total_n))
+                            self.play(Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear), Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear))
+                            self.remove(dot_prod[i])
 
-                    tmp = dot_prod[-1].copy().set_color(to_green(7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
-                    self.play(Transform(dot_prod[-1], tmp, remover=True), Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
-                    self.frame.add_updater(updater)
-                else:
-                    run_time = 0.2 if j < 2 else 0.05
-                    dot_prod[-1].deactivate_depth_test()
-                    tmp = dot_prod[-1].copy().set_color(to_green(7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
-                    self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
+                        tmp = dot_prod[-1].copy().set_color(to_green(7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
+                        self.play(Transform(dot_prod[-1], tmp, remover=True), Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
+                        self.frame.add_updater(updater)
+                    else:
+                        run_time = 0.2 if j < 2 else 0.1
+                        dot_prod[-1].deactivate_depth_test()
+                        tmp = dot_prod[-1].copy().set_color(to_green(7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
+                        self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
 
-                self.play(Write(thread_numbers[j*tile_n + k]), run_time=0.05)
-        self.frame.remove_updater(updater)
+                    self.play(Write(thread_numbers[j*tile_n + k]), run_time=0.05)
+            self.frame.remove_updater(updater)
 
-        self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
+            self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
 
         #Show full matrix
-        self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g),
-                  self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547).set_shape(329, 187).move_to([-28.3, 8.62, -25.36]),
-                  *[FadeOut(t) for t in thread_numbers]
-                  )
+        with self.voiceover(text="""Our input matrices tend to be very big""") as trk:
+            self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g),
+                      self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547).set_shape(329, 187).move_to([-28.3, 8.62, -25.36]),
+                      *[FadeOut(t) for t in thread_numbers]
+                      )
 
-        # Show tiling
-        self.play(self.frame.animate.set_shape(329, 187).move_to([-28.3, 8.62, -25.36]))
-        self.play(self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
 
         n_tiles = total_n // tile_n
 
@@ -236,100 +255,61 @@ class TensorCores(Scene):
                 anims.append(VGroup(*mat2_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*IN))
                 anims.append(VGroup(*mat3_tiles[x][y]).animate.shift(y*4*IN + x*4*DOWN))
 
-        self.play(*anims)
+
+        # Show tiling
+        with self.voiceover(text="""To optimize it we split our matrices into tiles""") as trk:
+            self.play(self.frame.animate.set_shape(329, 187).move_to([-28.3, 8.62, -25.36]))
+            self.play(self.frame.animate.set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
+
+            self.play(*anims)
 
         #play next tile
-        for tile in range(1, n_tiles):
-            mat2_3d = mat2_tiles[tile][0]
-            mat3_3d = mat3_tiles[0][tile]
-            self.play(VGroup(*mat2_3d).animate.set_opacity(0.5), VGroup(*mat3_3d).animate.set_opacity(0.5))
-            anims = []
-            for j in range(tile_n):
-                for k in range(tile_n):
-                    run_time = 0.1
+        with self.voiceover(text="""We talked about the motivation for doing this in an episode on matix tiling, but
+                            long story short it helps us move the data to faster memory and reuse it across the threads""") as trk:
+            for tile in range(1, n_tiles):
+                mat2_3d = mat2_tiles[tile][0]
+                mat3_3d = mat3_tiles[0][tile]
+                self.play(VGroup(*mat2_3d).animate.set_opacity(0.5), VGroup(*mat3_3d).animate.set_opacity(0.5))
+                anims = []
+                for j in range(tile_n):
+                    for k in range(tile_n):
+                        run_time = 0.1
 
-                    v1 = [mat2_3d[i*8 + k] for i in range(8)]
-                    v2 = [mat3_3d[j*8 + i] for i in range(8)]
+                        v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                        v2 = [mat3_3d[j*8 + i] for i in range(8)]
 
-                    disable_highlight = [
-                            m.animate.set_opacity(0.5) for m in mat3_3d+mat2_3d if m not in v1+v2
-                            ]
-                    
-                    dot_prod = []
-                    for i in range(8):
-                        pos = mat1_3d[j*8 + k].get_center().copy()
-                        pos[2] = v1[i].get_center()[2] # (43) + i * 6
-                        dot_prod.append(VCube(fill_color=YELLOW).move_to(pos))
+                        disable_highlight = [
+                                m.animate.set_opacity(0.5) for m in mat3_3d+mat2_3d if m not in v1+v2
+                                ]
+                        
+                        dot_prod = []
+                        for i in range(8):
+                            pos = mat1_3d[j*8 + k].get_center().copy()
+                            pos[2] = v1[i].get_center()[2] # (43) + i * 6
+                            dot_prod.append(VCube(fill_color=YELLOW).move_to(pos))
 
-                    anims = []
-                    for i in range(8):
-                        c1 = v1[i].copy()
-                        c2 = v2[i].copy()
-                        anims.extend([ReplacementTransform(c1, dot_prod[i]),ReplacementTransform(c2, dot_prod[i])])
+                        anims = []
+                        for i in range(8):
+                            c1 = v1[i].copy()
+                            c2 = v2[i].copy()
+                            anims.extend([ReplacementTransform(c1, dot_prod[i]),ReplacementTransform(c2, dot_prod[i])])
 
-                    self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2], *disable_highlight, *anims, run_time=run_time)
+                        self.play(*[v.animate.set_opacity(1) for v in v1], *[v.animate.set_opacity(1) for v in v2], *disable_highlight, *anims, run_time=run_time)
 
-                    run_time = 0.05
-                    dot_prod[-1].deactivate_depth_test()
-                    tmp = dot_prod[-1].copy().set_color(to_green(tile*8 + 7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
+                        run_time = 0.05
+                        dot_prod[-1].deactivate_depth_test()
+                        tmp = dot_prod[-1].copy().set_color(to_green(tile*8 + 7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
 
-                    self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
-            self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
+                        self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
+                self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
 
         # reset matrix
         self.play(VGroup(*mat1_3d).animate.set_color(GREY).set_opacity(0.1))
 
         #show tensor cores
-        tile = 0
-        mat2_3d = mat2_tiles[tile][0]
-        mat3_3d = mat3_tiles[0][tile]
-        self.play(VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1))
-        anims = [] 
-        dot_prods = []
-        cs = []
-        for j in range(tile_n):
-            for k in range(tile_n):
-                run_time = 1
-
-                v1 = [mat2_3d[i*8 + k] for i in range(8)]
-                v2 = [mat3_3d[j*8 + i] for i in range(8)]
-
-                dot_prod = []
-                for i in range(8):
-                    pos = mat1_3d[j*8 + k].get_center().copy()
-                    pos[2] = v1[i].get_center()[2] - (43) + i * 6
-                    dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
-                dot_prods.append(dot_prod)
-
-                for i in range(8):
-                    c1 = v1[i].copy()
-                    c2 = v2[i].copy()
-                    cs.extend([c1, c2])
-                    anims.extend([Transform(cs[-2], dot_prod[i], remover=True),ReplacementTransform(cs[-1], dot_prod[i])])
-
-        self.play(*anims, run_time=run_time)
-
-        #visualize accumulate
-        for i in range(7):
-            anims = []
-            for dot_prod in dot_prods:
-                run_time = 0.5
-                tmp = dot_prod[i+1].copy().set_color(to_green(i, total_n))
-                anims.extend([Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear, remover=True), 
-                              Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear)])
-            self.play(*anims)
-
-        anims = []
-        for i, dot_prod in enumerate(dot_prods):
-            tmp = mat1_3d[i].copy().set_opacity(1).set_color(to_green(7, total_n)).deactivate_depth_test()
-            anims.extend([Transform(dot_prod[-1], tmp, remover=True), Transform(mat1_3d[i], tmp)])
-        self.play(*anims)
-
-        self.play(VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3))
-
-
-        #show tensor cores
-        for tile in range(1, n_tiles):
+        with self.voiceover(text="""This is what tensor cores are designed to do, they are given 3 matrices as input, 2 matrices that we want to multiply
+                            and an accumulator containing the result of previous tiled matmul. And they perform a tiled matrix multiplication operation""") as trk:
+            tile = 0
             mat2_3d = mat2_tiles[tile][0]
             mat3_3d = mat3_tiles[0][tile]
             self.play(VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1))
@@ -346,7 +326,7 @@ class TensorCores(Scene):
                     dot_prod = []
                     for i in range(8):
                         pos = mat1_3d[j*8 + k].get_center().copy()
-                        pos[2] = v1[i].get_center()[2]
+                        pos[2] = v1[i].get_center()[2] - (43) + i * 6
                         dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
                     dot_prods.append(dot_prod)
 
@@ -359,59 +339,112 @@ class TensorCores(Scene):
             self.play(*anims, run_time=run_time)
 
             #visualize accumulate
+            for i in range(7):
+                anims = []
+                for dot_prod in dot_prods:
+                    run_time = 0.5
+                    tmp = dot_prod[i+1].copy().set_color(to_green(i, total_n))
+                    anims.extend([Transform(dot_prod[i], tmp, run_time=run_time, rate_func=linear, remover=True), 
+                                  Transform(dot_prod[i+1], tmp, run_time=run_time, rate_func=linear)])
+                self.play(*anims)
+
             anims = []
             for i, dot_prod in enumerate(dot_prods):
-                run_time = 0.5
-                tmp = mat1_3d[i].copy().set_color(to_green(tile*8 + 7, total_n))
-                anims.extend([Transform(x, tmp, remover=True) for x in dot_prod] + [Transform(mat1_3d[i], tmp)])
+                tmp = mat1_3d[i].copy().set_opacity(1).set_color(to_green(7, total_n)).deactivate_depth_test()
+                anims.extend([Transform(dot_prod[-1], tmp, remover=True), Transform(mat1_3d[i], tmp)])
             self.play(*anims)
+
             self.play(VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3))
+
+
+        #show tensor cores
+        with self.voiceover(text="""Previously each thread was calculating one element of the output matrix, in here the whole warp
+                            is working in synchronization to produce one output tile. """) as trk:
+            for tile in range(1, n_tiles):
+                mat2_3d = mat2_tiles[tile][0]
+                mat3_3d = mat3_tiles[0][tile]
+                self.play(VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1))
+                anims = [] 
+                dot_prods = []
+                cs = []
+                for j in range(tile_n):
+                    for k in range(tile_n):
+                        run_time = 1
+
+                        v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                        v2 = [mat3_3d[j*8 + i] for i in range(8)]
+
+                        dot_prod = []
+                        for i in range(8):
+                            pos = mat1_3d[j*8 + k].get_center().copy()
+                            pos[2] = v1[i].get_center()[2]
+                            dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
+                        dot_prods.append(dot_prod)
+
+                        for i in range(8):
+                            c1 = v1[i].copy()
+                            c2 = v2[i].copy()
+                            cs.extend([c1, c2])
+                            anims.extend([Transform(cs[-2], dot_prod[i], remover=True),ReplacementTransform(cs[-1], dot_prod[i])])
+
+                self.play(*anims, run_time=run_time)
+
+                #visualize accumulate
+                anims = []
+                for i, dot_prod in enumerate(dot_prods):
+                    run_time = 0.5
+                    tmp = mat1_3d[i].copy().set_color(to_green(tile*8 + 7, total_n))
+                    anims.extend([Transform(x, tmp, remover=True) for x in dot_prod] + [Transform(mat1_3d[i], tmp)])
+                self.play(*anims)
+                self.play(VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3))
 
         self.wait()
 
         self.play(VGroup(*mat1_3d).animate.set_color(GREY).set_opacity(0.1))
 
         #play full matmul
-        for tile_o in range(n_tiles):
-            anims1 = []
-            anims2 = [] 
-            anims3 = []
-            anims4 = [] 
-            dot_prods = []
-            cs = []
-            for tile_i in range(n_tiles):
-                mat2_3d = mat2_tiles[tile_o][tile_i]
-                for tile_j in range(n_tiles):
-                    mat3_3d = mat3_tiles[tile_j][tile_o]
-                    mat1_3d = mat1_tiles[tile_j][tile_i]
-                    anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
-                    anims3.extend([VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3)])
-                    dot_prod = []
-                    for j in range(8):
-                        for k in range(8):
-                            v1 = [mat2_3d[i*8 + k] for i in range(8)]
-                            v2 = [mat3_3d[j*8 + i] for i in range(8)]
+        with self.voiceover(text="""We can than launch as many warps as there are output tiles in the output matrix to perform a matrix multiplication
+                            on our whole matrix using tensor cores.""") as trk:
+            for tile_o in range(n_tiles):
+                anims1 = []
+                anims2 = [] 
+                anims3 = []
+                anims4 = [] 
+                dot_prods = []
+                cs = []
+                for tile_i in range(n_tiles):
+                    mat2_3d = mat2_tiles[tile_o][tile_i]
+                    for tile_j in range(n_tiles):
+                        mat3_3d = mat3_tiles[tile_j][tile_o]
+                        mat1_3d = mat1_tiles[tile_j][tile_i]
+                        anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
+                        anims3.extend([VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3)])
+                        dot_prod = []
+                        for j in range(8):
+                            for k in range(8):
+                                v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                                v2 = [mat3_3d[j*8 + i] for i in range(8)]
 
-                            for i in range(8):
-                                pos = mat1_3d[j*8 + k].get_center().copy()
-                                pos[2] = v1[i].get_center()[2] - (43) + i * 6 if tile_o == 0 and tile_i == 0 else v1[i].get_center()[2]
-                                dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
+                                for i in range(8):
+                                    pos = mat1_3d[j*8 + k].get_center().copy()
+                                    pos[2] = v1[i].get_center()[2] - (43) + i * 6 if tile_o == 0 and tile_i == 0 else v1[i].get_center()[2]
+                                    dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
 
-                    acc = VGroup(*dot_prod)
+                        acc = VGroup(*dot_prod)
 
-                    anims2.extend([Transform(VGroup(*mat2_3d).copy(), acc, remover=True),ReplacementTransform(VGroup(*mat3_3d).copy(), acc)])
+                        anims2.extend([Transform(VGroup(*mat2_3d).copy(), acc, remover=True),ReplacementTransform(VGroup(*mat3_3d).copy(), acc)])
 
-                    #visualize accumulate
-                    run_time = 0.5
-                    mat_group = VGroup(*mat1_3d)
-                    tmp = mat_group.copy().set_color(to_green(tile*8 + 7, total_n)).set_opacity(1)
-                    anims4.extend([Transform(acc, tmp, remover=True), Transform(mat_group, tmp)])
+                        #visualize accumulate
+                        run_time = 0.5
+                        mat_group = VGroup(*mat1_3d)
+                        tmp = mat_group.copy().set_color(to_green(tile*8 + 7, total_n)).set_opacity(1)
+                        anims4.extend([Transform(acc, tmp, remover=True), Transform(mat_group, tmp)])
 
-            self.play(*anims1, run_time=run_time)
-            self.play(*anims2, run_time=run_time)
+                self.play(*anims1, run_time=run_time)
+                self.play(*anims2, run_time=run_time)
 
-            self.play(*anims4)
-            self.play(*anims3)
+                self.play(*anims4)
+                self.play(*anims3)
 
 
 
