@@ -15,6 +15,7 @@ from manim import logger
 from scipy.interpolate import interp1d
 
 from manimlib import Scene
+from manimlib.config import manim_config
 from manim_voiceover.modify_audio import get_duration
 
 AUDIO_OFFSET_RESOLUTION = 10_000_000
@@ -316,7 +317,7 @@ class VoiceoverScene(Scene):
         Args:
             duration (float): The duration to wait for in seconds.
         """
-        #TODO read fps from config
+        fps = manim_config["camera"]["fps"]
         if duration > 1 / 30:
             self.wait(duration)
 
