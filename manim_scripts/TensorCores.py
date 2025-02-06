@@ -450,8 +450,13 @@ class TensorCores(VoiceoverScene):
 
 
 
-class TensorCoresCode(Scene):
+class TensorCoresCode(VoiceoverScene):
     def construct(self):
+        self.set_speech_service(
+            # RecorderService(transcription_model="base")
+            GTTSService(transcription_model="base")
+            )
+        self.voiceovers_in_embed = True
         # init scene
         total_n = 32
         tile_n = 8
@@ -562,50 +567,46 @@ class TensorCoresCode(Scene):
             anims = [AnimationGroup(*[anim(y) for y in x]) for x in nicely_animated if len(x) > 0]
             return LaggedStart(*anims, **kwargs)
 
-        #temp
-
-
         crossing = (mat1_3d_f_g.get_corner(UL) + mat2_3d_f_g.get_corner(OUT+LEFT) + mat3_3d_f_g.get_corner(OUT+UP))/3
         #create first shape
-        self.play(lagged_fade(mat1_tiles[0][0] + mat1_tiles[0][1] +
-                              mat1_tiles[1][0] + mat1_tiles[1][1] +
+        # a = m x k
+        # b = k x n
+        # acc = m x n
+        with self.voiceover(text="""Whan programming tensor cores, we first need to specify the shapes of our input and output matrices.
+                            Those are reffered to as M N and K
+                            If we go with float16 as our datatype, the shapes that we are allowed to use are 16 by 16 by 16
+                            """) as trk:
+            self.play(lagged_fade(mat1_tiles[0][0] + mat1_tiles[0][1] +
+                                  mat1_tiles[1][0] + mat1_tiles[1][1] +
 
-                              mat2_tiles[0][0] + mat2_tiles[0][1] +
-                              mat2_tiles[1][0] + mat2_tiles[1][1] +
+                                  mat2_tiles[0][0] + mat2_tiles[0][1] +
+                                  mat2_tiles[1][0] + mat2_tiles[1][1] +
 
-                              mat3_tiles[0][0] + mat3_tiles[0][1] +
-                              mat3_tiles[1][0] + mat3_tiles[1][1],
-                              crossing, True, lag_ratio=0.02))
+                                  mat3_tiles[0][0] + mat3_tiles[0][1] +
+                                  mat3_tiles[1][0] + mat3_tiles[1][1],
+                                  crossing, True, lag_ratio=0.02))
 
         #create next shape
-        self.play(lagged_fade(mat1_tiles[0][2] + mat1_tiles[0][3] +
-                              mat2_tiles[0][2] + mat2_tiles[0][3],
-                              crossing, True),
-                  lagged_fade(mat1_tiles[1][0] + mat1_tiles[1][1],
-                              mat1_3d_f_g.get_corner(LEFT), False),
+        with self.voiceover(text="""32 by 8 by 16""") as trk:
+            self.play(lagged_fade(mat1_tiles[0][2] + mat1_tiles[0][3] +
+                                  mat1_tiles[1][2] + mat1_tiles[1][3] +
+                                  mat2_tiles[0][2] + mat2_tiles[0][3], 
+                                  crossing, True),
+                      lagged_fade(mat2_tiles[1][0] + mat2_tiles[1][1],
+                                  mat2_3d_f_g.get_corner(LEFT+IN), False),
 
-                  lagged_fade(mat2_tiles[1][0] + mat2_tiles[1][1],
-                              mat2_3d_f_g.get_corner(LEFT+IN), False),
-
-                  lagged_fade(mat3_tiles[0][1] + mat3_tiles[1][0] + mat3_tiles[1][1],
-                              mat3_3d_f_g.get_corner(DOWN+IN), False))
+                      lagged_fade(mat3_tiles[0][1] + mat3_tiles[1][1],
+                                  mat2_3d_f_g.get_corner(LEFT+IN), False))
 
         #create third shape
-        self.play(lagged_fade(mat1_tiles[0][3] + mat1_tiles[0][1] + mat1_tiles[0][2],
-                              mat1_3d_f_g.get_corner(RIGHT), False),
-                  lagged_fade(mat2_tiles[1][0] + mat2_tiles[2][0] + mat2_tiles[3][0],
-                              mat2_3d_f_g.get_corner(OUT+LEFT), True),
-                  lagged_fade(mat2_tiles[0][1] + mat2_tiles[0][2] + mat2_tiles[0][3],
-                              mat2_3d_f_g.get_corner(RIGHT), False),
-                  lagged_fade(mat3_tiles[0][1] + mat3_tiles[0][2] + mat3_tiles[0][3],
-                              crossing, True))
-
-        #create last shape
-        self.play(lagged_fade(mat1_tiles[1][0] + mat1_tiles[2][0] + mat1_tiles[3][0],
-                              crossing, True),
-                  lagged_fade(mat2_tiles[1][0] + mat2_tiles[2][0] + mat2_tiles[3][0],
-                              mat2_3d_f_g.get_corner(IN+LEFT), False),
-                  lagged_fade(mat3_tiles[0][1] + mat3_tiles[0][2] + mat3_tiles[0][3],
-                              mat3_3d_f_g.get_corner(IN), False),
-                  lagged_fade(mat3_tiles[1][0] + mat3_tiles[2][0] + mat3_tiles[3][0],
-                              crossing, True))
+        with self.voiceover(text="""or 8 by 32 by 16""") as trk:
+            self.play(lagged_fade(mat1_tiles[0][3] + mat1_tiles[0][1] + mat1_tiles[0][2] +
+                                  mat1_tiles[1][3] + mat1_tiles[1][1] + mat1_tiles[1][2],
+                                  mat1_3d_f_g.get_corner(RIGHT+UP), False),
+                      lagged_fade(mat2_tiles[1][0] + mat2_tiles[2][0] + mat2_tiles[3][0],
+                                  mat2_3d_f_g.get_corner(OUT+LEFT), True),
+                      lagged_fade(mat2_tiles[0][1] + mat2_tiles[0][2] + mat2_tiles[0][3],
+                                  mat2_3d_f_g.get_corner(RIGHT), False),
+                      lagged_fade(mat3_tiles[0][1] + mat3_tiles[0][2] + mat3_tiles[0][3] +
+                                  mat3_tiles[1][1] + mat3_tiles[1][2] + mat3_tiles[1][3],
+                                  crossing, True))
