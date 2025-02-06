@@ -202,6 +202,8 @@ class TensorCores(VoiceoverScene):
                         self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
 
                     self.play(Write(thread_numbers[j*tile_n + k]), run_time=0.05)
+            while trk.get_remaining_duration > 0.01:
+                self.wait(0.01)
             self.frame.remove_updater(updater)
 
             self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
