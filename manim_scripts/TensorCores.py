@@ -563,8 +563,9 @@ class TensorCoresCode(VoiceoverScene):
 
         def lagged_fade(mobjects, start_dir, fade_in, **kwargs):
             nicely_animated = nicely_animate(mobjects, start_dir)
-            anim = FadeIn if fade_in else FadeOut
-            anims = [AnimationGroup(*[anim(y) for y in x]) for x in nicely_animated if len(x) > 0]
+            # anim = FadeIn if fade_in else FadeOut
+            # anims = [AnimationGroup(*[anim(y) for y in x]) for x in nicely_animated if len(x) > 0]
+            anims = [AnimationGroup(*[y.animate.set_opacity(1 if fade_in else 0.3) for y in x]) for x in nicely_animated if len(x) > 0]
             return LaggedStart(*anims, **kwargs)
 
         crossing = (mat1_3d_f_g.get_corner(UL) + mat2_3d_f_g.get_corner(OUT+LEFT) + mat3_3d_f_g.get_corner(OUT+UP))/3
@@ -576,15 +577,17 @@ class TensorCoresCode(VoiceoverScene):
                             Those are reffered to as M N and K
                             If we go with float16 as our datatype, the shapes that we are allowed to use are 16 by 16 by 16
                             """) as trk:
-            self.play(lagged_fade(mat1_tiles[0][0] + mat1_tiles[0][1] +
-                                  mat1_tiles[1][0] + mat1_tiles[1][1] +
-
-                                  mat2_tiles[0][0] + mat2_tiles[0][1] +
-                                  mat2_tiles[1][0] + mat2_tiles[1][1] +
-
-                                  mat3_tiles[0][0] + mat3_tiles[0][1] +
-                                  mat3_tiles[1][0] + mat3_tiles[1][1],
+            self.play(lagged_fade(mat1_3d_f + mat2_3d_f + mat3_3d_f,
                                   crossing, True, lag_ratio=0.02))
+            # self.play(lagged_fade(mat1_tiles[0][0] + mat1_tiles[0][1] +
+            #                       mat1_tiles[1][0] + mat1_tiles[1][1] +
+            #
+            #                       mat2_tiles[0][0] + mat2_tiles[0][1] +
+            #                       mat2_tiles[1][0] + mat2_tiles[1][1] +
+            #
+            #                       mat3_tiles[0][0] + mat3_tiles[0][1] +
+            #                       mat3_tiles[1][0] + mat3_tiles[1][1],
+            #                       crossing, True, lag_ratio=0.02))
 
         #create next shape
         with self.voiceover(text="""32 by 8 by 16""") as trk:
