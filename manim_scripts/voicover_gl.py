@@ -327,6 +327,8 @@ class VoiceoverScene(Scene):
         Args:
             mark (str): The `mark` attribute of the bookmark to wait for.
         """
+        if self.current_tracker is None:
+            return
         self.safe_wait(self.current_tracker.time_until_bookmark(mark))
 
     @contextmanager
