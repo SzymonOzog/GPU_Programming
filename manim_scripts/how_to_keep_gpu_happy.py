@@ -79,15 +79,29 @@ def iterate2(x):
         l2 = Line(k1.get_corner(UR), cpu_bot+1.55*LEFT, color=RED)
 
         l3 = Line(k2.get_corner(UL), cpu_bot+0.80*LEFT, color=BLUE)
-        l4 = Line(k2.get_corner(UR), cpu_bot+1.75*RIGHT, color=BLUE)
+        l4 = Line(k2.get_corner(UR), cpu_bot+1.85*RIGHT, color=BLUE)
 
-        l5 = Line(k3.get_corner(UL), cpu_bot+2.80*RIGHT, color=GREEN)
+        l5 = Line(k3.get_corner(UL), cpu_bot+3*RIGHT, color=GREEN)
         l6 = Line(k3.get_corner(UR), cpu_bot+7*RIGHT, color=GREEN)
+
         self.play(ShowCreation(cpu), Write(cpu_t))
+
         self.play(ShowCreation(k1), ShowCreation(k2), ShowCreation(k3),
                   ShowCreation(l1), ShowCreation(l2),
                   ShowCreation(l3), ShowCreation(l4),
                   ShowCreation(l5), ShowCreation(l6))
+
+        #show graph caching
+        self.play(*[FadeOut(l) for l in [l1, l2, l3, l4, l5, l6]])
+        k4 = Rectangle(color=RED).shift(3*LEFT+DOWN)
+        k5 = Rectangle(color=BLUE, width=2).next_to(k4, RIGHT, buff=0.05)
+        k6 = Rectangle(color=GREEN, width=3).next_to(k5, RIGHT, buff=0.05)
+        self.play(Transform(k1, k4), Transform(k2, k5), Transform(k3, k6))
+        graph_t = Text("CUDA graph").next_to(k2, DOWN)
+        self.play(Write(graph_t))
+        l1 = Line(k1.get_corner(UL), cpu_bot+5.3*LEFT, color=RED)
+        l2 = Line(k3.get_corner(UR), cpu_bot+4.6*RIGHT, color=GREEN)
+        self.play(ShowCreation(l1), ShowCreation(l2))
 
 
 
