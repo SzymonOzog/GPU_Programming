@@ -21,6 +21,7 @@ class Talk(Scene):
         self.play(ShowCreation(cpu), Write(cpu_t))
         self.play(ShowCreation(gpu), Write(gpu_t))
         self.play(ShowCreation(connection))
+        self.wait()
 
         #show analogy
         self.play(*[x.animate.shift(2*UP) for x in [cpu, cpu_t, gpu, gpu_t, connection]])
@@ -37,6 +38,7 @@ class Talk(Scene):
                   ReplacementTransform(gpu.copy(), programmer),
                   ReplacementTransform(gpu_t.copy(), programmer_t),
                   ReplacementTransform(connection.copy(), connection2))
+        self.wait()
 
         code = """
 def iterate1(x):
@@ -55,6 +57,7 @@ def iterate2(x):
         self.play(ShowCreation(code_obj))
         time1 = 58.657
         time2 = 0.1449
+        self.wait()
 
         #write results
         t1 = Text(f"{time1} ms").next_to(code_obj, RIGHT).shift(UP)
