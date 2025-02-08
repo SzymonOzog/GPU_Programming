@@ -66,4 +66,29 @@ def iterate2(x):
         self.play(Write(t2))
 
 
+        #graph caching
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        cpu = Rectangle(color=GOLD, width=16).shift(2*UP)
+        cpu_t = Text("CPU Thread", color=GOLD).move_to(cpu)
+        k1 = Rectangle(color=RED).shift(4*LEFT+DOWN)
+        k2 = Rectangle(color=BLUE, width=2).next_to(k1, RIGHT, buff=1.5)
+        k3 = Rectangle(color=GREEN, width=3).next_to(k2, RIGHT, buff=2)
+        cpu_bot = cpu.get_corner(DOWN)
+
+        l1 = Line(k1.get_corner(UL), cpu_bot+6.5*LEFT, color=RED)
+        l2 = Line(k1.get_corner(UR), cpu_bot+1.55*LEFT, color=RED)
+
+        l3 = Line(k2.get_corner(UL), cpu_bot+0.80*LEFT, color=BLUE)
+        l4 = Line(k2.get_corner(UR), cpu_bot+1.75*RIGHT, color=BLUE)
+
+        l5 = Line(k3.get_corner(UL), cpu_bot+2.80*RIGHT, color=GREEN)
+        l6 = Line(k3.get_corner(UR), cpu_bot+7*RIGHT, color=GREEN)
+        self.play(ShowCreation(cpu), Write(cpu_t))
+        self.play(ShowCreation(k1), ShowCreation(k2), ShowCreation(k3),
+                  ShowCreation(l1), ShowCreation(l2),
+                  ShowCreation(l3), ShowCreation(l4),
+                  ShowCreation(l5), ShowCreation(l6))
+
+
+
 
