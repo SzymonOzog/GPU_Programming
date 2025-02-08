@@ -66,6 +66,7 @@ def iterate2(x):
         self.play(Write(t2))
 
 
+        self.wait()
         #graph caching
         self.play(*[FadeOut(x) for x in self.mobjects])
         cpu = Rectangle(color=GOLD, width=16).shift(2*UP)
@@ -90,6 +91,8 @@ def iterate2(x):
                   ShowCreation(l1), ShowCreation(l2),
                   ShowCreation(l3), ShowCreation(l4),
                   ShowCreation(l5), ShowCreation(l6))
+
+        self.wait()
 
         #show graph caching
         self.play(*[FadeOut(l) for l in [l1, l2, l3, l4, l5, l6]])
