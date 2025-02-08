@@ -53,8 +53,8 @@ def iterate2(x):
         code_obj = Code(code)
         self.play(*[FadeOut(x) for x in self.mobjects])
         self.play(ShowCreation(code_obj))
-        time1 = 30.9233
-        time2 = 0.0777
+        time1 = 58.657
+        time2 = 0.1449
 
         #write results
         t1 = Text(f"{time1} ms").next_to(code_obj, RIGHT).shift(UP)
