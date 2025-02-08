@@ -573,16 +573,83 @@ class TensorCoresCode(VoiceoverScene):
             return LaggedStart(*anims, **kwargs)
 
         crossing = (mat1_3d_f_g.get_corner(UL) + mat2_3d_f_g.get_corner(OUT+LEFT) + mat3_3d_f_g.get_corner(OUT+UP))/3
+
+        def create_braces(m, k, n, buff=1):
+            tiles_in_m = m // tile_n
+            tmp = []
+            for i in range(tiles_in_m):
+                tmp += mat2_tiles[0][i]
+            tmp = VGroup(*tmp)
+            
+            b1 = Brace(tmp, stroke_width=5, font_size=1500, direction=UP).next_to(crossing, RIGHT, buff=buff, aligned_edge=DOWN)
+            t1 = Tex("M", font_size=1000).next_to(b1, UP, buff=2)
+
+            tiles_in_k = k // tile_n
+            tmp = []
+            for i in range(tiles_in_k):
+                tmp += mat2_tiles[0][i]
+            tmp = VGroup(*tmp)
+
+            b2 = Brace(tmp, stroke_width=5, font_size=1500, direction=UP).rotate(-radians(90), axis=UP).next_to(crossing, IN, buff=buff, aligned_edge=DOWN)
+            t2 = Tex("K", font_size=1000).rotate(-radians(90), axis=UP).next_to(b2, UP, buff=2)
+
+            tiles_in_n = n // tile_n
+            tmp = []
+            for i in range(tiles_in_n):
+                tmp += mat1_tiles[i][0]
+            tmp = VGroup(*tmp)
+            print(tiles_in_m, tiles_in_n, tiles_in_k)
+            b3 = Brace(tmp, stroke_width=5, font_size=1500, direction=LEFT).next_to(crossing, DOWN, buff=buff, aligned_edge=RIGHT)
+            t3 = Tex("N", font_size=1000).next_to(b3, LEFT, buff=2)
+            return (b1, b2, b3), (t1, t2, t3)
+
+
         #create first shape
         # a = m x k
         # b = k x n
         # acc = m x n
+        self.frame.set_shape(183, 103)
+        self.frame.move_to([-7, 24, 0])
         with self.voiceover(text="""Whan programming tensor cores, we first need to specify the shapes of our input and output matrices.
                             Those are reffered to as M N and K
-                            If we go with float16 as our datatype, the shapes that we are allowed to use are 16 by 16 by 16
                             """) as trk:
             self.play(lagged_fade(mat1_3d_f + mat2_3d_f + mat3_3d_f,
                                   crossing, True, lag_ratio=0.02))
+            self.play(mat2_3d_f_g.animate.shift(4*IN).shift(4*UP), mat3_3d_f_g.animate.shift(4*IN).shift(4*LEFT))
+
+        crossing = (mat1_3d_f_g.get_corner(UL) + mat2_3d_f_g.get_corner(OUT+LEFT) + mat3_3d_f_g.get_corner(OUT+UP))/3
+        braces, texts = create_braces(32, 32, 32)
+
+        #Show M and N
+        with self.voiceover(text="""M is the common dimension between matrix A and our accumulator<bookmark mark='1'/>
+                            and N is shared between matrix 2 and the accumulator""") as trk:
+            self.play(self.frame.animate.set_shape(427, 240)\
+                    .move_to([ 8.3777702e+01, -6.0713127e+01, -1.1432872e-18])\
+                    .set_euler_angles(-3.88572500e-03,  1.35525272e-20,  0.00000000e+00))
+            self.play(ShowCreation(braces[0]), Write(texts[0]))
+            self.wait_until_bookmark("1")
+            self.play(ShowCreation(braces[2]), Write(texts[2]))
+
+        #Show K
+        with self.voiceover(text="""And K is the dimension that is the same between our input matrices""") as trk:
+            self.play(self.frame.animate.set_shape(283, 159)\
+                    .move_to([-7, 24, 0])\
+                    .set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
+            self.play(ShowCreation(braces[1]), Write(texts[1]))
+
+            
+        with self.voiceover(text="""Our tensor cores can operate on three different shapes assuming that we're using half precision""") as trk:
+            pass
+
+        def get_transforms(braces, texts, new_braces, new_texts):
+            anims = []
+            for x, y in zip(braces + texts, new_braces + new_texts):
+                anims.append(Transform(x, y))
+            return anims
+
+        #16by16by16
+        with self.voiceover(text="""16 by 16 by 16""") as trk:
+            
             self.play(lagged_select(mat1_tiles[0][0] + mat1_tiles[0][1] +
                                   mat1_tiles[1][0] + mat1_tiles[1][1] +
 
@@ -591,8 +658,10 @@ class TensorCoresCode(VoiceoverScene):
 
                                   mat3_tiles[0][0] + mat3_tiles[0][1] +
                                   mat3_tiles[1][0] + mat3_tiles[1][1],
-                                  crossing, True, lag_ratio=0.02))
+                                  crossing, True, lag_ratio=0.02),
+                      *get_transforms(braces, texts, *create_braces(16,16,16)))
 
+        
         #create next shape
         with self.voiceover(text="""32 by 8 by 16""") as trk:
             self.play(lagged_select(mat1_tiles[0][2] + mat1_tiles[0][3] +
@@ -603,7 +672,8 @@ class TensorCoresCode(VoiceoverScene):
                                   mat2_3d_f_g.get_corner(LEFT+IN), False),
 
                       lagged_select(mat3_tiles[0][1] + mat3_tiles[1][1],
-                                  mat2_3d_f_g.get_corner(LEFT+IN), False))
+                                    mat2_3d_f_g.get_corner(LEFT+IN), False),
+                      *get_transforms(braces, texts, *create_braces(32,8,16)))
 
         #create third shape
         with self.voiceover(text="""or 8 by 32 by 16""") as trk:
@@ -616,4 +686,5 @@ class TensorCoresCode(VoiceoverScene):
                                   mat2_3d_f_g.get_corner(RIGHT), False),
                       lagged_select(mat3_tiles[0][1] + mat3_tiles[0][2] + mat3_tiles[0][3] +
                                   mat3_tiles[1][1] + mat3_tiles[1][2] + mat3_tiles[1][3],
-                                  crossing, True))
+                                  crossing, True),
+                      *get_transforms(braces, texts, *create_braces(8,32,16)))
