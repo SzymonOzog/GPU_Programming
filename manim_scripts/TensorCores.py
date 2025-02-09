@@ -280,7 +280,7 @@ class TensorCores(VoiceoverScene):
             for tile in range(1, n_tiles):
                 mat2_3d = mat2_tiles[tile][0]
                 mat3_3d = mat3_tiles[0][tile]
-                self.play(VGroup(*mat2_3d).animate.set_opacity(0.5), VGroup(*mat3_3d).animate.set_opacity(0.5))
+                self.play(VGroup(*mat2_3d).animate.set_opacity(0.5), VGroup(*mat3_3d).animate.set_opacity(0.5), run_time=0.2)
                 anims = []
                 for j in range(tile_n):
                     for k in range(tile_n):
@@ -312,7 +312,7 @@ class TensorCores(VoiceoverScene):
                         tmp = dot_prod[-1].copy().set_color(to_green(tile*8 + 7, total_n)).move_to(mat1_3d[j*8+k].get_center()).deactivate_depth_test()
 
                         self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
-                self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d])
+                self.play(*[m.animate.set_opacity(0.3) for m in mat3_3d+mat2_3d], run_time=0.2)
 
         # reset matrix
         self.play(VGroup(*mat1_3d).animate.set_color(GREY).set_opacity(0.1))
