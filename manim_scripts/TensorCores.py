@@ -283,7 +283,7 @@ class TensorCores(VoiceoverScene):
                 anims = []
                 for j in range(tile_n):
                     for k in range(tile_n):
-                        run_time = 0.1
+                        run_time = 0.09
 
                         v1 = [mat2_3d[i*8 + k] for i in range(8)]
                         v2 = [mat3_3d[j*8 + i] for i in range(8)]
