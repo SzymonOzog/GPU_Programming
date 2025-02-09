@@ -203,12 +203,11 @@ class TensorCores(VoiceoverScene):
 
                     self.play(Write(thread_numbers[j*tile_n + k]), run_time=0.05)
             self.wait_until_bookmark("1")
-            saved_color = mat1_3d_f[0].get_color()
             self.play(mat1_3d_f[0].animate.set_color(GREEN))
             self.wait_until_bookmark("2")
-            self.play(mat1_3d_f[0].animate.set_color(saved_color), mat1_3d_f[1].animate.set_color(GREEN))
+            self.play(mat1_3d_f[0].animate.set_color(to_green(7, total_n)), mat1_3d_f[1].animate.set_color(GREEN))
             self.wait(1)
-            self.play(mat1_3d_f[1].animate.set_color(saved_color))
+            self.play(mat1_3d_f[1].animate.set_color(to_green(7, total_n)))
             while trk.get_remaining_duration() > 0.01:
                 self.wait(0.01)
             self.frame.remove_updater(updater)
