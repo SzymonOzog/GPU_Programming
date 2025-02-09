@@ -151,7 +151,7 @@ class TensorCores(VoiceoverScene):
         with self.voiceover(text="""Here we can clearly see what vectors of each input matrices correspont to each entry
                             in the outpup matrix and how we can calculate it's dot product. The naive way to to do this on a GPU, that we discussed
                             in one of the first episodes of the GPU programming series had each output element calculated by one thread.
-                            So thread 0 would calculate the element at row 0 column 0, thread 1 would calculate the element at row 1 colum one etc..""") as trk:
+                            So thread 0 <bookmark mark='1'/>would calculate the element at row 0 column 0, thread 1 would calculate <bookmark mark='2'/>the element at row 1 colum one etc..""") as trk:
             for j in range(tile_n):
                 for k in range(tile_n):
                     if j + k == 0:
@@ -202,7 +202,14 @@ class TensorCores(VoiceoverScene):
                         self.play(*[Transform(x, tmp, remover=True) for x in dot_prod], Transform(mat1_3d[j*8+k], tmp), run_time=run_time)
 
                     self.play(Write(thread_numbers[j*tile_n + k]), run_time=0.05)
-            while trk.get_remaining_duration > 0.01:
+            self.wait_until_bookmark("1")
+            saved_color = mat1_3d_f[0].get_color()
+            self.play(mat1_3d_f[0].animate.set_color(GREEN))
+            self.wait_until_bookmark("2")
+            self.play(mat1_3d_f[0].animate.set_color(saved_color), mat1_3d_f[1].animate.set_color(GREEN))
+            self.wait(1)
+            self.play(mat1_3d_f[1].animate.set_color(saved_color))
+            while trk.get_remaining_duration() > 0.01:
                 self.wait(0.01)
             self.frame.remove_updater(updater)
 
