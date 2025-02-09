@@ -450,7 +450,7 @@ class TensorCores(VoiceoverScene):
                         #visualize accumulate
                         run_time = 0.5
                         mat_group = VGroup(*mat1_3d)
-                        tmp = mat_group.copy().set_color(to_green(tile*8 + 7, total_n)).set_opacity(1)
+                        tmp = mat_group.copy().set_color(to_green(tile_o*8 + 7, total_n)).set_opacity(1)
                         anims4.extend([Transform(acc, tmp, remover=True), Transform(mat_group, tmp)])
 
                 self.play(*anims1, run_time=run_time)
