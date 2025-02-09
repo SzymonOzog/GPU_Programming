@@ -71,8 +71,8 @@ class TensorCores(VoiceoverScene):
                 vv1 = v1[i].copy()
                 vv2 = v2[i].copy()
                 self.play(vv1.animate.move_to(v3[i].get_center()),
-                          vv2.animate.move_to(v3[i].get_center()), run_time=0.3)
-                self.play(FadeOut(vv1), FadeOut(vv2), FadeIn(v3[i]), run_time=0.3)
+                          vv2.animate.move_to(v3[i].get_center()), run_time=0.4)
+                self.play(FadeOut(vv1), FadeOut(vv2), FadeIn(v3[i]), run_time=0.4)
 
             #accumulate
             def to_green(step, total = 6):
@@ -83,7 +83,7 @@ class TensorCores(VoiceoverScene):
                 
             for i in range(tile_n-1):
                 self.play(v3[i].animate.move_to(v3[i+1]),
-                          v3[i+1].animate.set_color(to_green(i)), run_time=0.3)
+                          v3[i+1].animate.set_color(to_green(i)), run_time=0.4)
                 self.remove(v3[i])
 
             self.play(v3[-1].animate.move_to(mat1[0].get_center()), run_time=0.3)
