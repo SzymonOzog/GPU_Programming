@@ -457,8 +457,8 @@ class TensorCores(VoiceoverScene):
 
                 self.play(*anims4)
                 self.play(*anims3)
-
-
+        self.wait(1)
+        self.play(*[FadeOut(x) for x in self.mobjects])
 
 class TensorCoresCode(VoiceoverScene):
     def construct(self):
