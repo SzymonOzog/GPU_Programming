@@ -151,7 +151,7 @@ class TensorCores(VoiceoverScene):
         with self.voiceover(text="""Here we can clearly see what vectors of each input matrices correspont to each entry
                             in the outpup matrix and how we can calculate it's dot product. The naive way to to do this on a GPU, that we discussed
                             in one of the first episodes of the GPU programming series had each output element calculated by one thread.
-                            So thread 0 <bookmark mark='1'/>would calculate the element at row 0 column 0, thread 1 would calculate <bookmark mark='2'/>the element at row 1 colum one etc..""") as trk:
+                            So thread 0 <bookmark mark='1'/>would calculate the element at row 0 column 0, thread 1 would calculate <bookmark mark='2'/>the element at row 1 colum one etc.""") as trk:
             for j in range(tile_n):
                 for k in range(tile_n):
                     if j + k == 0:
@@ -273,8 +273,10 @@ class TensorCores(VoiceoverScene):
             self.play(*anims)
 
         #play next tile
-        with self.voiceover(text="""We talked about the motivation for doing this in an episode on matix tiling, but
-                            long story short it helps us move the data to faster memory and reuse it across the threads""") as trk:
+        with self.voiceover(text="""We talked about the motivation for doing this in an episode on matix tiling so if you want a 
+                            refresher on this you can go back to that video, but
+                            long story short it helps us move the data to faster memory and reuse it across the threads.
+                            The pattern of memory access is used across all highly performant matrix multiplication algorithms""") as trk:
             for tile in range(1, n_tiles):
                 mat2_3d = mat2_tiles[tile][0]
                 mat3_3d = mat3_tiles[0][tile]
@@ -317,7 +319,7 @@ class TensorCores(VoiceoverScene):
 
         #show tensor cores
         with self.voiceover(text="""This is what tensor cores are designed to do, they are given 3 matrices as input, <bookmark mark='1'/>2 matrices that we want to multiply
-                            and an accumulator containing the result of previous tiled matmul. And they perform <bookmark mark='2'/>a tiled matrix multiplication operation""") as trk:
+                            and an accumulator containing the result of previous tiled matmul. And they perform <bookmark mark='2'/>a tiled matrix multiplication operation _""") as trk:
             tile = 0
             mat2_3d = mat2_tiles[tile][0]
             mat3_3d = mat3_tiles[0][tile]
