@@ -316,11 +316,12 @@ class TensorCores(VoiceoverScene):
         self.play(VGroup(*mat1_3d).animate.set_color(GREY).set_opacity(0.1))
 
         #show tensor cores
-        with self.voiceover(text="""This is what tensor cores are designed to do, they are given 3 matrices as input, 2 matrices that we want to multiply
-                            and an accumulator containing the result of previous tiled matmul. And they perform a tiled matrix multiplication operation""") as trk:
+        with self.voiceover(text="""This is what tensor cores are designed to do, they are given 3 matrices as input, <bookmark mark='1'/>2 matrices that we want to multiply
+                            and an accumulator containing the result of previous tiled matmul. And they perform <bookmark mark='2'/>a tiled matrix multiplication operation""") as trk:
             tile = 0
             mat2_3d = mat2_tiles[tile][0]
             mat3_3d = mat3_tiles[0][tile]
+            self.wait_until_bookmark("1")
             self.play(VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1))
             anims = [] 
             dot_prods = []
@@ -345,6 +346,7 @@ class TensorCores(VoiceoverScene):
                         cs.extend([c1, c2])
                         anims.extend([Transform(cs[-2], dot_prod[i], remover=True),ReplacementTransform(cs[-1], dot_prod[i])])
 
+            self.wait_until_bookmark("2")
             self.play(*anims, run_time=run_time)
 
             #visualize accumulate
