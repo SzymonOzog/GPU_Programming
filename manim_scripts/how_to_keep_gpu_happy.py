@@ -47,13 +47,12 @@ class Talk(Scene):
         code = """
 def iterate1(x):
 \tfor elem in x:
-\t\tif elem > 999:
-\t\t\t\tprint("never called")
+\t\tdo_stuff()
+
 
 def iterate2(x):
 \t\tfor elem in x.tolist():
-\t\tif elem > 999:
-\t\t\t\tprint("never called")
+\t\tdo_stuff()
 """
         #show code
         code_obj = Code(code)
