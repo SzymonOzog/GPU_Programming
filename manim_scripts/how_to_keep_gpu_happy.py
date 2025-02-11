@@ -9,6 +9,10 @@ from voicover_gl import VoiceoverScene
 
 class Talk(Scene):
     def construct(self):
+        title = Text("HOW TO KEEP YOUR GPU HAPPY")
+        self.play(Write(title))
+        self.wait()
+        self.play(*[FadeOut(x) for x in self.mobjects])
         
         cpu = Square(color=YELLOW).shift(2*LEFT)
         cpu_t = Text("CPU", color=GREEN).move_to(cpu)
