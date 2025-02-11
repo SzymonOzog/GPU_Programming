@@ -3,6 +3,7 @@ from manimlib import *
 from math import radians
 from manim_voiceover.services.gtts import GTTSService
 from manim_voiceover.services.recorder import RecorderService
+from pathlib import Path
 #TODO why do I have to do this
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from voicover_gl import VoiceoverScene
@@ -120,6 +121,21 @@ def iterate2(x):
         nc_2 = Text("677 tok/s", color=RED).next_to(nc_1, DOWN)
 
         self.play(*[Write(t) for t in [gc_1, gc_2, nc_1, nc_2]])
+
+        self.wait()
+
+        #shill myself
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        yt_logo = SVGMobject("/Users/szymon.ozog/Downloads/youtube.svg").shift(UP+2*LEFT).set_color(RED)
+        x_logo = SVGMobject("/Users/szymon.ozog/Downloads/X_logo_2023_original.svg").next_to(yt_logo, DOWN).set_color(WHITE)
+
+        yt_user = Text("Simon Oz").next_to(yt_logo, RIGHT)
+        x_user = Text("@SzymonOz").next_to(x_logo, RIGHT)
+        self.play(ShowCreation(yt_logo), ShowCreation(x_logo), Write(yt_user), Write(x_user))
+
+
+
+
 
 
 
