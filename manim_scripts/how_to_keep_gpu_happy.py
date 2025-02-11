@@ -110,6 +110,17 @@ def iterate2(x):
         l2 = Line(k3.get_corner(UR), cpu_bot+4.6*RIGHT, color=GREEN)
         self.play(ShowCreation(l1), ShowCreation(l2))
 
+        self.wait()
+
+        #show results
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        gc_1 = Text("Graph caching", color=GREEN).shift(2*LEFT)
+        gc_2 = Text("1534 tok/s", color=GREEN).next_to(gc_1, DOWN)
+
+        nc_1 = Text("No graph caching", color=RED).shift(2*RIGHT)
+        nc_2 = Text("677 tok/s", color=RED).next_to(nc_1, DOWN)
+
+        self.play(*[Write(t) for t in [gc_1, gc_2, nc_1, nc_2]])
 
 
 
