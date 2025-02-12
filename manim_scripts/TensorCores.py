@@ -579,7 +579,7 @@ class TensorCoresCode(VoiceoverScene):
 
         def lagged_select(mobjects, start_dir, select, **kwargs):
             nicely_animated = nicely_animate(mobjects, start_dir)
-            anims = [AnimationGroup(*[y.animate.set_opacity(1 if select else 0.3) for y in x]) for x in nicely_animated if len(x) > 0]
+            anims = [AnimationGroup(*[y.animate.set_opacity(0.6 if select else 0.3) for y in x]) for x in nicely_animated if len(x) > 0]
             return LaggedStart(*anims, **kwargs)
 
         crossing = (mat1_3d_f_g.get_corner(UL) + mat2_3d_f_g.get_corner(OUT+LEFT) + mat3_3d_f_g.get_corner(OUT+UP))/3
@@ -659,7 +659,7 @@ class TensorCoresCode(VoiceoverScene):
 
         #16by16by16
         with self.voiceover(text="""16 by 16 by 16""") as trk:
-            
+
             self.play(lagged_select(mat1_tiles[0][0] + mat1_tiles[0][1] +
                                   mat1_tiles[1][0] + mat1_tiles[1][1] +
 
@@ -698,3 +698,38 @@ class TensorCoresCode(VoiceoverScene):
                                   mat3_tiles[1][1] + mat3_tiles[1][2] + mat3_tiles[1][3],
                                   crossing, True),
                       *get_transforms(braces, texts, *create_braces(8,32,16)))
+        
+        
+        # show accumulation 
+        with self.voiceover(text="""For this example let's work with 16 by 16 by 16 matrices""") as trk:
+            self.play(*[FadeOut(x) for x in braces + texts],
+                        lagged_select(mat1_tiles[0][0] + mat1_tiles[0][1] +
+                                      mat1_tiles[1][0] + mat1_tiles[1][1] +
+
+                                      mat2_tiles[0][0] + mat2_tiles[0][1] +
+                                      mat2_tiles[1][0] + mat2_tiles[1][1] +
+
+                                      mat3_tiles[0][0] + mat3_tiles[0][1] +
+                                      mat3_tiles[1][0] + mat3_tiles[1][1],
+                                      crossing, True, lag_ratio=0.02),
+                        lagged_select(mat2_tiles[3][0] + mat2_tiles[2][0] +
+
+                                      mat3_tiles[0][3] + mat3_tiles[1][3] +
+                                      mat3_tiles[0][2] + mat3_tiles[1][2],
+                                      mat2_3d_f_g.get_corner(IN+LEFT), False, lag_ratio=0.02))
+
+        # initialize acc
+        with self.voiceover(text="""We first initialize our accumulator to zeros""") as trk:
+            self.play(*[x.animate.set_color(GREY) for x in 
+                        mat1_tiles[0][0] + mat1_tiles[0][1] +
+                        mat1_tiles[1][0] + mat1_tiles[1][1]])
+
+        # load from global to reg 
+        with self.voiceover(text="""Then after performing a boundary check we load matrix A and matrix B from 
+                            global memory to registers""") as trk:
+            self.play(*[x.animate.set_opacity(1) for x in 
+                                      mat2_tiles[0][0] + mat2_tiles[0][1] +
+                                      mat2_tiles[1][0] + mat2_tiles[1][1] +
+
+                                      mat3_tiles[0][0] + mat3_tiles[0][1] +
+                                      mat3_tiles[1][0] + mat3_tiles[1][1]])
