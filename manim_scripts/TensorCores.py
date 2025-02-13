@@ -725,8 +725,9 @@ class TensorCoresCode(VoiceoverScene):
                         mat1_tiles[1][0] + mat1_tiles[1][1]])
 
         # load from global to reg 
-        with self.voiceover(text="""Then after performing a boundary check we load matrix A and matrix B from 
+        with self.voiceover(text="""Then after performing a boundary check we load <bookmark mark='1'/>matrix A and matrix B from 
                             global memory to registers""") as trk:
+            self.wait_until_bookmark("1")
             self.play(*[x.animate.set_opacity(1) for x in 
                                       mat2_tiles[0][0] + mat2_tiles[0][1] +
                                       mat2_tiles[1][0] + mat2_tiles[1][1] +
@@ -758,8 +759,9 @@ class TensorCoresCode(VoiceoverScene):
 
 
         run_time = 1
-        with self.voiceover(text="""We then perform a tensor core tiled matrix multiplication and store the result in our accumulator""") as trk:
+        with self.voiceover(text="""We then perform a tensor core tiled matrix multiplication and store <bookmark mark='1'/>the result in our accumulator""") as trk:
             self.play(*anims, run_time=run_time)
+            self.wait_until_bookmark("1")
             self.play(*anims2, run_time=run_time)
         self.play(VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3))
 
@@ -793,4 +795,5 @@ class TensorCoresCode(VoiceoverScene):
 
         with self.voiceover(text="""And perform another tiled matrix multiplication for the final result""") as trk:
             self.play(*anims, run_time=run_time)
+            self.wait(1)
             self.play(*anims2, run_time=run_time)
