@@ -733,3 +733,64 @@ class TensorCoresCode(VoiceoverScene):
 
                                       mat3_tiles[0][0] + mat3_tiles[0][1] +
                                       mat3_tiles[1][0] + mat3_tiles[1][1]])
+
+        # show tensor core matmul
+        mat1_3d = mat1_tiles[0][0] + mat1_tiles[0][1] + mat1_tiles[1][0] + mat1_tiles[1][1]
+        mat2_3d = mat2_tiles[0][0] + mat2_tiles[0][1] + mat2_tiles[1][0] + mat2_tiles[1][1]
+        mat3_3d =  mat3_tiles[0][0] + mat3_tiles[0][1] + mat3_tiles[1][0] + mat3_tiles[1][1]
+        dot_prod = []
+        for j in range(16):
+            for k in range(16):
+                v1 = [mat2_3d[i*16 + k] for i in range(16)]
+                v2 = [mat3_3d[j*16 + i] for i in range(16)]
+
+                for i in range(16):
+                    pos = mat1_3d[j*16 + k].get_center().copy()
+                    pos[2] = v1[i].get_center()[2]# - (43) + i * 6 if tile_o == 0 and tile_i == 0 else v1[i].get_center()[2]
+                    dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
+
+        acc = VGroup(*dot_prod)
+
+        anims = [Transform(VGroup(*mat2_3d).copy(), acc, remover=True),ReplacementTransform(VGroup(*mat3_3d).copy(), acc)]
+        mat_group = VGroup(*mat1_3d)
+        tmp = mat_group.copy().set_color(to_green(15, total_n)).set_opacity(1)
+        anims2 = [Transform(acc, tmp, remover=True), Transform(mat_group, tmp)]
+
+
+        run_time = 1
+        with self.voiceover(text="""We then perform a tensor core tiled matrix multiplication and store the result in our accumulator""") as trk:
+            self.play(*anims, run_time=run_time)
+            self.play(*anims2, run_time=run_time)
+        self.play(VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3))
+
+        # show next timed matmul
+        mat2_3d = mat2_tiles[2][0] + mat2_tiles[2][1] + mat2_tiles[3][0] + mat2_tiles[3][1]
+        mat3_3d =  mat3_tiles[0][2] + mat3_tiles[0][3] + mat3_tiles[1][2] + mat3_tiles[1][3]
+
+       
+        with self.voiceover(text="""We then advance our pointer to the next tile""") as trk:
+            self.play(VGroup(*mat2_3d).animate.set_opacity(0.5), VGroup(*mat3_3d).animate.set_opacity(0.5))
+
+        with self.voiceover(text="""Load them from memory""") as trk:
+            self.play(VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1))
+        dot_prod = []
+        for j in range(16):
+            for k in range(16):
+                v1 = [mat2_3d[i*16 + k] for i in range(16)]
+                v2 = [mat3_3d[j*16 + i] for i in range(16)]
+
+                for i in range(16):
+                    pos = mat1_3d[j*16 + k].get_center().copy()
+                    pos[2] = v1[i].get_center()[2]# - (43) + i * 6 if tile_o == 0 and tile_i == 0 else v1[i].get_center()[2]
+                    dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
+
+        acc = VGroup(*dot_prod)
+
+        anims = [Transform(VGroup(*mat2_3d).copy(), acc, remover=True),ReplacementTransform(VGroup(*mat3_3d).copy(), acc)]
+        mat_group = VGroup(*mat1_3d)
+        tmp = mat_group.copy().set_color(GREEN).set_opacity(1)
+        anims2 = [Transform(acc, tmp, remover=True), Transform(mat_group, tmp)]
+
+        with self.voiceover(text="""And perform another tiled matrix multiplication for the final result""") as trk:
+            self.play(*anims, run_time=run_time)
+            self.play(*anims2, run_time=run_time)
