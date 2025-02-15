@@ -57,9 +57,12 @@ class TensorCoresCode(VoiceoverScene):
         tc_label = Text("TensorCores", font_size=32, color=GREEN).next_to(labels[1], DOWN, aligned_edge=LEFT).shift(0.3*RIGHT+0.1*DOWN)
         tiled_label = Text("Tiled Matmul", font_size=32, color=BLUE).next_to(tc_label, DOWN, aligned_edge=LEFT) 
         normal_label = Text("Naive Matmul", font_size=32, color=RED).next_to(tiled_label, DOWN, aligned_edge=LEFT)
-        self.play(Create(ax), Write(labels))
+        with self.voiceover(text="""If we were to graph the throughput that we are getting with tensor cores""") as trk:
+            self.play(Create(ax), Write(labels))
 
-        self.play(Create(tc_graph), Create(tiled_graph), Create(normal_graph))
-        self.play(Write(tc_label), Write(tiled_label), Write(normal_label))
+        with self.voiceover(text="""We can see that just by utilizing tensor cores, we are getting an algorithm
+                            that's 6 times faster than our tiled kernel that we wrote a while back""") as trk:
+            self.play(Create(tc_graph), Create(tiled_graph), Create(normal_graph))
+            self.play(Write(tc_label), Write(tiled_label), Write(normal_label))
         self.wait(1)
 
