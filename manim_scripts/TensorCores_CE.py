@@ -121,3 +121,6 @@ class TensorCoresCode(VoiceoverScene):
         with self.voiceover(text="""In fact we have not even reached the theoretical maximum of what
                             the GPU can do without using tensor cores""") as trk:
             self.play(Create(theoretical_max), Write(theoretical_max_t))
+
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.wait(2)
