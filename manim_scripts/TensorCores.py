@@ -797,3 +797,5 @@ class TensorCoresCode(VoiceoverScene):
             self.play(*anims, run_time=run_time)
             self.wait(1)
             self.play(*anims2, run_time=run_time)
+        self.wait(2)
+        self.play(*[FadeOut(x) for x in self.mobjects])
