@@ -4,13 +4,12 @@ from manim_voiceover.services.recorder import RecorderService
 from manim_voiceover.services.gtts import GTTSService
 import math
 
-class TensorCoresCode(VoiceoverScene):
+class TensorCoresGraph(VoiceoverScene):
     def construct(self):
         self.set_speech_service(
-            # RecorderService(transcription_model="bapse")
+            # RecorderService(transcription_model="base")
             GTTSService(transcription_model="base")
             )
-        self.voiceovers_in_embed = True
         normal_times = [0.0229811, 0.0724406, 0.450077, 3.40259, 27.0164, ]
         tiled_times = [0.0162278, 0.0540909, 0.378201, 2.92617, 23.4949, ]
         tensor_core_times = [0.0113766, 0.0197933, 0.0607453, 0.501476, 3.70657, ]
