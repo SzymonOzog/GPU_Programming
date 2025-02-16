@@ -1,5 +1,6 @@
 from manim import *
 from manim_voiceover import VoiceoverScene
+from manim.mobject.text.text_mobject import remove_invisible_chars
 from manim_voiceover.services.recorder import RecorderService
 from manim_voiceover.services.gtts import GTTSService
 import math
@@ -118,8 +119,150 @@ class TensorCoresGraph(VoiceoverScene):
 
             self.play(Create(theoretical_max_tc), Write(theoretical_max_tc_t))
         with self.voiceover(text="""In fact we have not even reached the theoretical maximum of what
-                            the GPU can do without using tensor cores""") as trk:
+                            the GPU can do without using tensor cores. But filling this gap will be the topic of future videos""") as trk:
             self.play(Create(theoretical_max), Write(theoretical_max_t))
 
         self.play(*[FadeOut(x) for x in self.mobjects])
         self.wait(2)
+
+class TensorCoresCode2(Scene):
+    def construct(self):
+        code = """using layout = nvcuda::wmma::row_major;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, M, N, K, half, layout> a_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, M, N, K, half, layout> b_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::accumulator, M, N, K, half> acc;"""
+        code_obj = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+        code_obj.code = remove_invisible_chars(code_obj.code)
+        hl_a = SurroundingRectangle(code_obj.code[1], buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        hl_b = SurroundingRectangle(code_obj.code[2], buff=0.03, stroke_width=2, fill_opacity=0.3, color=ORANGE)
+        hl_acc = SurroundingRectangle(code_obj.code[3], buff=0.03, stroke_width=2, fill_opacity=0.3, color=GREEN)
+        self.play(Create(code_obj))
+        self.play(Create(hl_a), Create(hl_b), Create(hl_acc))
+
+        self.wait(1)
+
+        code = """constexpr int M = 16;
+constexpr int K = 16;
+constexpr int N = 16;
+using layout = nvcuda::wmma::row_major;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, M, N, K, half, layout> a_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, M, N, K, half, layout> b_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::accumulator, M, N, K, half> acc;"""
+        code_obj_t = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+        code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+        hl_a_t = SurroundingRectangle(code_obj_t.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        hl_b_t = SurroundingRectangle(code_obj_t.code[5], buff=0.03, stroke_width=2, fill_opacity=0.3, color=ORANGE)
+        hl_acc_t = SurroundingRectangle(code_obj_t.code[6], buff=0.03, stroke_width=2, fill_opacity=0.3, color=GREEN)
+        self.play(Transform(code_obj, code_obj_t), Transform(hl_a, hl_a_t), Transform(hl_b, hl_b_t), Transform(hl_acc, hl_acc_t))
+
+        self.wait(1)
+
+        code = """constexpr int M = 32;
+constexpr int K = 8;
+constexpr int N = 16;
+using layout = nvcuda::wmma::row_major;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, M, N, K, half, layout> a_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, M, N, K, half, layout> b_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::accumulator, M, N, K, half> acc;"""
+        code_obj_t = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+        code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+        hl_a_t = SurroundingRectangle(code_obj_t.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        hl_b_t = SurroundingRectangle(code_obj_t.code[5], buff=0.03, stroke_width=2, fill_opacity=0.3, color=ORANGE)
+        hl_acc_t = SurroundingRectangle(code_obj_t.code[6], buff=0.03, stroke_width=2, fill_opacity=0.3, color=GREEN)
+        self.play(Transform(code_obj, code_obj_t), Transform(hl_a, hl_a_t), Transform(hl_b, hl_b_t), Transform(hl_acc, hl_acc_t))
+
+        self.wait(1)
+    
+        code = """constexpr int M = 8;
+constexpr int K = 32;
+constexpr int N = 16;
+using layout = nvcuda::wmma::row_major;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, M, N, K, half, layout> a_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, M, N, K, half, layout> b_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::accumulator, M, N, K, half> acc;"""
+        code_obj_t = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+        code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+        self.play(Transform(code_obj, code_obj_t))
+
+
+        self.wait(1)
+
+        code = """constexpr int MKN = 16;
+using layout = nvcuda::wmma::row_major;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, MKN, MKN, MKN, half, layout> a_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, MKN, MKN, MKN, half, layout> b_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::accumulator, MKN, MKN, MKN, half> acc;
+"""
+        code_obj_t = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+        code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+        hl_a_t = SurroundingRectangle(code_obj_t.code[2], buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        hl_b_t = SurroundingRectangle(code_obj_t.code[3], buff=0.03, stroke_width=2, fill_opacity=0.3, color=ORANGE)
+        hl_acc_t = SurroundingRectangle(code_obj_t.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3, color=GREEN)
+        self.play(Transform(code_obj, code_obj_t), Transform(hl_a, hl_a_t), Transform(hl_b, hl_b_t), Transform(hl_acc, hl_acc_t))
+
+        self.wait(1)
+
+        code = """constexpr int MKN = 16;
+using layout = nvcuda::wmma::row_major;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, MKN, MKN, MKN, half, layout> a_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, MKN, MKN, MKN, half, layout> b_frag;
+nvcuda::wmma::fragment<nvcuda::wmma::accumulator, MKN, MKN, MKN, half> acc;
+
+nvcuda::wmma::fill_fragment(acc, 0);
+"""
+        code_obj_t = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+        code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+        hl_a_t = SurroundingRectangle(code_obj_t.code[2], buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        hl_b_t = SurroundingRectangle(code_obj_t.code[3], buff=0.03, stroke_width=2, fill_opacity=0.3, color=ORANGE)
+        hl_acc_t = SurroundingRectangle(code_obj_t.code[4], buff=0.03, stroke_width=2, fill_opacity=0.3, color=GREEN)
+        self.play(Transform(code_obj, code_obj_t), Transform(hl_a, hl_a_t), Transform(hl_b, hl_b_t), Transform(hl_acc, hl_acc_t))
+
+        self.wait(1)
+        
+
+        code = """for (int32_t i = 0; i < n; i+= MKN)
+{
+    const int32_t matrix_a_row = warpM * MKN;
+    const int32_t matrix_b_col = warpN * MKN;
+
+    if(matrix_a_row<n && matrix_b_col<n && i<n)
+    {
+        nvcuda::wmma::load_matrix_sync(a_frag, a + matrix_a_row * n + i, n);
+        nvcuda::wmma::load_matrix_sync(b_frag, b + i * n + matrix_b_col, n);
+
+        nvcuda::wmma::mma_sync(acc, a_frag, b_frag, acc);
+    }
+}
+"""
+        code_obj_t = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+        code_obj_t.code = remove_invisible_chars(code_obj_t.code)
+        self.play(Transform(code_obj, code_obj_t), FadeOut(hl_a), FadeOut(hl_b), FadeOut(hl_acc))
+
+        self.wait(1)
+
+        hl = SurroundingRectangle(code_obj_t.code[7:9], buff=0.03, stroke_width=2, fill_opacity=0.3, color=RED)
+        self.play(Create(hl))
+
+        self.wait(1)
+
+        hl_t = SurroundingRectangle(code_obj_t.code[10], buff=0.03, stroke_width=2, fill_opacity=0.3, color=RED)
+        self.play(Transform(hl, hl_t))
+
+        self.wait(1)
+
+        hl_t = SurroundingRectangle(code_obj_t.code[0], buff=0.03, stroke_width=2, fill_opacity=0.3, color=RED)
+        self.play(Transform(hl, hl_t))
+
+        self.wait(1)
+
+        hl_t = SurroundingRectangle(code_obj_t.code[7:9], buff=0.03, stroke_width=2, fill_opacity=0.3, color=RED)
+        self.play(Transform(hl, hl_t))
+
+        self.wait(1)
+
+        hl_t = SurroundingRectangle(code_obj_t.code[10], buff=0.03, stroke_width=2, fill_opacity=0.3, color=RED)
+        self.play(Transform(hl, hl_t))
+
+        self.wait(1)
+
+        self.play(*[FadeOut(x) for x in self.mobjects])
