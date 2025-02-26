@@ -17,8 +17,10 @@ class TensorCores(VoiceoverScene):
             )
         self.voiceovers_in_embed = True
 
-        total_n = 32
+        total_n = 64
+        visible_n = 32
         tile_n = 8
+        n_tiles = total_n // tile_n
         self.play(*[FadeOut(x) for x in self.mobjects])
         mat1_f = [Square(stroke_width=0, fill_color=GREEN, fill_opacity=0.5) for _ in range(total_n*total_n)]
         mat2_f = [Square(stroke_width=0, fill_color=BLUE, fill_opacity=0.5) for _ in range(total_n*total_n)]
@@ -98,18 +100,28 @@ class TensorCores(VoiceoverScene):
             mat3_tiles.append(outer_tile3)
 
         anims = []
+        anims2 = []
+        visible_tiles = visible_n//tile_n
         for x in range(n_tiles):
             for y in range(n_tiles):
-                anims.append(VGroup(*mat1_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*DOWN))
-                anims.append(VGroup(*mat2_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*IN))
-                anims.append(VGroup(*mat3_tiles[x][y]).animate.shift(y*4*IN + x*4*DOWN))
+                if x < visible_tiles and y < visible_tiles:
+                    anims.append(FadeIn(VGroup(*mat1_tiles[x][y])))
+                    anims.append(FadeIn(VGroup(*mat2_tiles[x][y])))
+                    anims.append(FadeIn(VGroup(*mat3_tiles[x][y])))
+                    anims2.append(VGroup(*mat1_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*DOWN))
+                    anims2.append(VGroup(*mat2_tiles[x][y]).animate.shift(y*4*RIGHT + x*4*IN))
+                    anims2.append(VGroup(*mat3_tiles[x][y]).animate.shift(y*4*IN + x*4*DOWN))
+                else:
+                    VGroup(*mat1_tiles[x][y]).shift(y*4*RIGHT + x*4*DOWN)
+                    VGroup(*mat2_tiles[x][y]).shift(y*4*RIGHT + x*4*IN)
+                    VGroup(*mat3_tiles[x][y]).shift(y*4*IN + x*4*DOWN)
 
 
         # Show tiling
         self.frame.set_shape(329, 187).move_to([-28.3, 8.62, -25.36]).set_euler_angles(-2.24045432,  1.17009916,  1.86961547)
         with self.voiceover(text="""In the previous episode we saw how given thre matrices divided into tiles""") as trk:
-            self.play(FadeIn(mat1_3d_f_g), FadeIn(mat2_3d_f_g), FadeIn(mat3_3d_f_g))
             self.play(*anims)
+            self.play(*anims2)
 
         def to_green(step, total = 6):
             percentage_red = 1 - step/total
@@ -120,16 +132,16 @@ class TensorCores(VoiceoverScene):
         with self.voiceover(text="""We can use tensor cores to perform a matrix multiplication on them. If you didn't watch that episode you 
                             might want to catch up on it, if you think you know enough about CUDA already and want to jump straight
                             to optimizations then stick around as in this episode we will implement hierarchical tiling to speed up our matmuls""") as trk:
-            for tile_o in range(n_tiles):
+            for tile_o in range(visible_tiles):
                 anims1 = []
                 anims2 = [] 
                 anims3 = []
                 anims4 = [] 
                 dot_prods = []
                 cs = []
-                for tile_i in range(n_tiles):
+                for tile_i in range(visible_tiles):
                     mat2_3d = mat2_tiles[tile_o][tile_i]
-                    for tile_j in range(n_tiles):
+                    for tile_j in range(visible_tiles):
                         mat3_3d = mat3_tiles[tile_j][tile_o]
                         mat1_3d = mat1_tiles[tile_j][tile_i]
                         anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
@@ -152,7 +164,7 @@ class TensorCores(VoiceoverScene):
                         #visualize accumulate
                         run_time = 0.5
                         mat_group = VGroup(*mat1_3d)
-                        tmp = mat_group.copy().set_color(to_green(tile_o*8 + 7, total_n)).set_opacity(1)
+                        tmp = mat_group.copy().set_color(to_green(tile_o*8 + 7, visible_n)).set_opacity(1)
                         anims4.extend([Transform(acc, tmp, remover=True), Transform(mat_group, tmp)])
 
                 self.play(*anims1, run_time=run_time)
@@ -160,5 +172,57 @@ class TensorCores(VoiceoverScene):
 
                 self.play(*anims4)
                 self.play(*anims3)
-        self.wait(1)
-        self.play(*[FadeOut(x) for x in self.mobjects])
+
+        tiles1 = []
+        tiles2 = []
+        tiles3 = []
+
+        w = VGroup(*mat1_tiles[0][0]).get_width()
+        h = VGroup(*mat1_tiles[0][0]).get_height()
+        d = VGroup(*mat1_tiles[0][0]).get_depth()
+
+        for x in range(n_tiles):
+            row1 = []
+            row2 = []
+            row3 = []
+            for y in range(n_tiles):
+                tile1_center = VGroup(*mat1_tiles[x][y]).get_center()
+                tile2_center = VGroup(*mat2_tiles[x][y]).get_center()
+                tile3_center = VGroup(*mat3_tiles[x][y]).get_center()
+                
+                cube1 = VPrism(width=w, height=h, depth=d, fill_color=GREEN, fill_opacity=0.3).move_to(tile1_center)
+                cube2 = VPrism(width=w, height=d, depth=h, fill_color=BLUE, fill_opacity=0.3).move_to(tile2_center)
+                cube3 = VPrism(width=d, height=h, depth=h, fill_color=ORANGE, fill_opacity=0.3).move_to(tile3_center)
+                
+                row1.append(cube1)
+                row2.append(cube2)
+                row3.append(cube3)
+            
+            tiles1.append(row1)
+            tiles2.append(row2)
+            tiles3.append(row3)
+
+        transforms = []
+        anims=[]
+
+        for x in range(n_tiles):
+            for y in range(n_tiles):
+                if x < visible_tiles and y < visible_tiles:
+                    transforms.append(Transform(VGroup(*mat1_tiles[x][y]), tiles1[x][y]))
+                    transforms.append(Transform(VGroup(*mat2_tiles[x][y]), tiles2[x][y]))
+                    transforms.append(Transform(VGroup(*mat3_tiles[x][y]), tiles3[x][y]))
+                else:
+                    anims.append(FadeIn(tiles1[x][y]))
+                    anims.append(FadeIn(tiles2[x][y]))
+                    anims.append(FadeIn(tiles3[x][y]))
+
+
+        
+        # Play transformation animation
+        with self.voiceover(text="""Since we are using tensor cores, we can abstract away single elements and start thinking of our 
+                            matrices in terms of tiles""") as trk:
+            self.play(*transforms, run_time=2)
+
+        # Now scale up to more tiles
+        with self.voiceover(text="""Let's start by thinking of an even bigger matrix""") as trk:
+            self.play(*anims, self.frame.animate.set_shape(708.5559, 402.73547))
