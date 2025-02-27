@@ -208,9 +208,9 @@ class TensorCores(VoiceoverScene):
         for x in range(n_tiles):
             for y in range(n_tiles):
                 if x < visible_tiles and y < visible_tiles:
-                    transforms.append(Transform(VGroup(*mat1_tiles[x][y]), tiles1[x][y]))
-                    transforms.append(Transform(VGroup(*mat2_tiles[x][y]), tiles2[x][y]))
-                    transforms.append(Transform(VGroup(*mat3_tiles[x][y]), tiles3[x][y]))
+                    transforms.append(ReplacementTransform(VGroup(*mat1_tiles[x][y]), tiles1[x][y]))
+                    transforms.append(ReplacementTransform(VGroup(*mat2_tiles[x][y]), tiles2[x][y]))
+                    transforms.append(ReplacementTransform(VGroup(*mat3_tiles[x][y]), tiles3[x][y]))
                 else:
                     anims.append(FadeIn(tiles1[x][y]))
                     anims.append(FadeIn(tiles2[x][y]))
