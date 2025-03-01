@@ -17,7 +17,7 @@ class TensorCores(VoiceoverScene):
             )
         self.voiceovers_in_embed = True
 
-        total_n = 64*2
+        total_n = 64
         visible_n = 32
         tile_n = 8
         n_tiles = total_n // tile_n
@@ -233,8 +233,8 @@ class TensorCores(VoiceoverScene):
         anims = []
         for x in range(0, n_tiles, 2):
             for y in range(0, n_tiles, 2):
-                dist_x = x*4 + 12*(x//4) + 30 *(x//8)
-                dist_y = y*4 + 12*(y//4) + 30 *(x//8)
+                dist_x = x*8 + 16*(x//4)
+                dist_y = y*8 + 16*(y//4)
                 anims.append(VGroup(*tiles1[x][y]).animate.shift(dist_y*RIGHT + dist_x*DOWN))
                 anims.append(VGroup(*tiles2[x][y]).animate.shift(dist_y*RIGHT + x*4*IN))
                 anims.append(VGroup(*tiles3[x][y]).animate.shift(y*4*IN + dist_x*DOWN))
@@ -255,4 +255,33 @@ class TensorCores(VoiceoverScene):
             self.play(*anims)
 
 
+        #show warp distinction
+        rects_b1 = []
+        rects_b2 = []
+        rects_b3 = []
+        rects_b4 = []
+        for x in range(0, n_tiles, 2):
+            for y in range(0, n_tiles, 2):
+                if x <= 2 and y <= 2:
+                    rects = rects_b1
+                elif x > 2 and y <= 2:
+                    rects = rects_b2
+                elif x <= 2 and y > 2:
+                    rects = rects_b3
+                else:
+                    rects = rects_b4
+                rects.append(SurroundingRectangle(VGroup(*tiles1[x][y] + tiles1[x+1][y] + tiles1[x][y+1] + tiles1[x+1][y+1]), buff=5))
+        rects_t = [Text(f"Warp {i}", font_size=2000, base_color=YELLOW).move_to(r) for i, r in enumerate(rects_b1)]
+        
+        with self.voiceover(text="""In this setup each warp producess 4 output tiles""") as trk:
+            self.play(*[ShowCreation(x) for x in rects_b1] + [Write(x) for x in rects_t])
+            self.play(self.frame.animate
+                      .set_shape(1078.2404, 612.86053)
+                      .move_to([145.04472, -178.0173, -15.1940775])
+                      .set_euler_angles(0,0,0))
 
+        #show block distinction
+        blocks = [SurroundingRectangle(VGroup(*r), color=RED, buff=8) for r in [rects_b1, rects_b3, rects_b2, rects_b4]]
+        blocks_t = [Text(f"Block {i}", font_size=3000, fill_color=RED).move_to(r).shift(0.1*OUT) for i, r in enumerate(blocks)]
+        with self.voiceover(text="""And each block produces 16 output tiles""") as trk:
+            self.play(*[ShowCreation(x) for x in blocks] + [Write(x) for x in blocks_t])
