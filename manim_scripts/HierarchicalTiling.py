@@ -8,7 +8,7 @@ from manim_voiceover.services.recorder import RecorderService
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from voicover_gl import VoiceoverScene
 
-class TensorCores(VoiceoverScene):
+class HierarchicalTiling(VoiceoverScene):
     def construct(self):
         # init scene
         self.set_speech_service(
@@ -128,50 +128,50 @@ class TensorCores(VoiceoverScene):
             red = int(255*percentage_red + 131 * (1-percentage_red)) 
             return f"#{red:02x}C167"
 
-        #play full matmul
-        with self.voiceover(text="""We can use tensor cores to perform a matrix multiplication on them. If you didn't watch that episode you 
-                            might want to catch up on it, if you think you know enough about CUDA already and want to jump straight
-                            to optimizations then stick around as in this episode we will implement hierarchical tiling to speed up our matmuls""") as trk:
-            for tile_o in range(visible_tiles):
-                anims1 = []
-                anims2 = [] 
-                anims3 = []
-                anims4 = [] 
-                dot_prods = []
-                cs = []
-                for tile_i in range(visible_tiles):
-                    mat2_3d = mat2_tiles[tile_o][tile_i]
-                    for tile_j in range(visible_tiles):
-                        mat3_3d = mat3_tiles[tile_j][tile_o]
-                        mat1_3d = mat1_tiles[tile_j][tile_i]
-                        anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
-                        anims3.extend([VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3)])
-                        dot_prod = []
-                        for j in range(8):
-                            for k in range(8):
-                                v1 = [mat2_3d[i*8 + k] for i in range(8)]
-                                v2 = [mat3_3d[j*8 + i] for i in range(8)]
-
-                                for i in range(8):
-                                    pos = mat1_3d[j*8 + k].get_center().copy()
-                                    pos[2] = v1[i].get_center()[2] - v1[i].get_center()[2]
-                                    dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
-
-                        acc = VGroup(*dot_prod)
-
-                        anims2.extend([Transform(VGroup(*mat2_3d).copy(), acc, remover=True),ReplacementTransform(VGroup(*mat3_3d).copy(), acc)])
-
-                        #visualize accumulate
-                        run_time = 0.5
-                        mat_group = VGroup(*mat1_3d)
-                        tmp = mat_group.copy().set_color(to_green(tile_o*8 + 7, visible_n)).set_opacity(1)
-                        anims4.extend([Transform(acc, tmp, remover=True), Transform(mat_group, tmp)])
-
-                self.play(*anims1, run_time=run_time)
-                self.play(*anims2, run_time=run_time)
-
-                self.play(*anims4)
-                self.play(*anims3)
+        # #play full matmul
+        # with self.voiceover(text="""We can use tensor cores to perform a matrix multiplication on them. If you didn't watch that episode you 
+        #                     might want to catch up on it, if you think you know enough about CUDA already and want to jump straight
+        #                     to optimizations then stick around as in this episode we will implement hierarchical tiling to speed up our matmuls""") as trk:
+        #     for tile_o in range(visible_tiles):
+        #         anims1 = []
+        #         anims2 = [] 
+        #         anims3 = []
+        #         anims4 = [] 
+        #         dot_prods = []
+        #         cs = []
+        #         for tile_i in range(visible_tiles):
+        #             mat2_3d = mat2_tiles[tile_o][tile_i]
+        #             for tile_j in range(visible_tiles):
+        #                 mat3_3d = mat3_tiles[tile_j][tile_o]
+        #                 mat1_3d = mat1_tiles[tile_j][tile_i]
+        #                 anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
+        #                 anims3.extend([VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3)])
+        #                 dot_prod = []
+        #                 for j in range(8):
+        #                     for k in range(8):
+        #                         v1 = [mat2_3d[i*8 + k] for i in range(8)]
+        #                         v2 = [mat3_3d[j*8 + i] for i in range(8)]
+        #
+        #                         for i in range(8):
+        #                             pos = mat1_3d[j*8 + k].get_center().copy()
+        #                             pos[2] = v1[i].get_center()[2] - v1[i].get_center()[2]
+        #                             dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
+        #
+        #                 acc = VGroup(*dot_prod)
+        #
+        #                 anims2.extend([Transform(VGroup(*mat2_3d).copy(), acc, remover=True),ReplacementTransform(VGroup(*mat3_3d).copy(), acc)])
+        #
+        #                 #visualize accumulate
+        #                 run_time = 0.5
+        #                 mat_group = VGroup(*mat1_3d)
+        #                 tmp = mat_group.copy().set_color(to_green(tile_o*8 + 7, visible_n)).set_opacity(1)
+        #                 anims4.extend([Transform(acc, tmp, remover=True), Transform(mat_group, tmp)])
+        #
+        #         self.play(*anims1, run_time=run_time)
+        #         self.play(*anims2, run_time=run_time)
+        #
+        #         self.play(*anims4)
+        #         self.play(*anims3)
 
         tiles1 = []
         tiles2 = []
@@ -270,18 +270,79 @@ class TensorCores(VoiceoverScene):
                     rects = rects_b3
                 else:
                     rects = rects_b4
-                rects.append(SurroundingRectangle(VGroup(*tiles1[x][y] + tiles1[x+1][y] + tiles1[x][y+1] + tiles1[x+1][y+1]), buff=5))
+                rects.append(SurroundingRectangle(VGroup(tiles1[x][y], tiles1[x+1][y], tiles1[x][y+1], tiles1[x+1][y+1]), buff=5))
         rects_t = [Text(f"Warp {i}", font_size=2000, base_color=YELLOW).move_to(r) for i, r in enumerate(rects_b1)]
         
         with self.voiceover(text="""In this setup each warp producess 4 output tiles""") as trk:
-            self.play(*[ShowCreation(x) for x in rects_b1] + [Write(x) for x in rects_t])
             self.play(self.frame.animate
                       .set_shape(1078.2404, 612.86053)
                       .move_to([145.04472, -178.0173, -15.1940775])
                       .set_euler_angles(0,0,0))
+            self.play(*[ShowCreation(x) for x in rects_b1] + [Write(x) for x in rects_t])
 
         #show block distinction
         blocks = [SurroundingRectangle(VGroup(*r), color=RED, buff=8) for r in [rects_b1, rects_b3, rects_b2, rects_b4]]
         blocks_t = [Text(f"Block {i}", font_size=3000, fill_color=RED).move_to(r).shift(0.1*OUT) for i, r in enumerate(blocks)]
         with self.voiceover(text="""And each block produces 16 output tiles""") as trk:
             self.play(*[ShowCreation(x) for x in blocks] + [Write(x) for x in blocks_t])
+
+
+        anims = []
+
+        for x in range(n_tiles):
+            for y in range(n_tiles):
+                if x < 4 and y < 4:
+                    anims.append(tiles1[x][y].animate.set_color(GREY))
+        with self.voiceover(text="""We start similarly as before by zeroing out our accumulator""") as trk:
+            self.play(*[FadeOut(x) for x in blocks + rects_t + blocks_t + rects_b1 + rects_b2 + rects_b3 + rects_b4],
+                      self.frame.animate.set_shape(1160.2727, 659.4865)
+                      .move_to([-28.3, 8.62, -25.36])
+                      .set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
+            self.play(*anims)
+
+        #show shared memory load
+        with self.voiceover(text="""We then load first parts of our tiles to shared memory""") as trk:
+            anims = []
+            for i in range(4):
+                anims.append(tiles2[0][i].animate.set_opacity(0.5))
+                anims.append(tiles3[i][0].animate.set_opacity(0.5))
+            self.play(*anims)
+
+        def crossing(m1, m2, m3):
+            return np.array([m1.get_center()[0], m1.get_center()[1], m3.get_center()[2]])
+
+        # do tensor core op
+        anims = []
+        anims_inner6 = []
+        for r in range(2):
+            for warp_m in range(2):
+                t2 = tiles2[0][warp_m*2 + r]
+                anims_inner1.append(t2.animate.set_opacity(1))
+                anims_inner6.append(t2.animate.set_opacity(0.3))
+        anims.append(anims_inner1)
+        for r in range(2):
+            anims_inner2 = []
+            anims_inner3 = []
+            anims_inner4 = []
+            anims_inner5 = []
+            for warp_m in range(2):
+                for warp_n in range(2):
+                    t1 = tiles1[warp_n*2][warp_m*2 + r]
+                    t2 = tiles2[0][warp_m*2 + r]
+                    t3 = tiles3[warp_n*2][0]
+                    acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
+                    # self.play(t1.animate.set_opacity(1), t2.animate.set_opacity(1), t3.animate.set_opacity(1))
+                    # self.play(t1.animate.set_opacity(0.1), t2.animate.set_opacity(0.1), t3.animate.set_opacity(0.1))
+                    anims_inner2.append(t3.animate.set_opacity(1))
+                    anims_inner3.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
+                    tmp = t1.copy().set_opacity(1)
+                    anims_inner4.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
+                    anims_inner5.append(t3.animate.set_opacity(0.5))
+            anims.append(anims_inner2)
+            anims.append(anims_inner3)
+            anims.append(anims_inner4)
+            anims.append(anims_inner5)
+        anims.append(anims_inner6)
+
+        for a in anims:
+            self.play(*a)
