@@ -17,7 +17,7 @@ class TensorCores(VoiceoverScene):
             )
         self.voiceovers_in_embed = True
 
-        total_n = 64
+        total_n = 64*2
         visible_n = 32
         tile_n = 8
         n_tiles = total_n // tile_n
@@ -225,4 +225,34 @@ class TensorCores(VoiceoverScene):
 
         # Now scale up to more tiles
         with self.voiceover(text="""Let's start by thinking of an even bigger matrix""") as trk:
-            self.play(*anims, self.frame.animate.set_shape(708.5559, 402.73547))
+            self.play(*anims, self.frame.animate.set_shape(1160.2727, 659.4865))
+
+
+
+        # show block tiles 
+        anims = []
+        for x in range(0, n_tiles, 2):
+            for y in range(0, n_tiles, 2):
+                dist_x = x*4 + 12*(x//4) + 30 *(x//8)
+                dist_y = y*4 + 12*(y//4) + 30 *(x//8)
+                anims.append(VGroup(*tiles1[x][y]).animate.shift(dist_y*RIGHT + dist_x*DOWN))
+                anims.append(VGroup(*tiles2[x][y]).animate.shift(dist_y*RIGHT + x*4*IN))
+                anims.append(VGroup(*tiles3[x][y]).animate.shift(y*4*IN + dist_x*DOWN))
+
+                anims.append(VGroup(*tiles1[x+1][y]).animate.shift(dist_y*RIGHT + dist_x*DOWN))
+                anims.append(VGroup(*tiles2[x+1][y]).animate.shift(dist_y*RIGHT + x*4*IN))
+                anims.append(VGroup(*tiles3[x+1][y]).animate.shift(y*4*IN + dist_x*DOWN))
+
+                anims.append(VGroup(*tiles1[x][y+1]).animate.shift(dist_y*RIGHT + dist_x*DOWN))
+                anims.append(VGroup(*tiles2[x][y+1]).animate.shift(dist_y*RIGHT + x*4*IN))
+                anims.append(VGroup(*tiles3[x][y+1]).animate.shift(y*4*IN + dist_x*DOWN))
+
+                anims.append(VGroup(*tiles1[x+1][y+1]).animate.shift(dist_y*RIGHT + dist_x*DOWN))
+                anims.append(VGroup(*tiles2[x+1][y+1]).animate.shift(dist_y*RIGHT + x*4*IN))
+                anims.append(VGroup(*tiles3[x+1][y+1]).animate.shift(y*4*IN + dist_x*DOWN))
+
+        with self.voiceover(text="""We can now divide this matrix into multiple hierarchicaly constructed tiles""") as trk:
+            self.play(*anims)
+
+
+
