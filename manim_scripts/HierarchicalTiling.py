@@ -300,49 +300,93 @@ class HierarchicalTiling(VoiceoverScene):
                       .set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
             self.play(*anims)
 
+        # move to global memory
+        anims = []
+        for tt in tiles2:
+            for t in tt:
+                anims.append(t.animate.shift(100*UP))
+        for tt in tiles3:
+            for t in tt:
+                anims.append(t.animate.shift(100*LEFT))
+        with self.voiceover(text="""Our input tiles initially start out far away in a slow global memory""") as trk:
+            self.play(*anims)
+
         #show shared memory load
+        smem1 = []
+        smem2 = []
         with self.voiceover(text="""We then load first parts of our tiles to shared memory""") as trk:
             anims = []
             for i in range(4):
+                smem1.append(tiles2[0][i].copy())
+                smem2.append(tiles3[i][0].copy())
                 anims.append(tiles2[0][i].animate.set_opacity(0.5))
                 anims.append(tiles3[i][0].animate.set_opacity(0.5))
+                anims.append(smem1[-1].animate.set_opacity(0.5).shift(60*DOWN))
+                anims.append(smem2[-1].animate.set_opacity(0.5).shift(60*RIGHT))
             self.play(*anims)
 
         def crossing(m1, m2, m3):
             return np.array([m1.get_center()[0], m1.get_center()[1], m3.get_center()[2]])
 
-        # do tensor core op
+        # load row 1 to registers
         anims = []
-        anims_inner6 = []
+        reg1 = [[[] * 2 for i in range(2)] for j in range(2)]
+        reg2 = [[None for i in range(2)] for j in range(2)]
         for r in range(2):
-            for warp_m in range(2):
-                t2 = tiles2[0][warp_m*2 + r]
-                anims_inner1.append(t2.animate.set_opacity(1))
-                anims_inner6.append(t2.animate.set_opacity(0.3))
-        anims.append(anims_inner1)
-        for r in range(2):
-            anims_inner2 = []
-            anims_inner3 = []
-            anims_inner4 = []
-            anims_inner5 = []
             for warp_m in range(2):
                 for warp_n in range(2):
                     t1 = tiles1[warp_n*2][warp_m*2 + r]
                     t2 = tiles2[0][warp_m*2 + r]
                     t3 = tiles3[warp_n*2][0]
-                    acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
-                    # self.play(t1.animate.set_opacity(1), t2.animate.set_opacity(1), t3.animate.set_opacity(1))
-                    # self.play(t1.animate.set_opacity(0.1), t2.animate.set_opacity(0.1), t3.animate.set_opacity(0.1))
-                    anims_inner2.append(t3.animate.set_opacity(1))
-                    anims_inner3.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
-                    tmp = t1.copy().set_opacity(1)
-                    anims_inner4.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
-                    anims_inner5.append(t3.animate.set_opacity(0.5))
-            anims.append(anims_inner2)
-            anims.append(anims_inner3)
-            anims.append(anims_inner4)
-            anims.append(anims_inner5)
-        anims.append(anims_inner6)
+                    reg1[warp_m][warp_n].append(t2.copy())
+                    if reg2[warp_m][warp_n] is None:
+                        reg2[warp_m][warp_n] = t3.copy()
+                    anims.append(reg1[warp_m][warp_n][-1].animate.align_to(t1, UP).shift(3*UP))
+        with self.voiceover(text="""Then all warps in a block will load the data from the first input matrix
+                            from shared memory to registers""") as trk:
+            self.play(*anims, self.frame.animate.set_euler_angles(-2.05697776,  0.77009916,  1.86961547))
+ 
+        # load from b to reg 
+        anims = []
+        for warp_m in range(2):
+            for warp_n in range(2):
+                t1 = tiles1[warp_n*2][warp_m*2]
+                t3 = reg2[warp_m][warp_n]
+                anims.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
+        with self.voiceover(text="""Afterwards we can load one tile of our second matrix to registers from shared memory""") as trk:
+            self.play(*anims)
 
-        for a in anims:
-            self.play(*a)
+        #play mma
+        anims1 = []
+        anims2 = []
+        for r in range(1):
+            for warp_m in range(2):
+                for warp_n in range(2):
+                    t1 = tiles1[warp_n*2][warp_m*2 + r]
+                    t2 = reg1[warp_m][warp_n][r]
+                    t3 = reg2[warp_m][warp_n]
+                    acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
+                    anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
+                    tmp = t1.copy().set_opacity(1)
+                    anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
+        with self.voiceover(text="""We then perform the first""") as trk:
+            self.play(*anims1)
+            self.play(*anims2)
+
+        #play second mma
+        anims1 = []
+        anims2 = []
+        for r in range(1, 2):
+            for warp_m in range(2):
+                for warp_n in range(2):
+                    t1 = tiles1[warp_n*2][warp_m*2 + r]
+                    t2 = reg1[warp_m][warp_n][r]
+                    t3 = reg2[warp_m][warp_n]
+                    acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
+                    anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
+                    tmp = t1.copy().set_opacity(1)
+                    anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
+        with self.voiceover(text="""And then the second mma instruction on the tiles that were already in our registers""") as trk:
+            self.play(*anims1)
+            self.play(*anims2)
+
