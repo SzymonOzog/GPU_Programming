@@ -449,3 +449,67 @@ class HierarchicalTiling(VoiceoverScene):
                         anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
             self.play(*anims1)
             self.play(*anims2)
+
+        # advance tile rows
+        with self.voiceover(text="""When all that is done we can load another tile of the second input matrix
+                            from shared memory to fill next output tiles""") as trk:
+            anims = []
+            tile = 0
+            c = 0
+            for warp_m in range(2):
+                for warp_n in range(2):
+                    anims.append(FadeOut(reg2[warp_m][warp_n]))
+                    anims.extend([FadeOut(x) for x in reg1[warp_m][warp_n]])
+                    anims.append(tiles2[tile*2 + c][i].animate.set_opacity(0.3))
+                    anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.3))
+            self.play(*anims, *[FadeOut(x) for x in smem1 + smem2])
+
+            c = 1
+            smem1 = []
+            smem2 = []
+            anims = []
+            for i in range(4):
+                smem1.append(tiles2[tile*2 + c][i].copy())
+                smem2.append(tiles3[i][tile*2 + c].copy())
+                anims.append(tiles2[tile*2 + c][i].animate.set_opacity(0.5))
+                anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.5))
+                anims.append(smem1[-1].animate.set_opacity(0.5).shift(60*DOWN))
+                anims.append(smem2[-1].animate.set_opacity(0.5).shift(60*RIGHT))
+            self.play(*anims)
+
+        with self.voiceover(text="""And we continue as before loading from shared memory into registers""") as trk:
+            anims = []
+            for r in range(2):
+                for warp_m in range(2):
+                    for warp_n in range(2):
+                        t1 = tiles1[warp_n*2][warp_m*2 + r]
+                        t2 = tiles2[c][warp_m*2 + r]
+                        reg1[warp_m][warp_n].append(t2.copy())
+                        anims.append(reg1[warp_m][warp_n][-1].animate.align_to(t1, UP).shift(3*UP))
+            self.play(*anims)
+
+        with self.voiceover(text="""while reusing the data as much as possible for our MMA instructions""") as trk:
+            for r in range(2):
+                anims = []
+                for warp_m in range(2):
+                    for warp_n in range(2):
+                        t1 = tiles1[warp_n*2 + r][warp_m*2]
+                        t3 = tiles3[warp_n*2 + r][c].copy()
+                        reg2[warp_m][warp_n] = t3
+                        anims.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
+                self.play(*anims)
+
+                anims1 = []
+                anims2 = []
+                for k in range(2):
+                    for warp_m in range(2):
+                        for warp_n in range(2):
+                            t1 = tiles1[warp_n*2 + r][warp_m*2 + k]
+                            t2 = reg1[warp_m][warp_n][k]
+                            t3 = reg2[warp_m][warp_n]
+                            acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
+                            anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
+                            tmp = t1.copy().set_opacity(1)
+                            anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
+                self.play(*anims1)
+                self.play(*anims2)
