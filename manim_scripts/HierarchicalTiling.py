@@ -390,3 +390,31 @@ class HierarchicalTiling(VoiceoverScene):
             self.play(*anims1)
             self.play(*anims2)
 
+
+        #show memory saves
+        l1 = Line(tiles3[0][0], smem2[0])
+        l2s = []
+        for warp_m in range(2):
+            for warp_n in range(2):
+                l2s.append(Line(smem2[0], reg2[warp_m][warp_n].get_corner(UP)))
+        l3s = []
+        for warp_m in range(2):
+            for warp_n in range(2):
+                for r in range(2):
+                    t1 = tiles1[warp_n*2][warp_m*2 + r]
+                    l3s.append(Line(reg2[warp_m][warp_n], t1))
+        with self.voiceover(text="""This is how hierarchical tiling speeds up our memory access, 
+                            We only do one<bookmark mark='1'/> global memory access per tile,
+                            that is then loaded 4 times<bookmark mark='2'/> from much faster shared memory
+                            to registers that reuse it <bookmark mark='3'/>2 more times""") as trk:
+            
+            self.wait_until_bookmark("1")
+            self.play(ShowCreation(l1))
+            self.wait_until_bookmark("2")
+            self.play(*[ShowCreation(l) for l in l2s])
+            self.wait_until_bookmark("3")
+            self.play(*[ShowCreation(l) for l in l3s])
+
+        self.play(*[FadeOut(x) for x in [l1] + l2s + l3s])
+
+
