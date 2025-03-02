@@ -460,8 +460,9 @@ class HierarchicalTiling(VoiceoverScene):
                 for warp_n in range(2):
                     anims.append(FadeOut(reg2[warp_m][warp_n]))
                     anims.extend([FadeOut(x) for x in reg1[warp_m][warp_n]])
-                    anims.append(tiles2[tile*2 + c][i].animate.set_opacity(0.3))
-                    anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.3))
+            for i in range(4):
+                anims.append(tiles2[tile*2 + c][i].animate.set_opacity(0.3))
+                anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.3))
             self.play(*anims, *[FadeOut(x) for x in smem1 + smem2])
 
             c = 1
@@ -479,6 +480,7 @@ class HierarchicalTiling(VoiceoverScene):
 
         with self.voiceover(text="""And we continue as before loading from shared memory into registers""") as trk:
             anims = []
+            reg1 = [[[] * 2 for i in range(2)] for j in range(2)]
             for r in range(2):
                 for warp_m in range(2):
                     for warp_n in range(2):
@@ -513,3 +515,17 @@ class HierarchicalTiling(VoiceoverScene):
                             anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
                 self.play(*anims1)
                 self.play(*anims2)
+                anims = []
+                for warp_m in range(2):
+                    for warp_n in range(2):
+                        anims.append(FadeOut(reg2[warp_m][warp_n]))
+                self.play(*anims)
+        anims = []
+        for warp_m in range(2):
+            for warp_n in range(2):
+                anims.extend([FadeOut(x) for x in reg1[warp_m][warp_n]])
+        for i in range(4):
+            anims.append(tiles2[tile*2 + c][i].animate.set_opacity(0.3))
+            anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.3))
+        self.play(*anims, *[FadeOut(x) for x in smem1 + smem2])
+
