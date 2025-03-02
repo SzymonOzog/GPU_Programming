@@ -417,4 +417,35 @@ class HierarchicalTiling(VoiceoverScene):
 
         self.play(*[FadeOut(x) for x in [l1] + l2s + l3s])
 
+        # play next row matmul
+        with self.voiceover(text="""When all that is done we can load another tile of the second input matrix
+                            from shared memory to fill next output tiles""") as trk:
+            anims = []
+            for warp_m in range(2):
+                for warp_n in range(2):
+                    anims.append(FadeOut(reg2[warp_m][warp_n]))
+            self.play(*anims)
 
+            anims = []
+            for warp_m in range(2):
+                for warp_n in range(2):
+                    t1 = tiles1[warp_n*2 + 1][warp_m*2]
+                    t3 = tiles3[warp_n*2 + 1][0].copy()
+                    reg2[warp_m][warp_n] = t3
+                    anims.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
+            self.play(*anims)
+
+            anims1 = []
+            anims2 = []
+            for r in range(2):
+                for warp_m in range(2):
+                    for warp_n in range(2):
+                        t1 = tiles1[warp_n*2 + 1][warp_m*2 + r]
+                        t2 = reg1[warp_m][warp_n][r]
+                        t3 = reg2[warp_m][warp_n]
+                        acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
+                        anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
+                        tmp = t1.copy().set_opacity(1)
+                        anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
+            self.play(*anims1)
+            self.play(*anims2)
