@@ -62,6 +62,18 @@ __global__ void copy_loop(const unsigned int n , const datatype* __restrict__ in
   }
 }
 
+__global__ void copy_loop_unrolled(const unsigned int n , const datatype* __restrict__ in, datatype*  __restrict__ out)
+{
+  unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
+  for (int idx = i; idx < n; idx+=gridDim.x * blockDim.x * 4)
+  {
+    out[idx] = in[idx];
+    out[idx+gridDim.x*blockDim.x] = in[idx+gridDim.x*blockDim.x];
+    out[idx+2*gridDim.x*blockDim.x] = in[idx+2*gridDim.x*blockDim.x];
+    out[idx+3*gridDim.x*blockDim.x] = in[idx+3*gridDim.x*blockDim.x];
+  }
+}
+
 __global__ void copy_loop_float4(const unsigned int n , const datatype_vec* __restrict__ in, datatype_vec*  __restrict__ out)
 {
   unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -174,9 +186,37 @@ int main()
     {
       ASSERT(out_h[i] == out2_h[i], "failed at copy loop %d, %f, %f\n", i, (float)out_h[i], (float)out2_h[i]);
     }
+    std::cout<<"loop time "<<run_time<<std::endl;
+
+    time = 0.f;
+    run_time = 0.0;
+    for (int i = -WARMUP_STEPS; i<BENCH_STEPS; i++)
+    {
+      clear_l2();
+      gpuErrchk(cudaDeviceSynchronize());
+      gpuErrchk(cudaEventRecord(start));
+      copy_loop_unrolled<<<dimGrid, dimBlock>>>(N, in_d, out2_d);
+      gpuErrchk(cudaEventRecord(stop));
+      gpuErrchk(cudaEventSynchronize(stop));
+      gpuErrchk(cudaEventElapsedTime(&time, start, stop));
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
+      if (i >= 0) // warmup
+      {
+        run_time += time / BENCH_STEPS;
+      }
+    }
+
+    cudaMemcpy(out_h, out_d, N*sizeof(datatype), cudaMemcpyDeviceToHost);
+    cudaMemcpy(out2_h, out2_d, N*sizeof(datatype), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < N; i++)
+    {
+      ASSERT(out_h[i] == out2_h[i], "failed at copy loop unrolled %d, %f, %f\n", i, (float)out_h[i], (float)out2_h[i]);
+    }
+
+    std::cout<<"loop time unrolled "<<run_time<<std::endl;
 
     loop_size = loop_size/VEC_RATIO;
-    std::cout<<"loop time "<<run_time<<std::endl;
     dimGrid = dim3(ceil(N/(float)(BLOCK_SIZE*VEC_RATIO*loop_size)), 1, 1);
     dimBlock = dim3(BLOCK_SIZE, 1, 1);
     time = 0.f;
