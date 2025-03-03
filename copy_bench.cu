@@ -38,7 +38,10 @@ void clear_l2() {
     gpuErrchk(cudaMemset(gpu_scratch_l2_clear, 0, l2_clear_size));
 }
 
-__global__ void copy(int n , datatype* in, datatype* out)
+using datatype = float;
+using datatype_vec = float4;
+
+__global__ void copy(const int n , const datatype* __restrict__ in, datatype*  __restrict__ out)
 {
   unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i < n)
@@ -47,7 +50,7 @@ __global__ void copy(int n , datatype* in, datatype* out)
   }
 }
 
-__global__ void copyh2(int n , datatype_vec* in, datatype_vec* out)
+__global__ void copyh2(const int n , const datatype_vec* __restrict__ in, datatype_vec*  __restrict__ out)
 {
   unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i < n)
@@ -56,27 +59,21 @@ __global__ void copyh2(int n , datatype_vec* in, datatype_vec* out)
   }
 }
 
-__global__ void copy_loop(int n , datatype* in, datatype* out, int max_size)
+__global__ void copy_loop(const unsigned int n , const datatype* __restrict__ in, datatype*  __restrict__ out)
 {
-  unsigned long i = blockIdx.x * blockDim.x;
-  for (int idx = i * max_size; idx < (i+blockDim.x)*max_size; idx+=blockDim.x)
+  unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
+  for (int idx = i; idx < n; idx+=gridDim.x * blockDim.x*4)
   {
-      if (idx<n)
-      {
-        out[idx+threadIdx.x] = in[idx+threadIdx.x];
-      }
+    out[idx] = in[idx];
   }
 }
 
-__global__ void copy_loop_float4(int n , datatype_vec* in, datatype_vec* out, int max_size)
+__global__ void copy_loop_float4(const unsigned int n , const datatype_vec* __restrict__ in, datatype_vec*  __restrict__ out)
 {
-  unsigned long i = blockIdx.x * blockDim.x;
-  for (int idx = i * max_size; idx < (i+blockDim.x)*max_size; idx+=blockDim.x)
+  unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
+  for (int idx = i; idx < n; idx+=gridDim.x * blockDim.x)
   {
-      if (idx<n)
-      {
-        out[idx+threadIdx.x] = in[idx+threadIdx.x];
-      }
+    out[idx] = in[idx];
   }
 }
 
@@ -163,7 +160,7 @@ int main()
       clear_l2();
       gpuErrchk(cudaDeviceSynchronize());
       gpuErrchk(cudaEventRecord(start));
-      copy_loop<<<dimGrid, dimBlock>>>(N, in_d, out2_d, loop_size);
+      copy_loop<<<dimGrid, dimBlock>>>(N, in_d, out2_d);
       gpuErrchk(cudaEventRecord(stop));
       gpuErrchk(cudaEventSynchronize(stop));
       gpuErrchk(cudaEventElapsedTime(&time, start, stop));
@@ -195,7 +192,7 @@ int main()
       clear_l2();
       gpuErrchk(cudaDeviceSynchronize());
       gpuErrchk(cudaEventRecord(start));
-      copy_loop_float4<<<dimGrid, dimBlock>>>(N/VEC_RATIO, reinterpret_cast<datatype_vec*>(in_d), reinterpret_cast<datatype_vec*>(out2_d), loop_size);
+      copy_loop_float4<<<dimGrid, dimBlock>>>(N/VEC_RATIO, reinterpret_cast<datatype_vec*>(in_d), reinterpret_cast<datatype_vec*>(out2_d));
       gpuErrchk(cudaEventRecord(stop));
       gpuErrchk(cudaEventSynchronize(stop));
       gpuErrchk(cudaEventElapsedTime(&time, start, stop));
