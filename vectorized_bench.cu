@@ -11,12 +11,6 @@
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 #define ASSERT(cond, msg, args...) assert((cond) || !fprintf(stderr, (msg "\n"), args))
 
-using datatype = float;
-using datatype_vec = float4;
-
-// using datatype = float;
-// using datatype_vec = float4;
-
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess) {
