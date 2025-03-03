@@ -56,7 +56,7 @@ __global__ void copyh2(const int n , const datatype_vec* __restrict__ in, dataty
 __global__ void copy_loop(const unsigned int n , const datatype* __restrict__ in, datatype*  __restrict__ out)
 {
   unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
-  for (int idx = i; idx < n; idx+=gridDim.x * blockDim.x*4)
+  for (int idx = i; idx < n; idx+=gridDim.x * blockDim.x)
   {
     out[idx] = in[idx];
   }
