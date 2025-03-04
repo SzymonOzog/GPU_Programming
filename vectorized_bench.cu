@@ -121,7 +121,7 @@ int main()
   datatype* out_red2_d;
   constexpr int reduction_factor = 1024;
 
-  long N = std::pow<long, long>(2, 26);
+  long N = std::pow<long, long>(2, 28);
 
     //one warmup run
     cudaEvent_t start, stop;
@@ -218,6 +218,7 @@ int main()
 
     datatype* out_h = new datatype[N];
     datatype* out2_h = new datatype[N];
+    dimGrid.x/=4;
     cudaMemcpy(out_h, out_d, N*sizeof(datatype), cudaMemcpyDeviceToHost);
     cudaMemcpy(out2_h, out2_d, N*sizeof(datatype), cudaMemcpyDeviceToHost);
     for (int i = 0; i < N; i++)
@@ -254,9 +255,6 @@ int main()
 
     std::cout<<"loop time unrolled "<<run_time<<std::endl;
 
-    loop_size = loop_size/VEC_RATIO;
-    dimGrid = dim3(ceil(N/(float)(BLOCK_SIZE*VEC_RATIO*loop_size)), 1, 1);
-    dimBlock = dim3(BLOCK_SIZE, 1, 1);
     time = 0.f;
     run_time = 0.0;
     for (int i = -WARMUP_STEPS; i<BENCH_STEPS; i++)
