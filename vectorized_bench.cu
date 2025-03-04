@@ -4,8 +4,8 @@
 #include <cublas_v2.h>
 
 #define BLOCK_SIZE 128 
-#define BENCH_STEPS 1000
-#define WARMUP_STEPS 100
+#define BENCH_STEPS 1
+#define WARMUP_STEPS 0
 #define VEC_RATIO 4
  
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -83,13 +83,45 @@ __global__ void copy_loop_float4(const unsigned int n , const datatype_vec* __re
   }
 }
 
+__global__ void reduce(const unsigned int n, const datatype* __restrict__ in, datatype*  __restrict__ out)
+{
+  unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
+  float reduction = 0.f;
+#pragma unroll
+  for (int idx = i; idx < n; idx+=gridDim.x * blockDim.x)
+  {
+      reduction += in[idx];
+  }
+  out[i] = reduction;
+}
+
+__global__ void reduce_float4(const unsigned int n, const datatype_vec* __restrict__ in, datatype_vec*  __restrict__ out)
+{
+  unsigned long i = blockIdx.x * blockDim.x + threadIdx.x;
+  float4 reduction = make_float4(0.f, 0.f, 0.f, 0.f);
+#pragma unroll
+  for (int idx = i; idx < n; idx+=gridDim.x * blockDim.x)
+  {
+      float4 val = in[idx];
+      reduction.x += val.x;
+      reduction.y += val.y;
+      reduction.z += val.z;
+      reduction.w += val.w;
+  }
+  out[i] = reduction;
+}
+
 int main()
 {
   datatype* in_d;
   datatype* out_d;
   datatype* out2_d;
 
-  long N = std::pow<long, long>(2, 25);
+  datatype* out_red_d;
+  datatype* out_red2_d;
+  constexpr int reduction_factor = 1024;
+
+  long N = std::pow<long, long>(2, 26);
 
     //one warmup run
     cudaEvent_t start, stop;
@@ -112,6 +144,12 @@ int main()
 
     cudaMalloc((void**) &out2_d, N*sizeof(datatype));
     cudaMemset(out2_d, 0, N*sizeof(datatype));
+
+    cudaMalloc((void**) &out_red_d, N*sizeof(datatype));
+    cudaMemset(out_red_d, 0, N/reduction_factor*sizeof(datatype));
+
+    cudaMalloc((void**) &out_red2_d, N*sizeof(datatype));
+    cudaMemset(out_red2_d, 0, N/reduction_factor*sizeof(datatype));
     float time = 0.f;
     double run_time = 0.0;
     for (int i = -WARMUP_STEPS; i<BENCH_STEPS; i++)
@@ -245,6 +283,60 @@ int main()
     {
       ASSERT(out_h[i] == out2_h[i], "failed at  copy loopa datatype 4 %d, %f, %f\n", i, (float)out_h[i], (float)out2_h[i]);
     }
+
+    dimGrid = dim3(ceil(N/(float)(BLOCK_SIZE*reduction_factor)), 1, 1);
+    dimBlock = dim3(BLOCK_SIZE, 1, 1);
+    time = 0.f;
+    run_time = 0.0;
+    for (int i = -WARMUP_STEPS; i<BENCH_STEPS; i++)
+    {
+      clear_l2();
+      gpuErrchk(cudaDeviceSynchronize());
+      gpuErrchk(cudaEventRecord(start));
+      reduce<<<dimGrid, dimBlock>>>(N, in_d, out_red_d);
+      gpuErrchk(cudaEventRecord(stop));
+      gpuErrchk(cudaEventSynchronize(stop));
+      gpuErrchk(cudaEventElapsedTime(&time, start, stop));
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
+      if (i >= 0) // warmup
+      {
+        run_time += time / BENCH_STEPS;
+      }
+    }
+
+    std::cout<<"reduce time "<<run_time<<std::endl;
+
+    time = 0.f;
+    run_time = 0.0;
+    dimGrid.x/=VEC_RATIO;
+    for (int i = -WARMUP_STEPS; i<BENCH_STEPS; i++)
+    {
+      clear_l2();
+      gpuErrchk(cudaDeviceSynchronize());
+      gpuErrchk(cudaEventRecord(start));
+      reduce_float4<<<dimGrid, dimBlock>>>(N/VEC_RATIO, reinterpret_cast<datatype_vec*>(in_d), reinterpret_cast<datatype_vec*>(out_red2_d));
+      gpuErrchk(cudaEventRecord(stop));
+      gpuErrchk(cudaEventSynchronize(stop));
+      gpuErrchk(cudaEventElapsedTime(&time, start, stop));
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
+      if (i >= 0) // warmup
+      {
+        run_time += time / BENCH_STEPS;
+      }
+    }
+
+    datatype* out_red_h = new datatype[N];
+    datatype* out_red2_h = new datatype[N];
+    cudaMemcpy(out_red_h, out_d, N*sizeof(datatype), cudaMemcpyDeviceToHost);
+    cudaMemcpy(out_red2_h, out2_d, N*sizeof(datatype), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < N; i++)
+    {
+      ASSERT(out_red_h[i] == out_red2_h[i], "failed at reduce float4 %d, %f, %f\n", i, (float)out_red_h[i], (float)out_red2_h[i]);
+    }
+
+    std::cout<<"reduce time float4 "<<run_time<<std::endl;
 
   cudaFree(in_d);
   cudaFree(out_d);
