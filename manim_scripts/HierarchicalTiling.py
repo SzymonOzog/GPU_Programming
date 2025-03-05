@@ -367,7 +367,7 @@ class HierarchicalTiling(VoiceoverScene):
                     t3 = reg2[warp_m][warp_n]
                     acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
                     anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
-                    tmp = t1.copy().set_opacity(1)
+                    tmp = t1.copy().set_opacity(1).set_color(to_green(1, 8))
                     anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
         with self.voiceover(text="""We then perform the first""") as trk:
             self.play(*anims1)
@@ -384,7 +384,7 @@ class HierarchicalTiling(VoiceoverScene):
                     t3 = reg2[warp_m][warp_n]
                     acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
                     anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
-                    tmp = t1.copy().set_opacity(1)
+                    tmp = t1.copy().set_opacity(1).set_color(to_green(1, 8))
                     anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
         with self.voiceover(text="""And then the second mma instruction on the tiles that were already in our registers""") as trk:
             self.play(*anims1)
@@ -445,7 +445,7 @@ class HierarchicalTiling(VoiceoverScene):
                         t3 = reg2[warp_m][warp_n]
                         acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
                         anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
-                        tmp = t1.copy().set_opacity(1)
+                        tmp = t1.copy().set_opacity(1).set_color(to_green(1, 8))
                         anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
             self.play(*anims1)
             self.play(*anims2)
@@ -511,7 +511,7 @@ class HierarchicalTiling(VoiceoverScene):
                             t3 = reg2[warp_m][warp_n]
                             acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
                             anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
-                            tmp = t1.copy().set_opacity(1)
+                            tmp = t1.copy().set_opacity(1).set_color(to_green(tile*2+c, 8))
                             anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
                 self.play(*anims1)
                 self.play(*anims2)
@@ -577,7 +577,7 @@ class HierarchicalTiling(VoiceoverScene):
                                     t3 = reg2[warp_m][warp_n]
                                     acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
                                     anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
-                                    tmp = t1.copy().set_opacity(1)
+                                    tmp = t1.copy().set_opacity(1).set_color(to_green(tile*2+c, 8))
                                     anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
                         self.play(*anims1)
                         self.play(*anims2)
