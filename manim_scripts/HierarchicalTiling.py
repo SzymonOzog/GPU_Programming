@@ -490,19 +490,20 @@ class HierarchicalTiling(VoiceoverScene):
                         anims.append(reg1[warp_m][warp_n][-1].animate.align_to(t1, UP).shift(3*UP))
             self.play(*anims)
 
+        #next part
         with self.voiceover(text="""while reusing the data as much as possible for our MMA instructions""") as trk:
+            anims1 = []
+            anims2 = []
+            anims3 = []
+            anims4 = []
             for r in range(2):
-                anims = []
                 for warp_m in range(2):
                     for warp_n in range(2):
                         t1 = tiles1[warp_n*2 + r][warp_m*2]
                         t3 = tiles3[warp_n*2 + r][c].copy()
                         reg2[warp_m][warp_n] = t3
-                        anims.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
-                self.play(*anims)
+                        anims1.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
 
-                anims1 = []
-                anims2 = []
                 for k in range(2):
                     for warp_m in range(2):
                         for warp_n in range(2):
@@ -510,16 +511,16 @@ class HierarchicalTiling(VoiceoverScene):
                             t2 = reg1[warp_m][warp_n][k]
                             t3 = reg2[warp_m][warp_n]
                             acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
-                            anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
+                            anims2.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
                             tmp = t1.copy().set_opacity(1).set_color(to_green(tile*2+c, 8))
-                            anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
-                self.play(*anims1)
-                self.play(*anims2)
-                anims = []
+                            anims3.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
                 for warp_m in range(2):
                     for warp_n in range(2):
-                        anims.append(FadeOut(reg2[warp_m][warp_n]))
-                self.play(*anims)
+                        anims4.append(FadeOut(reg2[warp_m][warp_n]))
+            self.play(*anims1)
+            self.play(*anims2)
+            self.play(*anims3)
+            self.play(*anims4)
         anims = []
         for warp_m in range(2):
             for warp_n in range(2):
@@ -557,6 +558,10 @@ class HierarchicalTiling(VoiceoverScene):
                                 anims.append(reg1[warp_m][warp_n][-1].animate.align_to(t1, UP).shift(3*UP))
                     self.play(*anims)
 
+                    anims1 = []
+                    anims2 = []
+                    anims3 = []
+                    anims4 = []
                     for r in range(2):
                         anims = []
                         for warp_m in range(2):
@@ -564,11 +569,8 @@ class HierarchicalTiling(VoiceoverScene):
                                 t1 = tiles1[warp_n*2 + r][warp_m*2]
                                 t3 = tiles3[warp_n*2 + r][tile*2 + c].copy()
                                 reg2[warp_m][warp_n] = t3
-                                anims.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
-                        self.play(*anims)
+                                anims1.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
 
-                        anims1 = []
-                        anims2 = []
                         for k in range(2):
                             for warp_m in range(2):
                                 for warp_n in range(2):
@@ -576,17 +578,17 @@ class HierarchicalTiling(VoiceoverScene):
                                     t2 = reg1[warp_m][warp_n][k]
                                     t3 = reg2[warp_m][warp_n]
                                     acc = VCube(side_length=w, fill_color=YELLOW, fill_opacity=0.3).move_to(crossing(t1, t2, t3))
-                                    anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
+                                    anims2.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
                                     tmp = t1.copy().set_opacity(1).set_color(to_green(tile*2+c, 8))
-                                    anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
-                        self.play(*anims1)
-                        self.play(*anims2)
+                                    anims3.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
 
-                        anims = []
                         for warp_m in range(2):
                             for warp_n in range(2):
-                                anims.append(FadeOut(reg2[warp_m][warp_n]))
-                        self.play(*anims)
+                                anims4.append(FadeOut(reg2[warp_m][warp_n]))
+                    self.play(*anims1)
+                    self.play(*anims2)
+                    self.play(*anims3)
+                    self.play(*anims4)
                     anims = []
                     for warp_m in range(2):
                         for warp_n in range(2):
