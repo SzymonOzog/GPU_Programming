@@ -293,11 +293,17 @@ class HierarchicalTiling(VoiceoverScene):
             for y in range(n_tiles):
                 if x < 4 and y < 4:
                     anims.append(tiles1[x][y].animate.set_color(GREY))
+        
+        # for synchronizing with manimCE script
+        def print_timestamp():
+            print(self.time)
+
         with self.voiceover(text="""We start similarly as before by zeroing out our accumulator""") as trk:
             self.play(*[FadeOut(x) for x in blocks + rects_t + blocks_t + rects_b1 + rects_b2 + rects_b3 + rects_b4],
                       self.frame.animate.set_shape(1160.2727, 659.4865)
                       .move_to([-28.3, 8.62, -25.36])
                       .set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
+            print_timestamp()
             self.play(*anims)
 
         # move to global memory
@@ -344,7 +350,13 @@ class HierarchicalTiling(VoiceoverScene):
                     anims.append(reg1[warp_m][warp_n][-1].animate.align_to(t1, UP).shift(3*UP))
         with self.voiceover(text="""Then all warps in a block will load the data from the first input matrix
                             from shared memory to registers""") as trk:
+            print_timestamp()
             self.play(*anims, self.frame.animate.set_euler_angles(-2.05697776,  0.77009916,  1.86961547))
+
+        with self.voiceover(text="""And when loading our tiles, we can do that <bookmark mark='1'/> using 
+                            faster vectorized loads""") as trk:
+            self.wait_until_bookmark("1")
+            print_timestamp()
  
         # load from b to reg 
         anims = []

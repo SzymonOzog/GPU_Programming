@@ -95,3 +95,139 @@ class TensorCoresGraph(VoiceoverScene):
         with self.voiceover(text="""And in the next episode, we'll once again move closer to this line""") as trk:
             pass
 
+
+
+# template<int SM_TILES, int OUT_TILES>
+# __global__ void tensor_core_matmul_reg_smem(int n_elem, half* a, half* b, half* c)
+# {
+#     const int32_t warpM = (blockIdx.x*blockDim.x+threadIdx.x)/32;
+#     const int32_t warpN = blockIdx.y*blockDim.y+threadIdx.y;
+#     const int32_t laneM = threadIdx.x/32;
+#     const int32_t laneN = threadIdx.y;
+#
+#     extern __shared__ char smem[];
+#
+#     half (*a_smem)[WMMA_MKN*WMMA_MKN]
+#         = reinterpret_cast<half(*)[WMMA_MKN*WMMA_MKN]>(smem);
+#     half (*b_smem)[WMMA_MKN*WMMA_MKN]
+#         = reinterpret_cast<half(*)[WMMA_MKN*WMMA_MKN]>(
+#                 smem + SM_TILES*WMMA_MKN*WMMA_MKN*sizeof(half));
+#
+#     nvcuda::wmma::fragment<nvcuda::wmma::matrix_a, WMMA_MKN, WMMA_MKN, WMMA_MKN, half, layout> a_frag[OUT_TILES];
+#     nvcuda::wmma::fragment<nvcuda::wmma::matrix_b, WMMA_MKN, WMMA_MKN, WMMA_MKN, half, layout> b_frag;
+#     nvcuda::wmma::fragment<nvcuda::wmma::accumulator, WMMA_MKN, WMMA_MKN, WMMA_MKN, half> acc[OUT_TILES][OUT_TILES];
+#
+#     for(int32_t i = 0; i<OUT_TILES; i++)
+#         for(int32_t j = 0; j<OUT_TILES; j++)
+#             nvcuda::wmma::fill_fragment(acc[i][j], 0);
+#
+#     const int32_t matrix_a_row = warpM * WMMA_MKN * OUT_TILES;
+#     const int32_t matrix_b_col = warpN * WMMA_MKN * OUT_TILES;
+#
+#     for (int32_t tile = 0; tile < n_elem; tile+=OUT_TILES*WMMA_MKN)
+#     {
+#         for (int k = 0; k < OUT_TILES; k++)
+#         {
+#             half* a_curr = a + blockIdx.x*SM_TILES*WMMA_MKN*n_elem + tile + k*WMMA_MKN;
+#             half* b_curr = b + (k*WMMA_MKN+tile)*n_elem + blockIdx.y*SM_TILES*WMMA_MKN;
+#             for (int i = (threadIdx.y * blockDim.x + threadIdx.x)*8;
+#                     i < SM_TILES*WMMA_MKN*WMMA_MKN;
+#                     i+=blockDim.x*blockDim.y*8)
+#             {
+#                 reinterpret_cast<float4*>(&a_smem[i/(WMMA_MKN*WMMA_MKN)][i%(WMMA_MKN*WMMA_MKN)])[0]
+#                     = reinterpret_cast<float4*>(&a_curr[(i/WMMA_MKN)*n_elem + i%WMMA_MKN])[0];
+#                 reinterpret_cast<float4*>(&b_smem[(i/WMMA_MKN)%SM_TILES][(i/(SM_TILES*WMMA_MKN))*WMMA_MKN + i%(WMMA_MKN)])[0]
+#                     = reinterpret_cast<float4*>(&b_curr[(i/(SM_TILES*WMMA_MKN))*n_elem + i%(SM_TILES*WMMA_MKN)])[0];
+#             }
+#
+#             for (int i = threadIdx.y * blockDim.x + threadIdx.x;
+#                     i < SM_TILES*WMMA_MKN*WMMA_MKN;
+#                     i+=blockDim.x*blockDim.y)
+#             {
+#                 a_smem[i/(WMMA_MKN*WMMA_MKN)][i%(WMMA_MKN*WMMA_MKN)] = a_curr[(i/WMMA_MKN)*n + i%WMMA_MKN];
+#                 b_smem[(i/WMMA_MKN)%SM_TILES][(i/(SM_TILES*WMMA_MKN))*WMMA_MKN + i%(WMMA_MKN)] = b_curr[(i/(SM_TILES*WMMA_MKN))*n + i%(SM_TILES*WMMA_MKN)];
+#             }
+#
+#             __syncthreads();
+#             for (int n = 0; n < OUT_TILES; n++)
+#             {
+#                 int32_t a_row = matrix_a_row + n*WMMA_MKN;
+#                 int32_t a_col = tile + k*WMMA_MKN;
+#                 if(a_row < n_elem && a_col < n_elem)
+#                 {
+#                     nvcuda::wmma::load_matrix_sync(a_frag[n], a_smem[laneM*OUT_TILES + n], WMMA_MKN);
+#                 }
+#             }
+#             for (int n = 0; n < OUT_TILES; n++)
+#             {
+#                 int32_t b_col = matrix_b_col + (n)*WMMA_MKN;
+#                 int32_t b_row = tile + k*WMMA_MKN;
+#                 if (b_row < n_elem && b_col < n_elem)
+#                 {
+#                     nvcuda::wmma::load_matrix_sync(b_frag, b_smem[laneN*OUT_TILES + n], WMMA_MKN);
+#                     for (int m = 0; m < OUT_TILES; m++)
+#                     {
+#                         nvcuda::wmma::mma_sync(acc[m][n], a_frag[m], b_frag, acc[m][n]);
+#                     }
+#                 }
+#             }
+#             __syncthreads();
+#         }
+#     }
+#
+#     for(int32_t i = 0; i<OUT_TILES; i++)
+#     {
+#         int32_t output_row = matrix_a_row + i*WMMA_MKN;
+#         for(int32_t j = 0; j<OUT_TILES; j++)
+#         {
+#             int32_t output_col = matrix_b_col + j*WMMA_MKN;
+#             if (output_row < n_elem && output_col < n_elem)
+#             {
+#                 nvcuda::wmma::store_matrix_sync(c + output_row * n_elem + output_col, acc[i][j], n_elem, nvcuda::wmma::mem_row_major);
+#             }
+#         }
+#     }
+# }
+
+class TensorCoresCode2(Scene):
+    def construct(self):
+        timestamps = []
+        def wait_timestamp():
+            self.wait(timestamps.pop(0) - self.last_t)
+
+        code = """nvcuda::wmma::fragment<nvcuda::wmma::accumulator, WMMA_MKN, WMMA_MKN, WMMA_MKN, half> acc[OUT_TILES][OUT_TILES];
+for(int32_t i = 0; i<OUT_TILES; i++)
+    for(int32_t j = 0; j<OUT_TILES; j++)
+        nvcuda::wmma::fill_fragment(acc[i][j], 0);"""
+        def create_code(code):
+            code_obj = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+            code_obj.code = remove_invisible_chars(code_obj.code)
+            return code_obj
+        code_obj = create_code(code)
+
+        self.play(Create(code_obj))
+        wait_timestamp()
+
+        code = """for (int i = threadIdx.y * blockDim.x + threadIdx.x;
+     i < SM_TILES*WMMA_MKN*WMMA_MKN;
+     i+=blockDim.x*blockDim.y)
+{
+    a_smem[i/(WMMA_MKN*WMMA_MKN)][i%(WMMA_MKN*WMMA_MKN)] =
+        a_curr[(i/WMMA_MKN)*n + i%WMMA_MKN];
+    b_smem[(i/WMMA_MKN)%SM_TILES][(i/(SM_TILES*WMMA_MKN))*WMMA_MKN + i%(WMMA_MKN)] = 
+        b_curr[(i/(SM_TILES*WMMA_MKN))*n + i%(SM_TILES*WMMA_MKN)];
+}"""
+        self.play(Transform(code_obj, create_code(code)))
+        wait_timestamp()
+
+        code = """for (int i = (threadIdx.y * blockDim.x + threadIdx.x)*8;
+             i < SM_TILES*WMMA_MKN*WMMA_MKN;
+             i+=blockDim.x*blockDim.y*8)
+{
+    reinterpret_cast<float4*>(&a_smem[i/(WMMA_MKN*WMMA_MKN)][i%(WMMA_MKN*WMMA_MKN)])[0]
+        = reinterpret_cast<float4*>(&a_curr[(i/WMMA_MKN)*n_elem + i%WMMA_MKN])[0];
+    reinterpret_cast<float4*>(&b_smem[(i/WMMA_MKN)%SM_TILES][(i/(SM_TILES*WMMA_MKN))*WMMA_MKN + i%(WMMA_MKN)])[0]
+        = reinterpret_cast<float4*>(&b_curr[(i/(SM_TILES*WMMA_MKN))*n_elem + i%(SM_TILES*WMMA_MKN)])[0];
+}"""
+        self.play(Transform(code_obj, create_code(code)))
+        wait_timestamp()
