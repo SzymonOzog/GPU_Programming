@@ -295,7 +295,9 @@ class HierarchicalTiling(VoiceoverScene):
                     anims.append(tiles1[x][y].animate.set_color(GREY))
         
         # for synchronizing with manimCE script
+        timestamps = []
         def print_timestamp():
+            timestamps.append(self.time)
             print(self.time)
 
         with self.voiceover(text="""We start similarly as before by zeroing out our accumulator""") as trk:
@@ -609,3 +611,4 @@ class HierarchicalTiling(VoiceoverScene):
                         anims.append(tiles2[tile*2 + c][i].animate.set_opacity(0.3))
                         anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.3))
                     self.play(*anims, *[FadeOut(x) for x in smem1 + smem2])
+        print("timestamps = ", timestamps)  
