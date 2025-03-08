@@ -140,14 +140,6 @@ class TensorCoresGraph(VoiceoverScene):
 #                     = reinterpret_cast<float4*>(&b_curr[(i/(SM_TILES*WMMA_MKN))*n_elem + i%(SM_TILES*WMMA_MKN)])[0];
 #             }
 #
-#             for (int i = threadIdx.y * blockDim.x + threadIdx.x;
-#                     i < SM_TILES*WMMA_MKN*WMMA_MKN;
-#                     i+=blockDim.x*blockDim.y)
-#             {
-#                 a_smem[i/(WMMA_MKN*WMMA_MKN)][i%(WMMA_MKN*WMMA_MKN)] = a_curr[(i/WMMA_MKN)*n + i%WMMA_MKN];
-#                 b_smem[(i/WMMA_MKN)%SM_TILES][(i/(SM_TILES*WMMA_MKN))*WMMA_MKN + i%(WMMA_MKN)] = b_curr[(i/(SM_TILES*WMMA_MKN))*n + i%(SM_TILES*WMMA_MKN)];
-#             }
-#
 #             __syncthreads();
 #             for (int n = 0; n < OUT_TILES; n++)
 #             {
@@ -238,3 +230,84 @@ for(int32_t i = 0; i<OUT_TILES; i++)
 }"""
         self.play(Transform(code_obj, create_code(code)))
         wait_timestamp()
+
+        code = """for (int32_t tile = 0; tile < n_elem; tile+=OUT_TILES*WMMA_MKN)
+{
+    for (int k = 0; k < OUT_TILES; k++)
+    {
+        half* a_curr = a + blockIdx.x*SM_TILES*WMMA_MKN*n_elem + tile + k*WMMA_MKN;
+        half* b_curr = b + (k*WMMA_MKN+tile)*n_elem + blockIdx.y*SM_TILES*WMMA_MKN;
+        load_tiles();
+        __syncthreads();
+        for (int n = 0; n < OUT_TILES; n++)
+        {
+            nvcuda::wmma::load_matrix_sync(a_frag[n], a_smem[laneM*OUT_TILES + n], WMMA_MKN);
+        }
+        for (int n = 0; n < OUT_TILES; n++)
+        {
+            nvcuda::wmma::load_matrix_sync(b_frag, b_smem[laneN*OUT_TILES + n], WMMA_MKN);
+            for (int m = 0; m < OUT_TILES; m++)
+            {
+                nvcuda::wmma::mma_sync(acc[m][n], a_frag[m], b_frag, acc[m][n]);
+            }
+        }
+        __syncthreads();
+    }
+}"""
+        self.play(Transform(code_obj, create_code(code)))
+        code_obj = create_code(code)
+        hl = SurroundingRectangle(code_obj.code[10], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Create(hl))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[14], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[17], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[15], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[17], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[14], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[15:19], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[2], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[4:7], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[8:12], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+
+        hl_t = SurroundingRectangle(code_obj.code[12:20], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+        self.play(Transform(hl, hl_t))
+        wait_timestamp()
+        for tile in range(1, 4):
+            hl_t = SurroundingRectangle(code_obj.code[4:7], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+            self.play(Transform(hl, hl_t))
+            wait_timestamp()
+
+            hl_t = SurroundingRectangle(code_obj.code[8:12], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+            self.play(Transform(hl, hl_t))
+            wait_timestamp()
+
+            hl_t = SurroundingRectangle(code_obj.code[12:20], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
+            self.play(Transform(hl, hl_t))
+            wait_timestamp()

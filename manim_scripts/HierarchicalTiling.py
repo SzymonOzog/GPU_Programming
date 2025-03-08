@@ -324,6 +324,7 @@ class HierarchicalTiling(VoiceoverScene):
         smem2 = []
         with self.voiceover(text="""We then load first parts of our tiles to shared memory""") as trk:
             anims = []
+            print_timestamp()
             for i in range(4):
                 smem1.append(tiles2[0][i].copy())
                 smem2.append(tiles3[i][0].copy())
@@ -368,6 +369,7 @@ class HierarchicalTiling(VoiceoverScene):
                 t3 = reg2[warp_m][warp_n]
                 anims.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
         with self.voiceover(text="""Afterwards we can load one tile of our second matrix to registers from shared memory""") as trk:
+            print_timestamp()
             self.play(*anims)
 
         #play mma
@@ -384,6 +386,7 @@ class HierarchicalTiling(VoiceoverScene):
                     tmp = t1.copy().set_opacity(1).set_color(to_green(1, 8))
                     anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
         with self.voiceover(text="""We then perform the first""") as trk:
+            print_timestamp()
             self.play(*anims1)
             self.play(*anims2)
 
@@ -401,6 +404,7 @@ class HierarchicalTiling(VoiceoverScene):
                     tmp = t1.copy().set_opacity(1).set_color(to_green(1, 8))
                     anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
         with self.voiceover(text="""And then the second mma instruction on the tiles that were already in our registers""") as trk:
+            print_timestamp()
             self.play(*anims1)
             self.play(*anims2)
 
@@ -433,7 +437,9 @@ class HierarchicalTiling(VoiceoverScene):
 
         # play next row matmul
         with self.voiceover(text="""When all that is done we can load another tile of the second input matrix
-                            from shared memory to fill next output tiles""") as trk:
+                            from shared memory to fill next output tiles<bookmark mark='1'/> and perform the next series
+                            of mma operations""") as trk:
+            print_timestamp()
             anims = []
             for warp_m in range(2):
                 for warp_n in range(2):
@@ -447,8 +453,10 @@ class HierarchicalTiling(VoiceoverScene):
                     t3 = tiles3[warp_n*2 + 1][0].copy()
                     reg2[warp_m][warp_n] = t3
                     anims.append(t3.animate.align_to(t1, LEFT).shift(3*LEFT))
+            print_timestamp()
             self.play(*anims)
 
+            self.wait_until_bookmark("1")
             anims1 = []
             anims2 = []
             for r in range(2):
@@ -461,6 +469,7 @@ class HierarchicalTiling(VoiceoverScene):
                         anims1.append(ReplacementTransform(VGroup(t2.copy(), t3.copy()), acc))
                         tmp = t1.copy().set_opacity(1).set_color(to_green(1, 8))
                         anims2.extend([Transform(acc, tmp, remover=True), Transform(t1, tmp)])
+            print_timestamp()
             self.play(*anims1)
             self.play(*anims2)
 
@@ -477,6 +486,7 @@ class HierarchicalTiling(VoiceoverScene):
             for i in range(4):
                 anims.append(tiles2[tile*2 + c][i].animate.set_opacity(0.3))
                 anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.3))
+            print_timestamp()
             self.play(*anims, *[FadeOut(x) for x in smem1 + smem2])
 
             c = 1
@@ -490,6 +500,7 @@ class HierarchicalTiling(VoiceoverScene):
                 anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.5))
                 anims.append(smem1[-1].animate.set_opacity(0.5).shift(60*DOWN))
                 anims.append(smem2[-1].animate.set_opacity(0.5).shift(60*RIGHT))
+            print_timestamp()
             self.play(*anims)
 
         with self.voiceover(text="""And we continue as before loading from shared memory into registers""") as trk:
@@ -502,6 +513,7 @@ class HierarchicalTiling(VoiceoverScene):
                         t2 = tiles2[c][warp_m*2 + r]
                         reg1[warp_m][warp_n].append(t2.copy())
                         anims.append(reg1[warp_m][warp_n][-1].animate.align_to(t1, UP).shift(3*UP))
+            print_timestamp()
             self.play(*anims)
 
         #next part
@@ -531,6 +543,7 @@ class HierarchicalTiling(VoiceoverScene):
                 for warp_m in range(2):
                     for warp_n in range(2):
                         anims4.append(FadeOut(reg2[warp_m][warp_n]))
+            print_timestamp()
             self.play(*anims1)
             self.play(*anims2)
             self.play(*anims3)
@@ -559,6 +572,7 @@ class HierarchicalTiling(VoiceoverScene):
                         anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.5))
                         anims.append(smem1[-1].animate.set_opacity(0.5).shift(60*DOWN))
                         anims.append(smem2[-1].animate.set_opacity(0.5).shift(60*RIGHT))
+                    print_timestamp()
                     self.play(*anims)
 
                     anims = []
@@ -570,6 +584,7 @@ class HierarchicalTiling(VoiceoverScene):
                                 t2 = tiles2[tile*2 + c][warp_m*2 + r]
                                 reg1[warp_m][warp_n].append(t2.copy())
                                 anims.append(reg1[warp_m][warp_n][-1].animate.align_to(t1, UP).shift(3*UP))
+                    print_timestamp()
                     self.play(*anims)
 
                     anims1 = []
@@ -599,6 +614,7 @@ class HierarchicalTiling(VoiceoverScene):
                         for warp_m in range(2):
                             for warp_n in range(2):
                                 anims4.append(FadeOut(reg2[warp_m][warp_n]))
+                    print_timestamp()
                     self.play(*anims1)
                     self.play(*anims2)
                     self.play(*anims3)
