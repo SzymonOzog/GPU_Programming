@@ -184,10 +184,12 @@ class TensorCoresGraph(VoiceoverScene):
 class TensorCoresCode2(Scene):
     def construct(self):
         timestamps = [i for i in range(1, 2048)]
+        timestamps =  [34.20000000000039, 43.399999999999864, 50.399999999999466, 53.06666666666598, 61.19999999999885, 67.3999999999985, 69.69999999999837, 92.83333333333039, 93.83333333333033, 101.56666666666322, 105.53333333332967, 106.53333333332961, 114.83333333332914, 119.6666666666622, 126.19999999999516, 127.1999999999951, 128.19999999999504, 133.19999999999476, 134.1999999999947, 135.19999999999465, 140.19999999999436, 141.1999999999943, 142.19999999999425, 147.19999999999396, 148.1999999999939, 149.19999999999385, 154.19999999999357, 155.1999999999935, 156.19999999999345, 161.19999999999317, 162.1999999999931, 163.19999999999305, 165]
         def wait_timestamp():
             print(self.renderer.time)
             self.wait(timestamps.pop(0) - self.renderer.time)
 
+        wait_timestamp()
         code = """nvcuda::wmma::fragment<nvcuda::wmma::accumulator, WMMA_MKN, WMMA_MKN, WMMA_MKN, half> acc[OUT_TILES][OUT_TILES];
 for(int32_t i = 0; i<OUT_TILES; i++)
     for(int32_t j = 0; j<OUT_TILES; j++)
@@ -311,3 +313,4 @@ for(int32_t i = 0; i<OUT_TILES; i++)
             hl_t = SurroundingRectangle(code_obj.code[12:20], buff=0.03, stroke_width=2, fill_opacity=0.3, color=YELLOW)
             self.play(Transform(hl, hl_t))
             wait_timestamp()
+        self.play(*[FadeOut(x) for x in self.mobjects])
