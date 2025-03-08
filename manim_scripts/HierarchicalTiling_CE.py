@@ -201,6 +201,7 @@ for(int32_t i = 0; i<OUT_TILES; i++)
         nvcuda::wmma::fill_fragment(acc[i][j], 0);"""
         def create_code(code):
             code_obj = Code(code=code, tab_width=2, language="c++", style='monokai', margin=0.1, line_spacing=0.7, insert_line_no=False, font_size=12, corner_radius=0.1)
+            code_obj = code_obj.to_edge(DR)
             code_obj.code = remove_invisible_chars(code_obj.code)
             return code_obj
         code_obj = create_code(code)
