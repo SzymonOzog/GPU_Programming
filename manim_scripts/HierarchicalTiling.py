@@ -12,8 +12,8 @@ class HierarchicalTiling(VoiceoverScene):
     def construct(self):
         # init scene
         self.set_speech_service(
-            # RecorderService(transcription_model="base")
-            GTTSService(transcription_model="base")
+                RecorderService(transcription_model="base")
+            # GTTSService(transcription_model="base")
             )
         self.voiceovers_in_embed = True
 
@@ -128,50 +128,50 @@ class HierarchicalTiling(VoiceoverScene):
             red = int(255*percentage_red + 131 * (1-percentage_red)) 
             return f"#{red:02x}C167"
 
-        # #play full matmul
-        # with self.voiceover(text="""We can use tensor cores to perform a matrix multiplication on them. If you didn't watch that episode you 
-        #                     might want to catch up on it, if you think you know enough about CUDA already and want to jump straight
-        #                     to optimizations then stick around as in this episode we will implement hierarchical tiling to speed up our matmuls""") as trk:
-        #     for tile_o in range(visible_tiles):
-        #         anims1 = []
-        #         anims2 = [] 
-        #         anims3 = []
-        #         anims4 = [] 
-        #         dot_prods = []
-        #         cs = []
-        #         for tile_i in range(visible_tiles):
-        #             mat2_3d = mat2_tiles[tile_o][tile_i]
-        #             for tile_j in range(visible_tiles):
-        #                 mat3_3d = mat3_tiles[tile_j][tile_o]
-        #                 mat1_3d = mat1_tiles[tile_j][tile_i]
-        #                 anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
-        #                 anims3.extend([VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3)])
-        #                 dot_prod = []
-        #                 for j in range(8):
-        #                     for k in range(8):
-        #                         v1 = [mat2_3d[i*8 + k] for i in range(8)]
-        #                         v2 = [mat3_3d[j*8 + i] for i in range(8)]
-        #
-        #                         for i in range(8):
-        #                             pos = mat1_3d[j*8 + k].get_center().copy()
-        #                             pos[2] = v1[i].get_center()[2] - v1[i].get_center()[2]
-        #                             dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
-        #
-        #                 acc = VGroup(*dot_prod)
-        #
-        #                 anims2.extend([Transform(VGroup(*mat2_3d).copy(), acc, remover=True),ReplacementTransform(VGroup(*mat3_3d).copy(), acc)])
-        #
-        #                 #visualize accumulate
-        #                 run_time = 0.5
-        #                 mat_group = VGroup(*mat1_3d)
-        #                 tmp = mat_group.copy().set_color(to_green(tile_o*8 + 7, visible_n)).set_opacity(1)
-        #                 anims4.extend([Transform(acc, tmp, remover=True), Transform(mat_group, tmp)])
-        #
-        #         self.play(*anims1, run_time=run_time)
-        #         self.play(*anims2, run_time=run_time)
-        #
-        #         self.play(*anims4)
-        #         self.play(*anims3)
+        #play full matmul
+        with self.voiceover(text="""We can use tensor cores to perform a matrix multiplication on them. If you didn't watch that episode you 
+                            might want to catch up on it, if you think you know enough about CUDA already and want to jump straight
+                            to optimizations then stick around as in this episode we will implement hierarchical tiling to speed up our matmuls""") as trk:
+            for tile_o in range(visible_tiles):
+                anims1 = []
+                anims2 = [] 
+                anims3 = []
+                anims4 = [] 
+                dot_prods = []
+                cs = []
+                for tile_i in range(visible_tiles):
+                    mat2_3d = mat2_tiles[tile_o][tile_i]
+                    for tile_j in range(visible_tiles):
+                        mat3_3d = mat3_tiles[tile_j][tile_o]
+                        mat1_3d = mat1_tiles[tile_j][tile_i]
+                        anims1.extend([VGroup(*mat2_3d).animate.set_opacity(1), VGroup(*mat3_3d).animate.set_opacity(1)])
+                        anims3.extend([VGroup(*mat2_3d).animate.set_opacity(0.3), VGroup(*mat3_3d).animate.set_opacity(0.3)])
+                        dot_prod = []
+                        for j in range(8):
+                            for k in range(8):
+                                v1 = [mat2_3d[i*8 + k] for i in range(8)]
+                                v2 = [mat3_3d[j*8 + i] for i in range(8)]
+
+                                for i in range(8):
+                                    pos = mat1_3d[j*8 + k].get_center().copy()
+                                    pos[2] = v1[i].get_center()[2] - v1[i].get_center()[2]
+                                    dot_prod.append(VCube(fill_color=YELLOW, side_length=1).move_to(pos))
+
+                        acc = VGroup(*dot_prod)
+
+                        anims2.extend([Transform(VGroup(*mat2_3d).copy(), acc, remover=True),ReplacementTransform(VGroup(*mat3_3d).copy(), acc)])
+
+                        #visualize accumulate
+                        run_time = 0.5
+                        mat_group = VGroup(*mat1_3d)
+                        tmp = mat_group.copy().set_color(to_green(tile_o*8 + 7, visible_n)).set_opacity(1)
+                        anims4.extend([Transform(acc, tmp, remover=True), Transform(mat_group, tmp)])
+
+                self.play(*anims1, run_time=run_time)
+                self.play(*anims2, run_time=run_time)
+
+                self.play(*anims4)
+                self.play(*anims3)
 
         tiles1 = []
         tiles2 = []
@@ -303,8 +303,8 @@ class HierarchicalTiling(VoiceoverScene):
         with self.voiceover(text="""We start similarly as before by zeroing out our accumulator""") as trk:
             self.play(*[FadeOut(x) for x in blocks + rects_t + blocks_t + rects_b1 + rects_b2 + rects_b3 + rects_b4],
                       self.frame.animate.set_shape(1160.2727, 659.4865)
-                      .move_to([-28.3, 8.62, -25.36])
-                      .set_euler_angles(-2.24045432,  1.17009916,  1.86961547))
+                      .move_to([196.86966, -76.23208, 193.16118])
+                      .set_euler_angles(-2.17929547,  0.88121027,  1.86961547))
             print_timestamp()
             self.play(*anims)
 
@@ -474,7 +474,7 @@ class HierarchicalTiling(VoiceoverScene):
 
         # advance tile rows
         with self.voiceover(text="""When all that is done we can load another tile of the second input matrix
-                            from shared memory to fill next output tiles""") as trk:
+                            from shared memory""") as trk:
             anims = []
             tile = 0
             c = 0
@@ -558,8 +558,10 @@ class HierarchicalTiling(VoiceoverScene):
         self.play(*anims, *[FadeOut(x) for x in smem1 + smem2])
 
         #continue untill the end of the matmul
-        with self.voiceover(text="""When all that is done we can load another tile of the second input matrix
-                            from shared memory to fill next output tiles""") as trk:
+        with self.voiceover(text="""We can continue with this pattern until we reach the end of our input matrices,
+                            also the 2 by 2 tile sizes that I've shown here are not exactly indicative of what our real world tile sizes
+                            will be, for benchmarking it I've been running for different configurations and saving the fastest one.
+                            As always all code is available on my github that is linked in the description""") as trk:
             for tile in range(1, 4):
                 for c in range(2):
                     smem1 = []
@@ -627,4 +629,7 @@ class HierarchicalTiling(VoiceoverScene):
                         anims.append(tiles2[tile*2 + c][i].animate.set_opacity(0.3))
                         anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.3))
                     self.play(*anims, *[FadeOut(x) for x in smem1 + smem2])
+
+        print_timestamp()
+        self.play(*[FadeOut(x) for x in self.mobjects])
         print("timestamps = ", timestamps)  
