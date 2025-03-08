@@ -224,10 +224,15 @@ for(int32_t i = 0; i<OUT_TILES; i++)
              i < SM_TILES*WMMA_MKN*WMMA_MKN;
              i+=blockDim.x*blockDim.y*8)
 {
-    reinterpret_cast<float4*>(&a_smem[i/(WMMA_MKN*WMMA_MKN)][i%(WMMA_MKN*WMMA_MKN)])[0]
-        = reinterpret_cast<float4*>(&a_curr[(i/WMMA_MKN)*n_elem + i%WMMA_MKN])[0];
-    reinterpret_cast<float4*>(&b_smem[(i/WMMA_MKN)%SM_TILES][(i/(SM_TILES*WMMA_MKN))*WMMA_MKN + i%(WMMA_MKN)])[0]
-        = reinterpret_cast<float4*>(&b_curr[(i/(SM_TILES*WMMA_MKN))*n_elem + i%(SM_TILES*WMMA_MKN)])[0];
+    half* a_smem_curr = &a_smem[i/(WMMA_MKN*WMMA_MKN)][i%(WMMA_MKN*WMMA_MKN)];
+    half* a_gmem_curr = &a_curr[(i/WMMA_MKN)*n_elem + i%WMMA_MKN];
+    reinterpret_cast<float4*>(a_smem_curr)[0]
+        = reinterpret_cast<float4*>(a_gmem_curr)[0];
+
+    half* b_smem_curr = &b_smem[(i/WMMA_MKN)%SM_TILES][(i/(SM_TILES*WMMA_MKN))*WMMA_MKN + i%(WMMA_MKN)];
+    half* b_gmem_curr = &b_curr[(i/(SM_TILES*WMMA_MKN))*n_elem + i%(SM_TILES*WMMA_MKN)];
+    reinterpret_cast<float4*>(b_smem_curr)[0]
+                    = reinterpret_cast<float4*>(b_gmem_curr)[0];
 }"""
         self.play(Transform(code_obj, create_code(code)))
         wait_timestamp()
