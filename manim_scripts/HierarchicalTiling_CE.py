@@ -12,7 +12,7 @@ class TensorCoresGraph(VoiceoverScene):
             GTTSService(transcription_model="base")
             )
         normal_times = [0.0108544, 0.0195504, 0.0610426, 0.502562, 3.72811, ]
-        tiled_times = [0.0186675, 0.0334739, 0.0679533, 0.153344, 0.822092, ]
+        tiled_times = [0.0172352, 0.0300934, 0.0591254, 0.141713, 0.762095, ]
         cublas_times = [0.00583872, 0.0082176, 0.027305, 0.0733114, 0.576111, ]
 
         
