@@ -193,7 +193,8 @@ class TensorCoresCode2(Scene):
     def construct(self):
         timestamps = [i for i in range(1, 2048)]
         def wait_timestamp():
-            self.wait(timestamps.pop(0) - self.last_t)
+            print(self.renderer.time)
+            self.wait(timestamps.pop(0) - self.renderer.time)
 
         code = """nvcuda::wmma::fragment<nvcuda::wmma::accumulator, WMMA_MKN, WMMA_MKN, WMMA_MKN, half> acc[OUT_TILES][OUT_TILES];
 for(int32_t i = 0; i<OUT_TILES; i++)
