@@ -191,7 +191,7 @@ class TensorCoresGraph(VoiceoverScene):
 
 class TensorCoresCode2(Scene):
     def construct(self):
-        timestamps = []
+        timestamps = [i for i in range(1, 2048)]
         def wait_timestamp():
             self.wait(timestamps.pop(0) - self.last_t)
 
