@@ -439,7 +439,6 @@ class HierarchicalTiling(VoiceoverScene):
         with self.voiceover(text="""When all that is done we can load another tile of the second input matrix
                             from shared memory to fill next output tiles<bookmark mark='1'/> and perform the next series
                             of mma operations""") as trk:
-            print_timestamp()
             anims = []
             for warp_m in range(2):
                 for warp_n in range(2):
@@ -488,6 +487,7 @@ class HierarchicalTiling(VoiceoverScene):
                 anims.append(tiles3[i][tile*2 + c].animate.set_opacity(0.3))
             print_timestamp()
             self.play(*anims, *[FadeOut(x) for x in smem1 + smem2])
+            self.wait(1)
 
             c = 1
             smem1 = []
@@ -543,8 +543,8 @@ class HierarchicalTiling(VoiceoverScene):
                 for warp_m in range(2):
                     for warp_n in range(2):
                         anims4.append(FadeOut(reg2[warp_m][warp_n]))
-            print_timestamp()
             self.play(*anims1)
+            print_timestamp()
             self.play(*anims2)
             self.play(*anims3)
             self.play(*anims4)
