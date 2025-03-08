@@ -333,6 +333,11 @@ class HierarchicalTiling(VoiceoverScene):
                 anims.append(smem2[-1].animate.set_opacity(0.5).shift(60*RIGHT))
             self.play(*anims)
 
+        with self.voiceover(text="""And when loading our tiles, we can do that <bookmark mark='1'/> using 
+                            faster vectorized loads""") as trk:
+            self.wait_until_bookmark("1")
+            print_timestamp()
+
         def crossing(m1, m2, m3):
             return np.array([m1.get_center()[0], m1.get_center()[1], m3.get_center()[2]])
 
@@ -354,11 +359,6 @@ class HierarchicalTiling(VoiceoverScene):
                             from shared memory to registers""") as trk:
             print_timestamp()
             self.play(*anims, self.frame.animate.set_euler_angles(-2.05697776,  0.77009916,  1.86961547))
-
-        with self.voiceover(text="""And when loading our tiles, we can do that <bookmark mark='1'/> using 
-                            faster vectorized loads""") as trk:
-            self.wait_until_bookmark("1")
-            print_timestamp()
  
         # load from b to reg 
         anims = []
