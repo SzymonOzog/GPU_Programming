@@ -46,7 +46,7 @@ class MoE(Scene):
         outputs = []
         anims = []
         for a in active:
-            lines1.append(Line(vector2.get_corner(RIGHT), mats[a].get_corner(LEFT)))
+            lines1.append(Line(vector2.get_corner(RIGHT), mats[a].get_corner(LEFT), z_index=100))
             outputs.append(vector3.copy().set_z(mats[a].get_z()))
             lines2.append(Line(mats[a].get_corner(RIGHT), outputs[-1].get_corner(LEFT)))
             anims.append(mats[a].animate.set_color(YELLOW))
@@ -55,3 +55,20 @@ class MoE(Scene):
 
         
 
+        # more tokens
+        toks = [vector2.copy().shift(2*x*IN + 16*OUT) for x in range(16)]
+        bgs2 = []
+        for i, m in enumerate(list(reversed(toks))):
+            m.set_z_index(i*2 + 1)
+            bg = Rectangle(m.get_width(), m.get_height(), color=BLACK, fill_color=BLACK, fill_opacity=1).move_to(m).shift(0.1*IN).set_z_index(i*2)
+            bgs2.append(bg)
+
+        self.play(*[ShowCreation(x) for x in toks + bgs2])
+
+        #create more mappings
+        lines3 = []
+        for t in toks:
+            for _ in range(4):
+                a = random.randint(0, 15)
+                lines3.append(Line(t.get_corner(RIGHT), mats[a].get_corner(LEFT), z_index=100))
+        self.play(*[ShowCreation(x) for x in lines3])
