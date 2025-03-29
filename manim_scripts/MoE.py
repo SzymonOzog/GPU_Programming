@@ -72,3 +72,16 @@ class MoE(Scene):
                 a = random.randint(0, 15)
                 lines3.append(Line(t.get_corner(RIGHT), mats[a].get_corner(LEFT), z_index=100))
         self.play(*[ShowCreation(x) for x in lines3])
+
+
+        # show isolated kernel
+        self.play(*[FadeOut(x) for x in lines3 + lines1 + lines2 + outputs])
+
+        self.play(mats[0].animate.shift(10*UP))
+        mat2 = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,n}"],
+                 ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,n}"],
+                 ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                 ["x_{m,0}", "x_{m,1}", "\\cdots", "x_{m,n}"]]).next_to(mats[0], LEFT).shift(LEFT)
+        self.play(ReplacementTransform(VGroup(toks[:4]), mat2))
+        self.play(self.frame.animate.set_euler_angles(0,0,0).set_shape(42.324615, 23.788895).move_to([-5.1398816 ,  9.678901  ,  0.38288084]), 
+                  *[FadeOut(x) for x in self.mobjects if x not in[mat2, mats[0]]])
