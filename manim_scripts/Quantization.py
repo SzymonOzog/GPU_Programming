@@ -36,16 +36,19 @@ class Quantization(Scene):
         q4_text = Text("Q4 representation").next_to(q4_box, UP)
         self.play(ShowCreation(q4_box), Write(q4_text))
         self.play(LaggedStart(*[ShowCreation(x) for x in lines]))
-        q4 = VGroup(q4_box, q4_text, *lines)
+        q4 = VGroup(q4_box, *lines)
 
         #create values
         values = []
-        start_point = ax.c2p(-1000, 0.8) 
-        end_point = ax.c2p(-1000, 0) 
-        w = 2000
+        rng = 20000
+        start_point = ax.c2p(-rng, 0.3) 
+        end_point = ax.c2p(-rng, 0) 
+        w = (ax.c2p(rng, 0) - ax.c2p(-rng, 0))[0]
         for i in range(15):
             start_point[0] += w/16
             end_point[0] += w/16
             values.append(Line(start_point, end_point, color=ORANGE, stroke_width=4, z_index=5))
         self.play(*[ShowCreation(x) for x in values])
-        self.play(ShowCreation(values[0]))
+
+        #show scale
+        self.play(q4.animate.stretch_to_fit_width(w))
