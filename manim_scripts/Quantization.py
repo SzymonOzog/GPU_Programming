@@ -31,10 +31,21 @@ class Quantization(Scene):
         for i in range(15):
             start_point[0] += w/16
             end_point[0] += w/16
-            lines.append(Line(start_point, end_point, color=RED))
+            lines.append(Line(start_point, end_point, color=RED, stroke_width=2))
 
         q4_text = Text("Q4 representation").next_to(q4_box, UP)
         self.play(ShowCreation(q4_box), Write(q4_text))
         self.play(LaggedStart(*[ShowCreation(x) for x in lines]))
+        q4 = VGroup(q4_box, q4_text, *lines)
 
-
+        #create values
+        values = []
+        start_point = ax.c2p(-1000, 0.8) 
+        end_point = ax.c2p(-1000, 0) 
+        w = 2000
+        for i in range(15):
+            start_point[0] += w/16
+            end_point[0] += w/16
+            values.append(Line(start_point, end_point, color=ORANGE, stroke_width=4, z_index=5))
+        self.play(*[ShowCreation(x) for x in values])
+        self.play(ShowCreation(values[0]))
