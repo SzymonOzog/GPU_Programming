@@ -44,11 +44,20 @@ class Quantization(Scene):
         start_point = ax.c2p(-rng, 0.3) 
         end_point = ax.c2p(-rng, 0) 
         w = (ax.c2p(rng, 0) - ax.c2p(-rng, 0))[0]
-        for i in range(15):
+        for i in range(24):
             start_point[0] += w/16
             end_point[0] += w/16
             values.append(Line(start_point, end_point, color=ORANGE, stroke_width=4, z_index=5))
-        self.play(*[ShowCreation(x) for x in values])
+        self.play(*[ShowCreation(x) for x in values[:16]])
 
         #show scale
         self.play(q4.animate.stretch_to_fit_width(w))
+
+        # not centared around 0
+        self.play(*[Uncreate(x) for x in values[:8]])
+
+        #more values
+        self.play(*[ShowCreation(x) for x in values[16:]])
+
+        #show zero point
+        self.play(q4.animate.shift(w/2 * RIGHT))
