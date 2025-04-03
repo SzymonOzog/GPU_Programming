@@ -61,3 +61,26 @@ class Quantization(Scene):
 
         #show zero point
         self.play(q4.animate.shift(w/2 * RIGHT))
+
+
+        #Show quantized block
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        block = Rectangle(width=8, height=2, color=BLUE)
+        self.play(ShowCreation(block))
+
+        start_point = block.get_corner(UL)
+        end_point = block.get_corner(DL)
+        w = 8
+        lines=[]
+        scale_blocks = [] 
+        for i in range(4):
+            start_point[0] += w/4
+            end_point[0] += w/4
+            lines.append(Line(start_point, end_point, color=BLUE))
+            scale_blocks.append(Text("6Bit scale\n2Bit shift").scale(0.5).move_to(end_point + LEFT + 0.5*DOWN))
+
+        self.play(LaggedStart(*[ShowCreation(x) for x in lines]))
+
+        scale_global = Text("FP16 scale & FP16 shift", color=BLUE).next_to(block, UP)
+        self.play(Write(scale_global))
+        self.play(LaggedStart(*[Write(x) for x in scale_blocks]))
