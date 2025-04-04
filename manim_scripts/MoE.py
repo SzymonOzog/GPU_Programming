@@ -83,5 +83,7 @@ class MoE(Scene):
                  ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                  ["x_{m,0}", "x_{m,1}", "\\cdots", "x_{m,n}"]]).next_to(mats[0], LEFT).shift(LEFT)
         self.play(ReplacementTransform(VGroup(toks[:4]), mat2))
-        self.play(self.frame.animate.set_euler_angles(0,0,0).set_shape(42.324615, 23.788895).move_to([-5.1398816 ,  9.678901  ,  0.38288084]), 
-                  *[FadeOut(x) for x in self.mobjects if x not in[mat2, mats[0]]])
+        self.play(*[FadeOut(x) for x in self.mobjects if x not in[mat2, mats[0]]])
+        self.play(self.frame.animate.set_euler_angles(0,0,0).set_shape(42.324615, 23.788895).move_to([-5.1398816 ,  9.678901  ,  0.38288084]))
+
+
