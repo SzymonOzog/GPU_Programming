@@ -84,3 +84,24 @@ class Quantization(Scene):
         scale_global = Text("FP16 scale & FP16 shift", color=BLUE).next_to(block, UP)
         self.play(Write(scale_global))
         self.play(LaggedStart(*[Write(x) for x in scale_blocks]))
+
+        #summarize
+        x = Text("32 bits").next_to(scale_global).shift(2*RIGHT)
+        self.play(Write(x))
+        y = Text("4x32x8bits").next_to(lines[-1]).align_to(x)
+        self.play(Write(y))
+        z = Text("4x8bits").next_to(scale_blocks[-1]).shift(RIGHT)
+        self.play(Write(z))
+        equation = [Text("+").next_to(x, DOWN).shift(0.2*DOWN),
+                    Text("+").next_to(y, DOWN).shift(0.2*DOWN),
+                    Text("=").next_to(z, DOWN).shift(0.2*DOWN)
+                    ]
+        self.play(*[Write(t) for t in equation])
+
+        result = Text(f"{32+(4*32*8)+(4*8)} bits").next_to(equation[-1], DOWN)
+        self.play(Write(result))
+
+
+
+
+
