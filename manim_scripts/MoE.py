@@ -19,6 +19,7 @@ class MoE(Scene):
         self.play(ShowCreation(vector2))
         self.play(ShowCreation(mat), ShowCreation(dot))
         self.play(ShowCreation(vector3), ShowCreation(eq))
+        self.wait()
 
         #fade out signs
         self.play(FadeOut(eq), FadeOut(dot))
@@ -32,11 +33,11 @@ class MoE(Scene):
             bg = Rectangle(m.get_width(), m.get_height(), color=BLACK, fill_color=BLACK, fill_opacity=1).move_to(m).shift(0.1*IN).set_z_index(i*2)
             bgs.append(bg)
 
-        self.play(*[ShowCreation(m) for m in mats + bgs])
-
-        #asdj
         self.play(self.frame.animate.move_to([-0.56036127, 0.8495176, 1.0232906]).set_euler_angles(-3.14159265,  0.26179939,  3.11379317).set_shape(53.023605, 29.802404))
         self.play(vector2.animate.shift(4*LEFT), FadeOut(vector3))
+        self.play(*[ShowCreation(m) for m in mats + bgs])
+        self.wait()
+
         vector3.shift(4*RIGHT)
         
         #show mapping
@@ -52,8 +53,7 @@ class MoE(Scene):
             anims.append(mats[a].animate.set_color(YELLOW))
         self.play(*[ShowCreation(x) for x in lines1], *anims)
         self.play(*[ShowCreation(x) for x in lines2 + outputs])
-
-        
+        self.wait()
 
         # more tokens
         toks = [vector2.copy().shift(2*x*IN + 16*OUT) for x in range(16)]
@@ -64,6 +64,7 @@ class MoE(Scene):
             bgs2.append(bg)
 
         self.play(*[ShowCreation(x) for x in toks + bgs2])
+        self.wait()
 
         #create more mappings
         lines3 = []
@@ -72,6 +73,7 @@ class MoE(Scene):
                 a = random.randint(0, 15)
                 lines3.append(Line(t.get_corner(RIGHT), mats[a].get_corner(LEFT), z_index=100))
         self.play(*[ShowCreation(x) for x in lines3])
+        self.wait()
 
 
         # show isolated kernel
@@ -85,5 +87,3 @@ class MoE(Scene):
         self.play(ReplacementTransform(VGroup(toks[:4]), mat2))
         self.play(*[FadeOut(x) for x in self.mobjects if x not in[mat2, mats[0]]])
         self.play(self.frame.animate.set_euler_angles(0,0,0).set_shape(42.324615, 23.788895).move_to([-5.1398816 ,  9.678901  ,  0.38288084]))
-
-
