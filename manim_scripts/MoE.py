@@ -84,6 +84,9 @@ class MoE(Scene):
                  ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,n}"],
                  ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                  ["x_{m,0}", "x_{m,1}", "\\cdots", "x_{m,n}"]]).next_to(mats[0], LEFT).shift(LEFT)
-        self.play(ReplacementTransform(VGroup(toks[:4]), mat2))
-        self.play(*[FadeOut(x) for x in self.mobjects if x not in[mat2, mats[0]]])
-        self.play(self.frame.animate.set_euler_angles(0,0,0).set_shape(42.324615, 23.788895).move_to([-5.1398816 ,  9.678901  ,  0.38288084]))
+        lines4 = []
+        for tok in toks[:4]:
+            lines4.append(Line(mat2.get_corner(DOWN), tok.get_corner(UP)))
+        self.play(*[ReplacementTransform(t.copy(), x) for x, t in zip(lines4, toks[:4])])
+        self.play(ShowCreation(mat2))
+
