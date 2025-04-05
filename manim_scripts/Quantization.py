@@ -88,9 +88,13 @@ class Quantization(Scene):
         #summarize
         x = Text("32 bits").next_to(scale_global).shift(2*RIGHT)
         self.play(Write(x))
-        y = Text("4x32x8bits").next_to(lines[-1]).align_to(x)
+        y = Text("4x32x8bits").next_to(lines[-1], RIGHT)
+        center_x = x.get_center()[0]
+        y_loc = y.get_center().copy()
+        y_loc[0] = center_x
+        y.move_to(y_loc)
         self.play(Write(y))
-        z = Text("4x8bits").next_to(scale_blocks[-1]).shift(RIGHT)
+        z = Text("4x8bits").next_to(scale_blocks[-1], RIGHT).shift(RIGHT)
         self.play(Write(z))
         equation = [Text("+").next_to(x, DOWN).shift(0.2*DOWN),
                     Text("+").next_to(y, DOWN).shift(0.2*DOWN),
@@ -100,8 +104,3 @@ class Quantization(Scene):
 
         result = Text(f"{32+(4*32*8)+(4*8)} bits").next_to(equation[-1], DOWN)
         self.play(Write(result))
-
-
-
-
-
