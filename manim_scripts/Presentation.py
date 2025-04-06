@@ -42,6 +42,6 @@ class Speed(Scene):
         timing = Tex("1\\,clock\\,cycle = \\frac{2}{3} ns").next_to(clock, DOWN)
         self.play(Write(timing))
 
-        distance = Tex("distance\\,=\\,\\frac{2}{30} mm").next_to(timing, DOWN)
+        distance = Tex("distance=100 \\,mm").next_to(timing, DOWN)
         self.play(Write(distance))
 
