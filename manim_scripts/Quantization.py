@@ -73,8 +73,6 @@ class Quantization(Scene):
         self.play(q4.animate.shift(w/2 * RIGHT))
         self.wait()
 
-
-        self.wait()
         #Show quantized block
         self.play(*[FadeOut(x) for x in self.mobjects])
         block = Rectangle(width=8, height=2, color=BLUE)
