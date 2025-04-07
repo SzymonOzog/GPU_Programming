@@ -77,6 +77,9 @@ class Quantization(Scene):
         self.play(*[FadeOut(x) for x in self.mobjects])
         block = Rectangle(width=8, height=2, color=BLUE)
         self.play(ShowCreation(block))
+        scale_global = Text("FP16 scale & FP16 shift", color=BLUE).next_to(block, UP)
+        self.play(Write(scale_global))
+        self.wait()
 
         start_point = block.get_corner(UL)
         end_point = block.get_corner(DL)
@@ -92,9 +95,6 @@ class Quantization(Scene):
         self.play(LaggedStart(*[ShowCreation(x) for x in lines]))
         self.wait()
 
-        scale_global = Text("FP16 scale & FP16 shift", color=BLUE).next_to(block, UP)
-        self.play(Write(scale_global))
-        self.wait()
         self.play(LaggedStart(*[Write(x) for x in scale_blocks]))
         self.wait()
 
