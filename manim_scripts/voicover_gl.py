@@ -204,6 +204,7 @@ class VoiceoverScene(Scene):
         self.current_tracker = None
         # TODO not supported
         self.create_subcaption = False
+        self.timestamps = []
 
     def add_voiceover_text(
         self,
@@ -344,6 +345,7 @@ class VoiceoverScene(Scene):
         Yields:
             Generator[VoiceoverTracker, None, None]: The voiceover tracker object.
         """
+        start_time = self.time
         if text is None and ssml is None:
             raise ValueError("Please specify either a voiceover text or SSML string.")
 
@@ -356,4 +358,7 @@ class VoiceoverScene(Scene):
                 yield self.add_voiceover_ssml(ssml, **kwargs)
         finally:
             self.wait_for_voiceover()
+            self.timestamps.append(f"{start_time},{self.time}")
 
+    def print_timestamps(self):
+        print(";".join(self.timestamps))
