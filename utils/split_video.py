@@ -60,6 +60,9 @@ def split_video(video_path: str, timestamps: List[Tuple[float, float]]) -> None:
         # Create output filename
         output_filename = f"{base_name}_segment_{i+1}.mp4"
         output_path = os.path.join(output_dir, output_filename)
+        if os.path.exists(output_path):
+            print("removing ", output_path)
+            os.unlink(output_path)
         
         # Extract the segment
         extract_video_segment(video_path, start_time, end_time, output_path)
