@@ -186,6 +186,7 @@ class VoiceoverScene(Scene):
     create_subcaption: bool
     create_script: bool
     voiceovers_in_embed: bool = False
+    mock: bool = False
 
     def set_speech_service(
         self,
@@ -328,7 +329,7 @@ class VoiceoverScene(Scene):
         Args:
             mark (str): The `mark` attribute of the bookmark to wait for.
         """
-        if self.current_tracker is None:
+        if self.current_tracker is None or self.mock:
             return
         self.safe_wait(self.current_tracker.time_until_bookmark(mark))
 
@@ -345,6 +346,8 @@ class VoiceoverScene(Scene):
         Yields:
             Generator[VoiceoverTracker, None, None]: The voiceover tracker object.
         """
+        if self.mock:
+            text = "pass"
         start_time = self.time
         if text is None and ssml is None:
             raise ValueError("Please specify either a voiceover text or SSML string.")
