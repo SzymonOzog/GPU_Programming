@@ -26,7 +26,10 @@ def play_videos(video_paths):
         
         while cv2.waitKey(frame_delay) != 32:
             (x, y, w, h) = cv2.getWindowImageRect("Video Presentation")
-            ret, frame = cap.read() if is_video else True, img
+            if is_video:
+                ret, frame = cap.read() 
+            else:
+                ret, frame = True, img
 
             if ret:
                 if h > 0 and w > 0:
@@ -102,6 +105,11 @@ def convert_videos_fps(video_paths, input_fps=60, output_fps=30, output_dir=None
 
 if __name__ == "__main__":
     video_paths = [
+            "./videos/Speed_segment_1.mp4",
+            "./videos/Speed_segment_2.mp4",
+            "./videos/Speed_segment_3.mp4",
+            "./videos/Speed_segment_4.mp4",
+
             "./media/videos/10_Memory_Coalescing/2160p30/Coalescing_segment_2_30fps.mp4",
             "./media/videos/10_Memory_Coalescing/2160p30/Coalescing_segment_3_30fps.mp4",
             "./media/videos/10_Memory_Coalescing/2160p30/Coalescing_segment_4_30fps.mp4",
@@ -141,6 +149,9 @@ if __name__ == "__main__":
             "./media/videos/10_Memory_Coalescing/2160p30/Coalescing_segment_38_30fps.mp4",
             "./media/videos/10_Memory_Coalescing/2160p30/Coalescing_segment_39_30fps.mp4",
 
+            "/Users/szymon.ozog/Downloads/front.jpg",
+            "/Users/szymon.ozog/Downloads/memory.jpg",
+
             "./media/videos/11_Occupancy/2160p30/Occupancy_segment_1_30fps.mp4",
             "./media/videos/11_Occupancy/2160p30/Occupancy_segment_2_30fps.mp4",
             "./media/videos/11_Occupancy/2160p30/Occupancy_segment_3_30fps.mp4",
@@ -175,7 +186,6 @@ if __name__ == "__main__":
             "./videos/Quantization_segment_13_30fps.mp4",
             "./videos/Quantization_segment_14_30fps.mp4",
 
-            "./videos/MoE_segment_1_30fps.mp4",
             "./videos/MoE_segment_2_30fps.mp4",
             "./videos/MoE_segment_3_30fps.mp4",
             "./videos/MoE_segment_4_30fps.mp4",
