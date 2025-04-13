@@ -5,23 +5,36 @@ import ffmpeg
 import os
 
 def play_videos(video_paths):
+    cv2.namedWindow("Video Presentation", cv2.WINDOW_NORMAL)
     while len(video_paths):
         video_path = video_paths.pop(0)
         print(f"\nPlaying video: {video_path}")
         
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            print(f"Error: Could not open video {video_path}")
-            continue
-        
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        frame_delay = int(1000 / fps) if fps > 0 else 33
+        is_video = ".mp4" in video_path
+
+        if is_video:
+            cap = cv2.VideoCapture(video_path)
+            if not cap.isOpened():
+                print(f"Error: Could not open video {video_path}")
+                continue
+            
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            frame_delay = int(1000 / fps) if fps > 0 else 33
+
+        else:
+            img = cv2.imread(video_path)
         
         while cv2.waitKey(frame_delay) != 32:
-            ret, frame = cap.read()
+            (x, y, w, h) = cv2.getWindowImageRect("Video Presentation")
+            ret, frame = cap.read() if is_video else True, img
+
             if ret:
+                if h > 0 and w > 0:
+                    frame = cv2.resize(frame, (w,h))
                 cv2.imshow('Video Presentation', frame)
-        cap.release()
+
+        if is_video:
+            cap.release()
         
     cv2.destroyAllWindows()
     print("All videos have been played.")
