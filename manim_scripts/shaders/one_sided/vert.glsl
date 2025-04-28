@@ -17,7 +17,8 @@ const float EPSILON = 1e-10;
 void main(){
     emit_gl_Position(point);
     vec3 unit_normal = normalize(d_normal_point - point);
-    if (dot(camera_position, unit_normal) < 0)
+    vec3 camera_normal = normalize(camera_position - point);
+    if (dot(camera_normal, unit_normal) < 0)
     {
         v_color = vec4(0);
     }
