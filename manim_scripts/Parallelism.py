@@ -51,12 +51,25 @@ class Parallelism(VoiceoverScene):
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
                     l = Line(x1, x2)
                     lines.append(l)
-                i = len(self.submobjects)
+                i = len(self.submobjects) - 1
                 for l in reversed(lines):
-                    i -= 2
                     self.insert_submobject(i, l)
+                    i -= 2
 
                 self.high_level = FBlock("Transformer Block", width = self.get_width() * 1.05, height = self.get_height() * 1.05)
+
+            def extend_at(self, obj, dist=2):
+                idx = self.submobjects.index(obj)
+                anims = []
+                for i, smo in enumerate(self):
+                    if i <= idx:
+                        anims.append(smo.animate.shift(dist*DOWN))
+                    elif i == idx + 1:
+                        assert isinstance(smo, Line)
+                        anims.append(Transform(smo, Line(smo.get_bottom() + dist*DOWN, smo.get_top() + dist*UP)))
+                    else:
+                        anims.append(smo.animate.shift(dist*UP))
+                return AnimationGroup(*anims)
 
 
             def create(self, high_level=True):
@@ -83,3 +96,5 @@ class Parallelism(VoiceoverScene):
         t = TransformerBlock()
         self.play(t.create())
         self.play(t.transform())
+        self.play(t.transform())
+        self.play(t.extend_at(t.attn))
