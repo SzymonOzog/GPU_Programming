@@ -27,9 +27,14 @@ class Parallelism(VoiceoverScene):
                 if formula is not None:
                     self.t = Tex(formula).move_to(self.block.get_corner(OUT))
                     self.add(self.t)
+                else:
+                    self.t = None
 
             def create(self):
-                return LaggedStart(ShowCreation(self.block), Write(self.t))
+                anims = [ShowCreation(self.block)]
+                if self.t:
+                    anims.append(Write(self.t))
+                return LaggedStart(*anims)
 
         class TransformerBlock(Group):
             def __init__(self):
@@ -51,14 +56,30 @@ class Parallelism(VoiceoverScene):
                     i -= 2
                     self.insert_submobject(i, l)
 
-            def create(self):
-                anims = []
-                for obj in self:
-                    if isinstance(obj, FBlock):
-                        anims.append(obj.create())
-                    else:
-                        anims.append(ShowCreation(obj))
-                return LaggedStart(*anims)
+                self.high_level = FBlock("Transformer Block", width = self.get_width() * 1.05, height = self.get_height() * 1.05)
+
+
+            def create(self, high_level=True):
+                self.is_hl = high_level
+                if high_level:
+                    anims = []
+                    for obj in self:
+                        if isinstance(obj, FBlock):
+                            anims.append(obj.create())
+                        else:
+                            anims.append(ShowCreation(obj))
+                    return LaggedStart(*anims)
+                else:
+                    return self.high_level.create()
+
+            def transform(self):
+                if self.is_hl:
+                    ret = AnimationGroup(FadeOut(self), self.high_level.create())
+                else:
+                    ret = AnimationGroup(FadeOut(self.high_level), self.create())
+                self.is_hl = not self.is_hl
+                return ret
 
         t = TransformerBlock()
         self.play(t.create())
+        self.play(t.transform())
