@@ -31,8 +31,34 @@ class Parallelism(VoiceoverScene):
             def create(self):
                 return LaggedStart(ShowCreation(self.block), Write(self.t))
 
-        attn = FBlock("softmax(\\frac{QK^T}{\\sqrt{d_k}})V", width = 8)
-        norm = Cube().next_to(attn, UP)
-        conn = Line(norm, attn)
-        self.play(attn.create(), ShowCreation(norm), ShowCreation(conn))
+        class TransformerBlock(Group):
+            def __init__(self):
+                super().__init__()
+                self.attn = FBlock("softmax(\\frac{QK^T}{\\sqrt{d_k}})V", width=8, opacity=0.5)
+                self.add(self.attn)
 
+                self.rope = FBlock("RoPE(x)", width=8)
+                self.add(self.rope)
+
+                self.arrange(UP, buff=1)
+
+                lines = []
+                for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
+                    l = Line(x1, x2)
+                    lines.append(l)
+                i = len(self.submobjects)
+                for l in reversed(lines):
+                    i -= 2
+                    self.insert_submobject(i, l)
+
+            def create(self):
+                anims = []
+                for obj in self:
+                    if isinstance(obj, FBlock):
+                        anims.append(obj.create())
+                    else:
+                        anims.append(ShowCreation(obj))
+                return LaggedStart(*anims)
+
+        t = TransformerBlock()
+        self.play(t.create())
