@@ -43,13 +43,17 @@ class Parallelism(Scene):
                 self.add(self.l)
                 self.args = args
                 self.kwargs = kwargs
+                # TODO why do we need this
+                self.s = self.l.get_bottom()
+                self.e = self.l.get_top()
             
             def create(self):
                 return ShowCreation(self.l)
 
             def extend(self, dist):
-                return Transform(self.l, Line(self.l.get_bottom() + dist*DOWN, self.l.get_top() + dist*UP, *self.args, **self.kwargs))
-
+                self.s += dist*DOWN
+                self.e += dist*UP
+                return Transform(self.l, Line(self.s, self.e, *self.args, **self.kwargs)) 
 
         class TransformerBlock(Group):
             def __init__(self):
@@ -123,6 +127,9 @@ class Parallelism(Scene):
                 return AnimationGroup(*anims)
 
 
+            def shrink_at(self, obj, dist=2):
+                return self.extend_at(obj, dist=-dist)
+
             def create(self, high_level=True):
                 self.is_hl = high_level
                 if high_level:
@@ -148,3 +155,5 @@ class Parallelism(Scene):
         self.play(t.create())
         self.play(t.transform())
         self.play(t.transform())
+        self.play(t.extend_at(t.attn))
+        self.play(t.shrink_at(t.attn))
