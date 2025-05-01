@@ -36,16 +36,24 @@ class Parallelism(Scene):
                     anims.append(Write(self.t))
                 return LaggedStart(*anims)
 
+        class Connector(Group):
+            def __init__(self, start, end, *args, **kwargs):
+                super().__init__()
+                self.l = Line(start, end, *args, **kwargs)
+                self.add(self.l)
+                self.args = args
+                self.kwargs = kwargs
+            
+            def create(self):
+                return ShowCreation(self.l)
+
+            def extend(self, dist):
+                return Transform(self.l, Line(self.l.get_bottom() + dist*DOWN, self.l.get_top() + dist*UP, *self.args, **self.kwargs))
+
+
         class TransformerBlock(Group):
             def __init__(self):
                 super().__init__()
-                # self.attn = FBlock("softmax(\\frac{QK^T}{\\sqrt{d_k}})V", width=8, opacity=0.5)
-                # self.add(self.attn)
-                #
-                # self.rope = FBlock("RoPE(x)", width=8)
-                # self.add(self.rope)
-
-                # Standard block width
                 self.std_width = 8
                 self.std_height = 1.5
                 
@@ -92,12 +100,12 @@ class Parallelism(Scene):
 
                 lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
-                    l = Line(x1, x2)
+                    l = Connector(x1, x2)
                     lines.append(l)
                 i = len(self.submobjects) - 1
                 for l in reversed(lines):
                     self.insert_submobject(i, l)
-                    i -= 2
+                    i -= 1
 
                 self.high_level = FBlock("Transformer Block", width = self.get_width() * 1.05, height = self.get_height() * 1.05)
 
@@ -108,8 +116,8 @@ class Parallelism(Scene):
                     if i <= idx:
                         anims.append(smo.animate.shift(dist*DOWN))
                     elif i == idx + 1:
-                        assert isinstance(smo, Line)
-                        anims.append(Transform(smo, Line(smo.get_bottom() + dist*DOWN, smo.get_top() + dist*UP)))
+                        assert isinstance(smo, Connector)
+                        anims.append(smo.extend(dist))
                     else:
                         anims.append(smo.animate.shift(dist*UP))
                 return AnimationGroup(*anims)
@@ -120,7 +128,7 @@ class Parallelism(Scene):
                 if high_level:
                     anims = []
                     for obj in self:
-                        if isinstance(obj, FBlock):
+                        if hasattr(obj, "create"):
                             anims.append(obj.create())
                         else:
                             anims.append(ShowCreation(obj))
