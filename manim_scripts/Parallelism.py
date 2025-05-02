@@ -9,6 +9,41 @@ from math import radians
 # from voicover_gl import VoiceoverScene
 import moderngl
 
+def is_grp(obj):
+    return obj.__class__ is Group
+
+def get_vline_start_end(start, end):
+    center = (start.get_center() + end.get_center()) / 2
+    min_x = float("inf")
+    max_x = float("-inf")
+    if isinstance(start, Group):
+        for smo in start.submobjects:
+            min_x = min(min_x, smo.get_bottom()[0])
+            max_x = max(max_x, smo.get_bottom()[0])
+
+    if isinstance(end, Group):
+        for smo in end.submobjects:
+            min_x = min(min_x, smo.get_bottom()[0])
+            max_x = max(max_x, smo.get_bottom()[0])
+    left = center.copy()
+    left[0] = min_x
+    right = center.copy()
+    right[0] = max_x
+    return left, right
+
+def connect(v_line, obj, up=True, *args, **kwargs):
+    if is_grp(obj):
+        lines = []
+        for smo in obj.submobjects: 
+            start = smo.get_bottom() if up else smo.get_top()
+            end = v_line.get_center().copy()
+            end[0] = start[0]
+            lines.append(Line(start, end, *args, **kwargs))
+        return lines
+    loc = obj.get_bottom() if up else obj.get_top()
+    return [Line(v_line.get_center(), loc, *args, **kwargs)]
+
+
 class Parallelism(Scene):
     def construct(self):
         # self.set_speech_service(
@@ -39,18 +74,45 @@ class Parallelism(Scene):
         class Connector(Group):
             def __init__(self, start, end, *args, **kwargs):
                 super().__init__()
-                self.l = Line(start, end, *args, **kwargs)
-                self.add(self.l)
+                if is_grp(start) or is_grp(end):
+                    l, r = get_vline_start_end(start, end)
+                    self.v_line = Line(l, r, *args, **kwargs)
+                    self.add(self.v_line)
+                    self.bot = connect(self.v_line, start, False, *args, **kwargs)
+                    self.top = connect(self.v_line, end, True, *args, **kwargs)
+                    self.s = []
+                    self.e = []
+                    for x in self.bot:
+                        self.add(x)
+                        self.s.append(x.get_top())
+                    for x in self.top:
+                        self.add(x)
+                        self.e.append(x.get_bottom())
+                else:
+                    self.l = Line(start, end, *args, **kwargs)
+                    self.add(self.l)
+                    self.s = self.l.get_bottom()
+                    self.e = self.l.get_top()
                 self.args = args
                 self.kwargs = kwargs
-                # TODO why do we need this
-                self.s = self.l.get_bottom()
-                self.e = self.l.get_top()
             
             def create(self):
+                if isinstance(self.s, list):
+                    return AnimationGroup(*[ShowCreation(x) for x in self.bot + [self.v_line] + self.top])
                 return ShowCreation(self.l)
 
             def extend(self, dist):
+                if isinstance(self.s, list):
+                    anims = []
+                    for i, x in enumerate(self.bot):
+                        self.s[i] += dist*DOWN
+                        anims.append(Transform(x, Line(self.s[i], x.get_top(), *self.args, **self.kwargs)))
+
+                    for i, x in enumerate(self.top):
+                        self.e[i] += dist*UP
+                        anims.append(Transform(x, Line(x.get_bottom(), self.e[i], *self.args, **self.kwargs)))
+
+                    return AnimationGroup(*anims)
                 self.s += dist*DOWN
                 self.e += dist*UP
                 return Transform(self.l, Line(self.s, self.e, *self.args, **self.kwargs)) 
@@ -151,9 +213,12 @@ class Parallelism(Scene):
                 self.is_hl = not self.is_hl
                 return ret
 
+        # x = FBlock("one").shift(2*UP)
+        # y = Group(FBlock("two"), FBlock("Three")).arrange(RIGHT).shift(2*DOWN)
+        # self.play(ShowCreation(x), ShowCreation(y))
+        # conn = Connector(x, y)
+        # self.play(conn.create())
         t = TransformerBlock()
         self.play(t.create())
-        self.play(t.transform())
-        self.play(t.transform())
-        self.play(t.extend_at(t.attn))
-        self.play(t.shrink_at(t.attn))
+        # self.play(t.transform())
+        # self.play(t.transform())
