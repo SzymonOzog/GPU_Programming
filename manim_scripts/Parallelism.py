@@ -75,20 +75,26 @@ class Parallelism(Scene):
             def __init__(self, start, end, *args, **kwargs):
                 super().__init__()
                 if is_grp(start) or is_grp(end):
+                    self.is_grp = True
                     l, r = get_vline_start_end(start, end)
                     self.v_line = Line(l, r, *args, **kwargs)
                     self.add(self.v_line)
                     self.bot = connect(self.v_line, start, False, *args, **kwargs)
                     self.top = connect(self.v_line, end, True, *args, **kwargs)
-                    self.s = []
-                    self.e = []
+                    self.b_s = []
+                    self.b_e = []
+                    self.t_s = []
+                    self.t_e = []
                     for x in self.bot:
                         self.add(x)
-                        self.s.append(x.get_top())
+                        self.b_s.append(x.get_bottom())
+                        self.b_e.append(x.get_top())
                     for x in self.top:
                         self.add(x)
-                        self.e.append(x.get_bottom())
+                        self.t_s.append(x.get_bottom())
+                        self.t_e.append(x.get_top())
                 else:
+                    self.is_grp = False
                     self.l = Line(start, end, *args, **kwargs)
                     self.add(self.l)
                     self.s = self.l.get_bottom()
@@ -97,20 +103,20 @@ class Parallelism(Scene):
                 self.kwargs = kwargs
             
             def create(self):
-                if isinstance(self.s, list):
+                if self.is_grp:
                     return AnimationGroup(*[ShowCreation(x) for x in self.bot + [self.v_line] + self.top])
                 return ShowCreation(self.l)
 
             def extend(self, dist):
-                if isinstance(self.s, list):
+                if self.is_grp:
                     anims = []
                     for i, x in enumerate(self.bot):
-                        self.s[i] += dist*DOWN
-                        anims.append(Transform(x, Line(self.s[i], x.get_top(), *self.args, **self.kwargs)))
+                        self.b_s[i] += dist*DOWN
+                        anims.append(Transform(x, Line(self.b_s[i], self.b_e[i], *self.args, **self.kwargs)))
 
                     for i, x in enumerate(self.top):
-                        self.e[i] += dist*UP
-                        anims.append(Transform(x, Line(x.get_bottom(), self.e[i], *self.args, **self.kwargs)))
+                        self.t_e[i] += dist*UP
+                        anims.append(Transform(x, Line(self.t_s[i], self.t_e[i], *self.args, **self.kwargs)))
 
                     return AnimationGroup(*anims)
                 self.s += dist*DOWN
@@ -220,5 +226,6 @@ class Parallelism(Scene):
         # self.play(conn.create())
         t = TransformerBlock()
         self.play(t.create())
+        self.play(t.extend_at(t.qkv_group))
         # self.play(t.transform())
         # self.play(t.transform())
