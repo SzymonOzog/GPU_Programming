@@ -131,7 +131,7 @@ class Parallelism(Scene):
                 self.s_point = start.get_left() + LEFT
                 self.e_point = end.get_left() + LEFT
                 self.s_line = Line(start, self.s_point, *args, **kwargs)
-                self.h_line = Line(self.s_point, self.e_point, *args, **kwargs)
+                self.h_line = Connector(self.s_point, self.e_point, *args, **kwargs)
                 self.e_line = Line(self.e_point, end.get_left(), *args, **kwargs)
                 self.add(self.s_line)
                 self.add(self.h_line)
@@ -139,6 +139,11 @@ class Parallelism(Scene):
 
             def create(self):
                 return AnimationGroup(*[ShowCreation(x) for x  in self.submobjects])
+
+            def extend(self, dist):
+                return AnimationGroup(self.s_line.animate.shift(dist*DOWN),
+                                      self.h_line.extend(dist),
+                                      self.e_line.animate.shift(dist*UP))
 
         class TransformerBlock(Group):
             def __init__(self):
@@ -205,6 +210,16 @@ class Parallelism(Scene):
                 idx = self.submobjects.index(obj)
                 anims = []
                 for i, smo in enumerate(self):
+                    if isinstance(smo, Residual):
+                        s_idx = self.submobjects.index(smo.start)
+                        e_idx = self.submobjects.index(smo.end)
+                        if s_idx < idx and e_idx > idx:
+                            anims.append(smo.extend(dist))
+                        elif e_idx <= idx:
+                            anims.append(smo.animate.shift(dist*DOWN))
+                        else:
+                            anims.append(smo.animate.shift(dist*UP))
+                        continue
                     if i <= idx:
                         anims.append(smo.animate.shift(dist*DOWN))
                     elif i == idx + 1:
