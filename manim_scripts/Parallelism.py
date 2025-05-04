@@ -123,6 +123,23 @@ class Parallelism(Scene):
                 self.e += dist*UP
                 return Transform(self.l, Line(self.s, self.e, *self.args, **self.kwargs)) 
 
+        class Residual(Group):
+            def __init__(self, start, end, *args, **kwargs):
+                super().__init__()
+                self.start = start
+                self.end = end
+                self.s_point = start.get_left() + LEFT
+                self.e_point = end.get_left() + LEFT
+                self.s_line = Line(start, self.s_point, *args, **kwargs)
+                self.h_line = Line(self.s_point, self.e_point, *args, **kwargs)
+                self.e_line = Line(self.e_point, end.get_left(), *args, **kwargs)
+                self.add(self.s_line)
+                self.add(self.h_line)
+                self.add(self.e_line)
+
+            def create(self):
+                return AnimationGroup(*[ShowCreation(x) for x  in self.submobjects])
+
         class TransformerBlock(Group):
             def __init__(self):
                 super().__init__()
@@ -178,6 +195,9 @@ class Parallelism(Scene):
                 for l in reversed(lines):
                     self.insert_submobject(i, l)
                     i -= 1
+
+                self.res = Residual(self.rms_norm1, self.residual1)
+                self.add(self.res)
 
                 self.high_level = FBlock("Transformer Block", width = self.get_width() * 1.05, height = self.get_height() * 1.05)
 
