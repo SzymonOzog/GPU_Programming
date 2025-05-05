@@ -130,7 +130,12 @@ class Parallelism(Scene):
                 self.end = end
                 self.s_point = start.get_left() + LEFT
                 self.e_point = end.get_left() + LEFT
-                self.s_line = Line(start, self.s_point, *args, **kwargs)
+                if self.s_point[0] < self.e_point[0]:
+                    self.e_point[0] = self.s_point[0]
+                else:
+                    self.s_point[0] = self.e_point[0]
+
+                self.s_line = Line(start.get_left(), self.s_point, *args, **kwargs)
                 self.h_line = Connector(self.s_point, self.e_point, *args, **kwargs)
                 self.e_line = Line(self.e_point, end.get_left(), *args, **kwargs)
                 self.add(self.s_line)
@@ -161,7 +166,7 @@ class Parallelism(Scene):
 
                 self.attn = FBlock("\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V", width=self.std_width, height=self.std_height)
                 
-                self.residual1 = FBlock("X + \\text{Attn}", width=self.std_width, height=self.std_height)
+                self.residual1 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
                 self.rms_norm2 = FBlock("\\text{RMSNorm}", width=self.std_width, height=self.std_height)
                 
@@ -173,7 +178,7 @@ class Parallelism(Scene):
                 
                 self.swiglu = FBlock("\\text{SwiGLU} = \\text{Swish}(XW_g) \\cdot XW_u", width=self.std_width, height=self.std_height)
                 
-                self.residual2 = FBlock("X + \\text{FFN}", width=self.std_width, height=self.std_height)
+                self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
                 self.rms_norm3 = FBlock("\\text{RMSNorm}", width=self.std_width, height=self.std_height)
                 
@@ -261,6 +266,6 @@ class Parallelism(Scene):
         # self.play(conn.create())
         t = TransformerBlock()
         self.play(t.create())
-        self.play(t.extend_at(t.qkv_group))
+        # self.play(t.extend_at(t.qkv_group))
         # self.play(t.transform())
         # self.play(t.transform())
