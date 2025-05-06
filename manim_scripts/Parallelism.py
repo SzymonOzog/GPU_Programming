@@ -124,16 +124,14 @@ class Parallelism(Scene):
                 return Transform(self.l, Line(self.s, self.e, *self.args, **self.kwargs)) 
 
         class Residual(Group):
-            def __init__(self, start, end, *args, **kwargs):
+            def __init__(self, start, end, x, *args, **kwargs):
                 super().__init__()
                 self.start = start
                 self.end = end
                 self.s_point = start.get_left() + LEFT
                 self.e_point = end.get_left() + LEFT
-                if self.s_point[0] < self.e_point[0]:
-                    self.e_point[0] = self.s_point[0]
-                else:
-                    self.s_point[0] = self.e_point[0]
+                self.e_point[0] = x
+                self.s_point[0] = x
 
                 self.s_line = Line(start.get_left(), self.s_point, *args, **kwargs)
                 self.h_line = Connector(self.s_point, self.e_point, *args, **kwargs)
@@ -206,8 +204,12 @@ class Parallelism(Scene):
                     self.insert_submobject(i, l)
                     i -= 1
 
-                self.res = Residual(self.rms_norm1, self.residual1)
+                res_x = self.rms_norm1.get_left()[0] - 1
+
+                self.res = Residual(self.rms_norm1, self.residual1, res_x)
                 self.add(self.res)
+                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_x)
+                self.add(self.res2)
 
                 self.high_level = FBlock("Transformer Block", width = self.get_width() * 1.05, height = self.get_height() * 1.05)
 
