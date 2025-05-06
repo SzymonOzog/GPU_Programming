@@ -156,7 +156,7 @@ class Parallelism(Scene):
                 self.std_width = 8
                 self.std_height = 1.5
                 
-                self.rms_norm1 = FBlock("\\text{RMSNorm}", width=self.std_width, height=self.std_height)
+                self.rms_norm1 = FBlock(r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}", width=self.std_width, height=self.std_height)
                 
                 self.q_proj = FBlock("Q = XW_q", width=self.std_width/3, height=self.std_height)
                 self.k_proj = FBlock("K = XW_k", width=self.std_width/3, height=self.std_height)
@@ -168,7 +168,7 @@ class Parallelism(Scene):
                 
                 self.residual1 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
-                self.rms_norm2 = FBlock("\\text{RMSNorm}", width=self.std_width, height=self.std_height)
+                self.rms_norm2 = FBlock(r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}", width=self.std_width, height=self.std_height)
                 
                 self.ffn_gate = FBlock("XW_g", width=self.std_width/2, height=self.std_height)
                 self.ffn_up = FBlock("XW_u", width=self.std_width/2, height=self.std_height)
@@ -180,7 +180,7 @@ class Parallelism(Scene):
                 
                 self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
-                self.rms_norm3 = FBlock("\\text{RMSNorm}", width=self.std_width, height=self.std_height)
+                self.rms_norm3 = FBlock(r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}", width=self.std_width, height=self.std_height)
                 
                 self.ffn_final = FBlock("XW_{out}", width=self.std_width, height=self.std_height)
                 
