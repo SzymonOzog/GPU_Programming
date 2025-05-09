@@ -174,7 +174,7 @@ class Parallelism(Scene):
                 self.ffn_group = Group(self.ffn_gate, self.ffn_up)
                 self.ffn_group.arrange(RIGHT, buff=0.5)
                 
-                self.swiglu = FBlock("\\text{SwiGLU} = \\text{Swish}(XW_g) \\cdot XW_u", width=self.std_width, height=self.std_height)
+                self.swiglu = FBlock(r"x \cdot w \cdot \frac{1}{e^{-x}}", width=self.std_width, height=self.std_height)
                 
                 self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
