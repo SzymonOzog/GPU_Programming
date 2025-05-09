@@ -54,22 +54,32 @@ class Parallelism(Scene):
         Square3D.shader_folder = shader_dir
 
         class FBlock(Group):
-            def __init__(self, formula=None, *args, **kwargs):
+            def __init__(self, text=None, formula=None, *args, **kwargs):
                 super().__init__()
                 self.block = Prism(*args, **kwargs)
                 
+                self.t = None
+                self.f = None
                 self.add(self.block)
-                if formula is not None:
-                    self.t = Tex(formula).move_to(self.block.get_corner(OUT))
+                self.showing_text = True
+                if text is not None:
+                    self.t = Tex(text).move_to(self.block.get_corner(OUT))
                     self.add(self.t)
-                else:
-                    self.t = None
+                if formula is not None:
+                    self.f = Tex(formula).move_to(self.block.get_corner(OUT))
+                    self.add(self.f)
 
             def create(self):
                 anims = [ShowCreation(self.block)]
                 if self.t:
                     anims.append(Write(self.t))
                 return LaggedStart(*anims)
+
+            def transform(self):
+                self.showing_text = not self.showing_text
+                if self.showing_text:
+                    return ReplacementTransform(self.f, self.t)
+                return ReplacementTransform(self.t, self.f)
 
         class Connector(Group):
             def __init__(self, start, end, *args, **kwargs):
@@ -154,7 +164,8 @@ class Parallelism(Scene):
                 self.std_width = 8
                 self.std_height = 1.5
                 
-                self.rms_norm1 = FBlock(r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}", width=self.std_width, height=self.std_height)
+                self.rms_norm1 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
+                                        width=self.std_width, height=self.std_height)
                 
                 self.q_proj = FBlock("Q = XW_q", width=self.std_width/3, height=self.std_height)
                 self.k_proj = FBlock("K = XW_k", width=self.std_width/3, height=self.std_height)
@@ -162,11 +173,13 @@ class Parallelism(Scene):
                 self.qkv_group = Group(self.q_proj, self.k_proj, self.v_proj)
                 self.qkv_group.arrange(RIGHT, buff=0.5)
 
-                self.attn = FBlock("\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V", width=self.std_width, height=self.std_height)
+                self.attn = FBlock("Attention", "\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V",
+                                   width=self.std_width, height=self.std_height)
                 
                 self.residual1 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
-                self.rms_norm2 = FBlock(r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}", width=self.std_width, height=self.std_height)
+                self.rms_norm2 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
+                                        width=self.std_width, height=self.std_height)
                 
                 self.ffn_gate = FBlock("XW_g", width=self.std_width/2, height=self.std_height)
                 self.ffn_up = FBlock("XW_u", width=self.std_width/2, height=self.std_height)
@@ -174,11 +187,13 @@ class Parallelism(Scene):
                 self.ffn_group = Group(self.ffn_gate, self.ffn_up)
                 self.ffn_group.arrange(RIGHT, buff=0.5)
                 
-                self.swiglu = FBlock(r"x \cdot w \cdot \frac{1}{e^{-x}}", width=self.std_width, height=self.std_height)
+                self.swiglu = FBlock("SwiGLU", r"x \cdot w \cdot \frac{1}{e^{-x}}",
+                                     width=self.std_width, height=self.std_height)
                 
                 self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
-                self.rms_norm3 = FBlock(r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}", width=self.std_width, height=self.std_height)
+                self.rms_norm3 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
+                                        width=self.std_width, height=self.std_height)
                 
                 self.ffn_final = FBlock("XW_{out}", width=self.std_width, height=self.std_height)
                 
