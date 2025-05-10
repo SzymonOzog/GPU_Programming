@@ -192,11 +192,6 @@ class Parallelism(Scene):
                 
                 self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
-                self.rms_norm3 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
-                                        width=self.std_width, height=self.std_height)
-                
-                self.ffn_final = FBlock("XW_{out}", width=self.std_width, height=self.std_height)
-                
                 self.add(self.rms_norm1)
                 self.add(self.qkv_group)
                 self.add(self.attn)
@@ -205,8 +200,6 @@ class Parallelism(Scene):
                 self.add(self.ffn_group)
                 self.add(self.swiglu)
                 self.add(self.residual2)
-                self.add(self.rms_norm3)
-                self.add(self.ffn_final)
 
                 self.arrange(UP, buff=1)
 
