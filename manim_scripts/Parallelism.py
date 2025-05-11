@@ -263,8 +263,12 @@ class Parallelism(Scene):
 
             def transform(self):
                 if self.is_hl:
+                    self.apply_depth_test()
+                    self.high_level.deactivate_depth_test()
                     ret = AnimationGroup(FadeOut(self), self.high_level.create())
                 else:
+                    self.deactivate_depth_test()
+                    self.high_level.apply_depth_test()
                     ret = AnimationGroup(FadeOut(self.high_level), self.create())
                 self.is_hl = not self.is_hl
                 return ret
