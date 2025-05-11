@@ -266,11 +266,12 @@ class Parallelism(Scene):
                     self.apply_depth_test()
                     self.high_level.deactivate_depth_test()
                     ret = AnimationGroup(FadeOut(self), self.high_level.create())
+                    self.is_hl = False
                 else:
                     self.deactivate_depth_test()
                     self.high_level.apply_depth_test()
                     ret = AnimationGroup(FadeOut(self.high_level), self.create())
-                self.is_hl = not self.is_hl
+                    self.is_hl = True
                 return ret
 
         # x = FBlock("one").shift(2*UP)
