@@ -54,7 +54,7 @@ class Parallelism(Scene):
         Square3D.shader_folder = shader_dir
 
         class FBlock(Group):
-            def __init__(self, text=None, formula=None, *args, **kwargs):
+            def __init__(self, text=None, formula=None, text_scale=1, *args, **kwargs):
                 super().__init__()
                 self.block = Prism(*args, **kwargs)
                 
@@ -63,10 +63,10 @@ class Parallelism(Scene):
                 self.add(self.block)
                 self.showing_text = True
                 if text is not None:
-                    self.t = Tex(text).move_to(self.block.get_corner(OUT))
+                    self.t = Text(text).move_to(self.block.get_corner(OUT)).scale(text_scale)
                     self.add(self.t)
                 if formula is not None:
-                    self.f = Tex(formula).move_to(self.block.get_corner(OUT))
+                    self.f = Tex(formula).move_to(self.block.get_corner(OUT)).scale(text_scale)
                     self.add(self.f)
 
             def create(self):
@@ -219,7 +219,7 @@ class Parallelism(Scene):
                 self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_x)
                 self.add(self.res2)
 
-                self.high_level = FBlock("Transformer Block", width = self.get_width() * 1.05, height = self.get_height() * 1.05)
+                self.high_level = FBlock("Transformer\nBlock", width = self.get_width() * 1.05, height = self.get_height() * 1.05, text_scale=4)
                 self.add(self.high_level)
 
             def extend_at(self, obj, dist=2):
@@ -288,7 +288,8 @@ class Parallelism(Scene):
                 for _ in range(num_blocks):
                     self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height))
 
-                self.embeddings = FBlock("Embedding", width = self.transformer_layers[-1].get_width(), height=self.std_height)
+                self.embeddings = FBlock("Embedding", width=self.transformer_layers[-1].get_width(),
+                                         height=self.std_height, text_scale=2)
                 self.add(self.embeddings)
 
                 for tb in self.transformer_layers:
