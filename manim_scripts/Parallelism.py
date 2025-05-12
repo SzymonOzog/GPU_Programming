@@ -14,33 +14,33 @@ def is_grp(obj):
 
 def get_vline_start_end(start, end):
     center = (start.get_center() + end.get_center()) / 2
-    min_x = float("inf")
-    max_x = float("-inf")
+    min_y = float("inf")
+    max_y = float("-inf")
     if isinstance(start, Group):
         for smo in start.submobjects:
-            min_x = min(min_x, smo.get_bottom()[0])
-            max_x = max(max_x, smo.get_bottom()[0])
+            max_y = max(max_y, smo.get_left()[1])
+            min_y = min(min_y, smo.get_left()[1])
 
     if isinstance(end, Group):
         for smo in end.submobjects:
-            min_x = min(min_x, smo.get_bottom()[0])
-            max_x = max(max_x, smo.get_bottom()[0])
+            min_y = min(min_y, smo.get_left()[1])
+            max_y = max(max_y, smo.get_left()[1])
     left = center.copy()
-    left[0] = min_x
+    left[1] = min_y
     right = center.copy()
-    right[0] = max_x
+    right[1] = max_y
     return left, right
 
 def connect(v_line, obj, up=True, *args, **kwargs):
     if is_grp(obj):
         lines = []
         for smo in obj.submobjects: 
-            start = smo.get_bottom() if up else smo.get_top()
+            start = smo.get_left() if up else smo.get_right()
             end = v_line.get_center().copy()
-            end[0] = start[0]
+            end[1] = start[1]
             lines.append(Line(start, end, *args, **kwargs))
         return lines
-    loc = obj.get_bottom() if up else obj.get_top()
+    loc = obj.get_left() if up else obj.get_right()
     return [Line(v_line.get_center(), loc, *args, **kwargs)]
 
 
@@ -97,18 +97,18 @@ class Parallelism(Scene):
                     self.t_e = []
                     for x in self.bot:
                         self.add(x)
-                        self.b_s.append(x.get_bottom())
-                        self.b_e.append(x.get_top())
+                        self.b_s.append(x.get_left())
+                        self.b_e.append(x.get_right())
                     for x in self.top:
                         self.add(x)
-                        self.t_s.append(x.get_bottom())
-                        self.t_e.append(x.get_top())
+                        self.t_s.append(x.get_left())
+                        self.t_e.append(x.get_right())
                 else:
                     self.is_grp = False
                     self.l = Line(start, end, *args, **kwargs)
                     self.add(self.l)
-                    self.s = self.l.get_bottom()
-                    self.e = self.l.get_top()
+                    self.s = self.l.get_left()
+                    self.e = self.l.get_right()
                 self.args = args
                 self.kwargs = kwargs
             
@@ -121,31 +121,31 @@ class Parallelism(Scene):
                 if self.is_grp:
                     anims = []
                     for i, x in enumerate(self.bot):
-                        self.b_s[i] += dist*DOWN
+                        self.b_s[i] += dist*LEFT
                         anims.append(Transform(x, Line(self.b_s[i], self.b_e[i], *self.args, **self.kwargs)))
 
                     for i, x in enumerate(self.top):
-                        self.t_e[i] += dist*UP
+                        self.t_e[i] += dist*RIGHT
                         anims.append(Transform(x, Line(self.t_s[i], self.t_e[i], *self.args, **self.kwargs)))
 
                     return AnimationGroup(*anims)
-                self.s += dist*DOWN
-                self.e += dist*UP
+                self.s += dist*LEFT
+                self.e += dist*RIGHT
                 return Transform(self.l, Line(self.s, self.e, *self.args, **self.kwargs)) 
 
         class Residual(Group):
-            def __init__(self, start, end, x, *args, **kwargs):
+            def __init__(self, start, end, y, *args, **kwargs):
                 super().__init__()
                 self.start = start
                 self.end = end
-                self.s_point = start.get_left() + LEFT
-                self.e_point = end.get_left() + LEFT
-                self.e_point[0] = x
-                self.s_point[0] = x
+                self.s_point = start.get_top() + UP
+                self.e_point = end.get_top() + UP
+                self.e_point[1] = y
+                self.s_point[1] = y
 
-                self.s_line = Line(start.get_left(), self.s_point, *args, **kwargs)
+                self.s_line = Line(start.get_top(), self.s_point, *args, **kwargs)
                 self.h_line = Connector(self.s_point, self.e_point, *args, **kwargs)
-                self.e_line = Line(self.e_point, end.get_left(), *args, **kwargs)
+                self.e_line = Line(self.e_point, end.get_top(), *args, **kwargs)
                 self.add(self.s_line)
                 self.add(self.h_line)
                 self.add(self.e_line)
@@ -154,9 +154,9 @@ class Parallelism(Scene):
                 return AnimationGroup(*[ShowCreation(x) for x  in self.submobjects])
 
             def extend(self, dist):
-                return AnimationGroup(self.s_line.animate.shift(dist*DOWN),
+                return AnimationGroup(self.s_line.animate.shift(dist*LEFT),
                                       self.h_line.extend(dist),
-                                      self.e_line.animate.shift(dist*UP))
+                                      self.e_line.animate.shift(dist*RIGHT))
 
         class TransformerBlock(Group):
             def __init__(self, width, height):
@@ -167,11 +167,11 @@ class Parallelism(Scene):
                 self.rms_norm1 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width, height=self.std_height)
                 
-                self.q_proj = FBlock("Q = XW_q", width=self.std_width/3, height=self.std_height)
-                self.k_proj = FBlock("K = XW_k", width=self.std_width/3, height=self.std_height)
-                self.v_proj = FBlock("V = XW_v", width=self.std_width/3, height=self.std_height)
+                self.q_proj = FBlock("Q = XW_q", width=self.std_width, height=self.std_height/3)
+                self.k_proj = FBlock("K = XW_k", width=self.std_width, height=self.std_height/3)
+                self.v_proj = FBlock("V = XW_v", width=self.std_width, height=self.std_height/3)
                 self.qkv_group = Group(self.q_proj, self.k_proj, self.v_proj)
-                self.qkv_group.arrange(RIGHT, buff=0.5)
+                self.qkv_group.arrange(DOWN, buff=0.5)
 
                 self.attn = FBlock("Attention", "\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V",
                                    width=self.std_width, height=self.std_height)
@@ -181,11 +181,11 @@ class Parallelism(Scene):
                 self.rms_norm2 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width, height=self.std_height)
                 
-                self.ffn_gate = FBlock("XW_g", width=self.std_width/2, height=self.std_height)
-                self.ffn_up = FBlock("XW_u", width=self.std_width/2, height=self.std_height)
+                self.ffn_gate = FBlock("XW_g", width=self.std_width, height=self.std_height/2)
+                self.ffn_up = FBlock("XW_u", width=self.std_width, height=self.std_height/2)
                 
                 self.ffn_group = Group(self.ffn_gate, self.ffn_up)
-                self.ffn_group.arrange(RIGHT, buff=0.5)
+                self.ffn_group.arrange(DOWN, buff=0.5)
                 
                 self.swiglu = FBlock("SwiGLU", r"x \cdot w \cdot \frac{1}{e^{-x}}",
                                      width=self.std_width, height=self.std_height)
@@ -201,7 +201,7 @@ class Parallelism(Scene):
                 self.add(self.swiglu)
                 self.add(self.residual2)
 
-                self.arrange(UP, buff=1)
+                self.arrange(RIGHT, buff=1)
 
                 lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
@@ -212,11 +212,11 @@ class Parallelism(Scene):
                     self.insert_submobject(i, l)
                     i -= 1
 
-                res_x = self.rms_norm1.get_left()[0] - 1
+                res_y = self.rms_norm1.get_top()[1] + 1
 
-                self.res = Residual(self.rms_norm1, self.residual1, res_x)
+                self.res = Residual(self.rms_norm1, self.residual1, res_y)
                 self.add(self.res)
-                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_x)
+                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y)
                 self.add(self.res2)
 
                 self.high_level = FBlock("Transformer\nBlock", width = self.get_width() * 1.05, height = self.get_height() * 1.05, text_scale=4)
@@ -232,17 +232,17 @@ class Parallelism(Scene):
                         if s_idx < idx and e_idx > idx:
                             anims.append(smo.extend(dist))
                         elif e_idx <= idx:
-                            anims.append(smo.animate.shift(dist*DOWN))
+                            anims.append(smo.animate.shift(dist*LEFT))
                         else:
-                            anims.append(smo.animate.shift(dist*UP))
+                            anims.append(smo.animate.shift(dist*RIGHT))
                         continue
                     if i <= idx:
-                        anims.append(smo.animate.shift(dist*DOWN))
+                        anims.append(smo.animate.shift(dist*LEFT))
                     elif i == idx + 1:
                         assert isinstance(smo, Connector)
                         anims.append(smo.extend(dist))
                     else:
-                        anims.append(smo.animate.shift(dist*UP))
+                        anims.append(smo.animate.shift(dist*RIGHT))
                 return AnimationGroup(*anims)
 
 
@@ -278,24 +278,24 @@ class Parallelism(Scene):
                 return ret
 
         class Transformer(Group):
-            def __init__(self, num_blocks=6, *args, **kwargs):
+            def __init__(self, std_width=4, std_height=4, num_blocks=6, *args, **kwargs):
                 super().__init__()
 
-                self.std_width = 10
-                self.std_height = 1.5
+                self.std_width = std_width
+                self.std_height = std_height
 
                 self.transformer_layers = []
                 for _ in range(num_blocks):
                     self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height))
 
-                self.embeddings = FBlock("Embedding", width=self.transformer_layers[-1].get_width(),
-                                         height=self.std_height, text_scale=2)
+                self.embeddings = FBlock("Embedding", width=self.std_width*1.5,
+                                         height=self.transformer_layers[-1].get_height(), text_scale=2)
                 self.add(self.embeddings)
 
                 for tb in self.transformer_layers:
                     self.add(tb)
 
-                self.arrange(UP, buff=1)
+                self.arrange(RIGHT, buff=1)
 
                 lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
@@ -317,6 +317,6 @@ class Parallelism(Scene):
 
                 
 
-        t = Transformer()
+        t = Transformer(4, 4)
         self.play(t.create())
 
