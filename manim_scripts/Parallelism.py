@@ -219,8 +219,7 @@ class Parallelism(Scene):
                 self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y)
                 self.add(self.res2)
 
-                self.high_level = FBlock("Transformer\nBlock", width = self.get_width() * 1.05, height = self.get_height() * 1.05, text_scale=4)
-                self.add(self.high_level)
+                self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
 
             def extend_at(self, obj, dist=2):
                 idx = self.submobjects.index(obj)
@@ -252,12 +251,11 @@ class Parallelism(Scene):
             def create(self, high_level=True):
                 self.is_hl = high_level
                 if high_level:
+                    self.high_level.move_to(self)
                     return self.high_level.create()
                 else:
                     anims = []
                     for obj in self:
-                        if obj is self.high_level:
-                            continue
                         if hasattr(obj, "create"):
                             anims.append(obj.create())
                         else:
@@ -266,14 +264,14 @@ class Parallelism(Scene):
 
             def transform(self):
                 if self.is_hl:
-                    self.apply_depth_test()
-                    self.high_level.deactivate_depth_test()
-                    ret = AnimationGroup(FadeOut(self), self.high_level.create())
-                    self.is_hl = False
-                else:
                     self.deactivate_depth_test()
                     self.high_level.apply_depth_test()
-                    ret = AnimationGroup(FadeOut(self.high_level), self.create())
+                    ret = AnimationGroup(FadeOut(self.high_level), self.create(False))
+                    self.is_hl = False
+                else:
+                    self.apply_depth_test()
+                    self.high_level.deactivate_depth_test()
+                    ret = AnimationGroup(FadeOut(self), self.create(True))
                     self.is_hl = True
                 return ret
 
