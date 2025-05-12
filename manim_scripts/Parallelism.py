@@ -159,10 +159,10 @@ class Parallelism(Scene):
                                       self.e_line.animate.shift(dist*UP))
 
         class TransformerBlock(Group):
-            def __init__(self):
+            def __init__(self, width, height):
                 super().__init__()
-                self.std_width = 8
-                self.std_height = 1.5
+                self.std_width = width 
+                self.std_height = height 
                 
                 self.rms_norm1 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width, height=self.std_height)
@@ -281,16 +281,19 @@ class Parallelism(Scene):
             def __init__(self, num_blocks=6, *args, **kwargs):
                 super().__init__()
 
-                self.std_width = 9
+                self.std_width = 10
                 self.std_height = 1.5
 
-                self.embeddings = FBlock("Embedding", width = self.std_width, height=self.std_height)
-                self.add(self.embeddings)
                 self.transformer_layers = []
                 for _ in range(num_blocks):
-                    self.transformer_layers.append(TransformerBlock())
-                    self.add(self.transformer_layers[-1])
-                print(self.transformer_layers)
+                    self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height))
+
+                self.embeddings = FBlock("Embedding", width = self.transformer_layers[-1].get_width(), height=self.std_height)
+                self.add(self.embeddings)
+
+                for tb in self.transformer_layers:
+                    self.add(tb)
+
                 self.arrange(UP, buff=1)
 
                 lines = []
