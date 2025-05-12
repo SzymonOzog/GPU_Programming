@@ -220,6 +220,7 @@ class Parallelism(Scene):
                 self.add(self.res2)
 
                 self.high_level = FBlock("Transformer Block", width = self.get_width() * 1.05, height = self.get_height() * 1.05)
+                self.add(self.high_level)
 
             def extend_at(self, obj, dist=2):
                 idx = self.submobjects.index(obj)
@@ -255,6 +256,8 @@ class Parallelism(Scene):
                 else:
                     anims = []
                     for obj in self:
+                        if obj is self.high_level:
+                            continue
                         if hasattr(obj, "create"):
                             anims.append(obj.create())
                         else:
