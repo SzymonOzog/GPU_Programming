@@ -277,13 +277,42 @@ class Parallelism(Scene):
                     self.is_hl = True
                 return ret
 
-        # x = FBlock("one").shift(2*UP)
-        # y = Group(FBlock("two"), FBlock("Three")).arrange(RIGHT).shift(2*DOWN)
-        # self.play(ShowCreation(x), ShowCreation(y))
-        # conn = Connector(x, y)
-        # self.play(conn.create())
-        t = TransformerBlock()
+        class Transformer(Group):
+            def __init__(self, num_blocks=6, *args, **kwargs):
+                super().__init__()
+
+                self.std_width = 9
+                self.std_height = 1.5
+
+                self.embeddings = FBlock("Embedding", width = self.std_width, height=self.std_height)
+                self.add(self.embeddings)
+                self.transformer_layers = []
+                for _ in range(num_blocks):
+                    self.transformer_layers.append(TransformerBlock())
+                    self.add(self.transformer_layers[-1])
+                print(self.transformer_layers)
+                self.arrange(UP, buff=1)
+
+                lines = []
+                for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
+                    l = Connector(x1, x2)
+                    lines.append(l)
+                i = len(self.submobjects) - 1
+                for l in reversed(lines):
+                    self.insert_submobject(i, l)
+                    i -= 1
+
+            def create(self):
+                anims = []
+                for obj in self:
+                    if hasattr(obj, "create"):
+                        anims.append(obj.create())
+                    else:
+                        anims.append(ShowCreation(obj))
+                return LaggedStart(*anims)
+
+                
+
+        t = Transformer()
         self.play(t.create())
-        # self.play(t.extend_at(t.qkv_group))
-        # self.play(t.transform())
-        # self.play(t.transform())
+
