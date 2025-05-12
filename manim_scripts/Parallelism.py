@@ -251,6 +251,8 @@ class Parallelism(Scene):
             def create(self, high_level=True):
                 self.is_hl = high_level
                 if high_level:
+                    return self.high_level.create()
+                else:
                     anims = []
                     for obj in self:
                         if hasattr(obj, "create"):
@@ -258,8 +260,6 @@ class Parallelism(Scene):
                         else:
                             anims.append(ShowCreation(obj))
                     return LaggedStart(*anims)
-                else:
-                    return self.high_level.create()
 
             def transform(self):
                 if self.is_hl:
