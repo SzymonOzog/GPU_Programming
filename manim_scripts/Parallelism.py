@@ -293,7 +293,7 @@ class Parallelism(Scene):
                 for tb in self.transformer_layers:
                     self.add(tb)
 
-                self.arrange(RIGHT, buff=1)
+                self.arrange(RIGHT, buff=3)
 
                 lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
