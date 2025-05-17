@@ -275,6 +275,15 @@ class Parallelism(Scene):
                     self.is_hl = True
                 return ret
 
+            def duplicate_to(self, target):
+                anims = []
+                if self.is_hl:
+                    anims.append(ReplacementTransform(self.high_level.copy(), target.high_level.move_to(target)))
+                else:
+                    for i, x in self.submobjects:
+                        anims.append(ReplacementTransform(x.copy(), target.submobjects[i]))
+                return AnimationGroup(*anims)
+
         class Transformer(Group):
             def __init__(self, std_width=4, std_height=4, num_blocks=6, *args, **kwargs):
                 super().__init__()
@@ -313,14 +322,22 @@ class Parallelism(Scene):
                         anims.append(ShowCreation(obj))
                 return LaggedStart(*anims)
 
+            def duplicate_to(self, target):
+                anims = []
+                for i, x in enumerate(self.submobjects):
+                    if hasattr(x, "duplicate_to"):
+                        anims.append(x.duplicate_to(target.submobjects[i]))
+                    else:
+                        anims.append(ReplacementTransform(x.copy(), target.submobjects[i]))
+                return AnimationGroup(*anims)
+
                 
 
         t = Transformer(4, 4)
+        t2 = Transformer(4, 4).next_to(t, DOWN)
         self.play(t.create(), self.frame.animate.match_width(t))
         self.frame.save_state()
         #TODO get camera to move to start
         self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
         self.play(Restore(self.frame, run_time=2))
-
-
-
+        self.play(t.duplicate_to(t2))
