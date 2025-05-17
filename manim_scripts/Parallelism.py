@@ -316,5 +316,11 @@ class Parallelism(Scene):
                 
 
         t = Transformer(4, 4)
-        self.play(t.create())
+        self.play(t.create(), self.frame.animate.match_width(t))
+        self.frame.save_state()
+        #TODO get camera to move to start
+        self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
+        self.play(Restore(self.frame, run_time=2))
+
+
 
