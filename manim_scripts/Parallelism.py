@@ -69,10 +69,10 @@ class Parallelism(Scene):
                     self.f = Tex(formula).move_to(self.block.get_corner(OUT)).scale(text_scale)
                     self.add(self.f)
 
-            def create(self):
-                anims = [ShowCreation(self.block)]
+            def create(self, *args, **kwargs):
+                anims = [ShowCreation(self.block, *args, **kwargs)]
                 if self.t:
-                    anims.append(Write(self.t))
+                    anims.append(Write(self.t, *args, **kwargs))
                 return LaggedStart(*anims)
 
             def transform(self):
@@ -112,10 +112,10 @@ class Parallelism(Scene):
                 self.args = args
                 self.kwargs = kwargs
             
-            def create(self):
+            def create(self, *args, **kwargs):
                 if self.is_grp:
-                    return AnimationGroup(*[ShowCreation(x) for x in self.bot + [self.v_line] + self.top])
-                return ShowCreation(self.l)
+                    return AnimationGroup(*[ShowCreation(x, *args, **kwargs) for x in self.bot + [self.v_line] + self.top])
+                return ShowCreation(self.l, *args, **kwargs)
 
             def extend(self, dist):
                 if self.is_grp:
@@ -150,7 +150,7 @@ class Parallelism(Scene):
                 self.add(self.h_line)
                 self.add(self.e_line)
 
-            def create(self):
+            def create(self, *args, **kwargs):
                 return AnimationGroup(*[ShowCreation(x) for x  in self.submobjects])
 
             def extend(self, dist):
@@ -248,18 +248,18 @@ class Parallelism(Scene):
             def shrink_at(self, obj, dist=2):
                 return self.extend_at(obj, dist=-dist)
 
-            def create(self, high_level=True):
+            def create(self, high_level=False, *args, **kwargs):
                 self.is_hl = high_level
                 if high_level:
                     self.high_level.move_to(self)
-                    return self.high_level.create()
+                    return self.high_level.create(*args, **kwargs)
                 else:
                     anims = []
                     for obj in self:
                         if hasattr(obj, "create"):
-                            anims.append(obj.create())
+                            anims.append(obj.create(*args, **kwargs))
                         else:
-                            anims.append(ShowCreation(obj))
+                            anims.append(ShowCreation(obj, *args, **kwargs))
                     return LaggedStart(*anims)
 
             def transform(self):
@@ -313,13 +313,13 @@ class Parallelism(Scene):
                     self.insert_submobject(i, l)
                     i -= 1
 
-            def create(self):
+            def create(self, *args, **kwargs):
                 anims = []
                 for obj in self:
                     if hasattr(obj, "create"):
-                        anims.append(obj.create())
+                        anims.append(obj.create(*args, **kwargs))
                     else:
-                        anims.append(ShowCreation(obj))
+                        anims.append(ShowCreation(obj, *args, **kwargs))
                 return LaggedStart(*anims)
 
             def duplicate_to(self, target):
@@ -331,13 +331,35 @@ class Parallelism(Scene):
                         anims.append(ReplacementTransform(x.copy(), target.submobjects[i]))
                 return AnimationGroup(*anims)
 
-                
 
-        t = Transformer(4, 4)
+        t = TransformerBlock(4, 4)
         t2 = Transformer(4, 4).next_to(t, DOWN)
+        
+        def monkey_patch_interp(self, alpha, full=t):
+            x_min = t.get_left()[0]
+            x_max = t.get_right()[0]
+            x_total = x_max - x_min
+            m_x_min = self.mobject.get_left()[0]
+            m_x_max = self.mobject.get_right()[0]
+            m_x_total = m_x_max - m_x_min
+            percentage = m_x_total/x_total
+
+            x_curr = alpha*x_total
+            x_start = (m_x_min - x_min) / x_total
+            x_end = (m_x_max - x_min) / x_total
+            new_alpha = (alpha - x_start)/(x_end - x_start + 1e-6)
+            print(new_alpha, alpha, x_start, x_end, percentage)
+            return self.interpolate_mobject(clip(new_alpha, 0, 1))
+
         self.play(t.create(), self.frame.animate.match_width(t))
-        self.frame.save_state()
-        #TODO get camera to move to start
-        self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
-        self.play(Restore(self.frame, run_time=2))
-        self.play(t.duplicate_to(t2))
+        Animation.interpolate = monkey_patch_interp
+        b = FBlock(width=8).next_to(t, DOWN)
+        b2 = FBlock(width=8).next_to(b, RIGHT)
+        self.play(ShowCreation(b), ShowCreation(b2), run_time=10)
+
+        # self.play(t.create(), self.frame.animate.match_width(t))
+        # self.frame.save_state()
+        # #TODO get camera to move to start
+        # self.play(t.create(), self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
+        # self.play(Restore(self.frame, run_time=2))
+        # self.play(t.duplicate_to(t2))
