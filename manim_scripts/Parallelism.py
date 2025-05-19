@@ -56,7 +56,7 @@ class Parallelism(Scene):
         class FBlock(Group):
             def __init__(self, text=None, formula=None, text_scale=1, *args, **kwargs):
                 super().__init__()
-                self.block = Prism(*args, **kwargs)
+                self.block = Prism(square_resolution=(10,10),*args, **kwargs)
                 
                 self.t = None
                 self.f = None
