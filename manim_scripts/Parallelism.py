@@ -400,7 +400,6 @@ class Parallelism(Scene):
 
         def updater(m, dt):
             camera_x = self.frame.get_center()[0]
-            print(camera_x)
             for mob in t.get_family(True):
                 points = mob.get_points()
                 if len(points):
