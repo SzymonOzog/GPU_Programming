@@ -73,7 +73,7 @@ class Parallelism(Scene):
                 anims = [ShowCreation(self.block, *args, **kwargs)]
                 if self.t:
                     anims.append(Write(self.t, *args, **kwargs))
-                return LaggedStart(*anims)
+                return AnimationGroup(*anims)
 
             def transform(self):
                 self.showing_text = not self.showing_text
@@ -260,7 +260,7 @@ class Parallelism(Scene):
                             anims.append(obj.create(*args, **kwargs))
                         else:
                             anims.append(ShowCreation(obj, *args, **kwargs))
-                    return LaggedStart(*anims)
+                    return AnimationGroup(*anims)
 
             def transform(self):
                 if self.is_hl:
@@ -320,7 +320,7 @@ class Parallelism(Scene):
                         anims.append(obj.create(*args, **kwargs))
                     else:
                         anims.append(ShowCreation(obj, *args, **kwargs))
-                return LaggedStart(*anims)
+                return AnimationGroup(*anims)
 
             def duplicate_to(self, target):
                 anims = []
@@ -351,15 +351,82 @@ class Parallelism(Scene):
             print(new_alpha, alpha, x_start, x_end, percentage)
             return self.interpolate_mobject(clip(new_alpha, 0, 1))
 
-        self.play(t.create(), self.frame.animate.match_width(t))
-        Animation.interpolate = monkey_patch_interp
+        def get_sub_alpha(
+            self,
+            alpha: float,
+            index: int,
+            num_submobjects: int
+        ) -> float:
+            # TODO, make this more understanable, and/or combine
+            # its functionality with AnimationGroup's method
+            # build_animations_with_timings
+            # lag_ratio = self.lag_ratio
+            # full_length = (num_submobjects - 1) * lag_ratio + 1
+            # value = alpha * full_length
+            # lower = index * lag_ratio
+            # raw_sub_alpha = clip((value - lower), 0, 1)
+            raw_sub_alpha = alpha
+
+
+            x_min = t.get_left()[0]
+            x_max = t.get_right()[0]
+            x_total = x_max - x_min
+            m_x_min = self.mobject.get_left()[0]
+            m_x_max = self.mobject.get_right()[0]
+            m_x_total = m_x_max - m_x_min
+
+            x_start = (m_x_min - x_min) / x_total
+            x_end = (m_x_max - x_min) / x_total
+            new_alpha = (raw_sub_alpha - x_start)/(x_end - x_start + 1e-6)
+            # print(alpha, new_alpha)
+
+            return self.rate_func(new_alpha)
+
+        def rgba_func(
+        ) -> float:
+            x_min = t.get_left()[0]
+            x_max = t.get_right()[0]
+            x_total = x_max - x_min
+            m_x_min = self.mobject.get_left()[0]
+            m_x_max = self.mobject.get_right()[0]
+            m_x_total = m_x_max - m_x_min
+
+            x_start = (m_x_min - x_min) / x_total
+            x_end = (m_x_max - x_min) / x_total
+            new_alpha = (raw_sub_alpha - x_start)/(x_end - x_start + 1e-6)
+            # print(alpha, new_alpha)
+
+            return self.rate_func(new_alpha)
+
+        def updater(m, dt):
+            camera_x = self.frame.get_center()[0]
+            print(camera_x)
+            for mob in t.get_family(True):
+                points = mob.get_points()
+                if len(points):
+                    try:
+                        rgba = mob.data["rgba"].copy()
+                        m_x_min = np.min(points[:, 0])
+                        m_x_max = np.max(points[:, 0])
+                        m_x_total = m_x_max - m_x_min
+                        rgba[:, 3] = clip((camera_x-m_x_min)/m_x_total, 0, 1)
+                        mob.set_rgba_array(rgba)
+                    except:
+                        pass
+                
+
+        # self.play(t.create(), self.frame.animate.match_width(t))
+        # Animation.get_sub_alpha = get_sub_alpha
         b = FBlock(width=8).next_to(t, DOWN)
         b2 = FBlock(width=8).next_to(b, RIGHT)
-        self.play(ShowCreation(b), ShowCreation(b2), run_time=10)
+        # self.play(t.create(), run_time=10)
 
         # self.play(t.create(), self.frame.animate.match_width(t))
         # self.frame.save_state()
         # #TODO get camera to move to start
-        # self.play(t.create(), self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
+        self.play(t.create(), run_time=0)
+        t.set_opacity(0)
+        self.frame.add_updater(updater)
+        self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
         # self.play(Restore(self.frame, run_time=2))
         # self.play(t.duplicate_to(t2))
