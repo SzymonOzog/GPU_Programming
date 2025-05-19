@@ -408,7 +408,7 @@ class Parallelism(Scene):
                         m_x_min = np.min(points[:, 0])
                         m_x_max = np.max(points[:, 0])
                         m_x_total = m_x_max - m_x_min
-                        rgba[:, 3] = clip((camera_x-m_x_min)/m_x_total, 0, 1)
+                        rgba[:, 3] = np.clip((camera_x-points[:, 0]), 0, 1)
                         mob.set_rgba_array(rgba)
                     except:
                         pass
