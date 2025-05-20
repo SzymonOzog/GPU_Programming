@@ -403,15 +403,23 @@ class Parallelism(Scene):
             for mob in t.get_family(True):
                 points = mob.get_points()
                 if len(points):
-                    try:
+                    if "rgba" in mob.data_dtype.names:
                         rgba = mob.data["rgba"].copy()
                         m_x_min = np.min(points[:, 0])
                         m_x_max = np.max(points[:, 0])
                         m_x_total = m_x_max - m_x_min
                         rgba[:, 3] = np.clip((camera_x-points[:, 0]), 0, 1)
                         mob.set_rgba_array(rgba)
-                    except:
-                        pass
+                    else:
+                        rgba_s = mob.data["stroke_rgba"].copy()
+                        rgba_f = mob.data["fill_rgba"].copy()
+                        m_x_min = np.min(points[:, 0])
+                        m_x_max = np.max(points[:, 0])
+                        m_x_total = m_x_max - m_x_min
+                        rgba_f[:, 3] = np.clip((camera_x-points[:, 0]), 0, 1)
+                        rgba_s[:, 3] = np.clip((camera_x-points[:, 0]), 0, 1)
+                        mob.set_rgba_array(rgba_s, name="stroke_rgba")
+                        mob.set_rgba_array(rgba_f, name="fill_rgba")
                 
 
         # self.play(t.create(), self.frame.animate.match_width(t))
