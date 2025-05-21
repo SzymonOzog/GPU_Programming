@@ -38,10 +38,10 @@ def connect(v_line, obj, up=True, *args, **kwargs):
             start = smo.get_left() if up else smo.get_right()
             end = v_line.get_center().copy()
             end[1] = start[1]
-            lines.append(Line(start, end, *args, **kwargs))
+            lines.append(Line3D(start, end, *args, **kwargs))
         return lines
     loc = obj.get_left() if up else obj.get_right()
-    return [Line(v_line.get_center(), loc, *args, **kwargs)]
+    return [Line3D(v_line.get_center(), loc, *args, **kwargs)]
 
 
 class Parallelism(Scene):
@@ -87,7 +87,7 @@ class Parallelism(Scene):
                 if is_grp(start) or is_grp(end):
                     self.is_grp = True
                     l, r = get_vline_start_end(start, end)
-                    self.v_line = Line(l, r, *args, **kwargs)
+                    self.v_line = Line3D(l, r, *args, **kwargs)
                     self.add(self.v_line)
                     self.bot = connect(self.v_line, start, False, *args, **kwargs)
                     self.top = connect(self.v_line, end, True, *args, **kwargs)
@@ -105,10 +105,10 @@ class Parallelism(Scene):
                         self.t_e.append(x.get_right())
                 else:
                     self.is_grp = False
-                    self.l = Line(start, end, *args, **kwargs)
+                    self.s = start if isinstance(start, np.ndarray) else start.get_right()
+                    self.e = end if isinstance(end, np.ndarray) else end.get_left()
+                    self.l = Line3D(self.s, self.e, *args, **kwargs)
                     self.add(self.l)
-                    self.s = self.l.get_left()
-                    self.e = self.l.get_right()
                 self.args = args
                 self.kwargs = kwargs
             
@@ -122,16 +122,16 @@ class Parallelism(Scene):
                     anims = []
                     for i, x in enumerate(self.bot):
                         self.b_s[i] += dist*LEFT
-                        anims.append(Transform(x, Line(self.b_s[i], self.b_e[i], *self.args, **self.kwargs)))
+                        anims.append(Transform(x, Line3D(self.b_s[i], self.b_e[i], *self.args, **self.kwargs)))
 
                     for i, x in enumerate(self.top):
                         self.t_e[i] += dist*RIGHT
-                        anims.append(Transform(x, Line(self.t_s[i], self.t_e[i], *self.args, **self.kwargs)))
+                        anims.append(Transform(x, Line3D(self.t_s[i], self.t_e[i], *self.args, **self.kwargs)))
 
                     return AnimationGroup(*anims)
                 self.s += dist*LEFT
                 self.e += dist*RIGHT
-                return Transform(self.l, Line(self.s, self.e, *self.args, **self.kwargs)) 
+                return Transform(self.l, Line3D(self.s, self.e, *self.args, **self.kwargs)) 
 
         class Residual(Group):
             def __init__(self, start, end, y, *args, **kwargs):
@@ -143,9 +143,9 @@ class Parallelism(Scene):
                 self.e_point[1] = y
                 self.s_point[1] = y
 
-                self.s_line = Line(start.get_top(), self.s_point, *args, **kwargs)
+                self.s_line = Line3D(start.get_top(), self.s_point, *args, **kwargs)
                 self.h_line = Connector(self.s_point, self.e_point, *args, **kwargs)
-                self.e_line = Line(self.e_point, end.get_top(), *args, **kwargs)
+                self.e_line = Line3D(self.e_point, end.get_top(), *args, **kwargs)
                 self.add(self.s_line)
                 self.add(self.h_line)
                 self.add(self.e_line)
