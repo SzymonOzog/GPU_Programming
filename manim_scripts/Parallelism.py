@@ -84,7 +84,23 @@ class Parallelism(Scene):
         class Connector(Group):
             def __init__(self, start, end, *args, **kwargs):
                 super().__init__()
-                if is_grp(start) or is_grp(end):
+                self.v_line = None
+                if is_grp(start):
+                    self.is_grp = True
+                    self.bot = []
+                    self.top = []
+                    self.b_s = []
+                    self.b_e = []
+                    for s in start:
+                        st = s.get_right()
+                        en = end.get_left().copy()
+                        en[1] = st[1]
+                        l = Line3D(st, en, *args, **kwargs)
+                        self.bot.append(l)
+                        self.add(l)
+                        self.b_s.append(l.get_left())
+                        self.b_e.append(l.get_right())
+                elif is_grp(end):
                     self.is_grp = True
                     l, r = get_vline_start_end(start, end)
                     self.v_line = Line3D(l, r, *args, **kwargs)
@@ -114,7 +130,10 @@ class Parallelism(Scene):
             
             def create(self, *args, **kwargs):
                 if self.is_grp:
-                    return AnimationGroup(*[ShowCreation(x, *args, **kwargs) for x in self.bot + [self.v_line] + self.top])
+                    lines = self.bot + self.top
+                    if self.v_line is not None:
+                        lines.append(self.v_line)
+                    return AnimationGroup(*[ShowCreation(x, *args, **kwargs) for x in lines])
                 return ShowCreation(self.l, *args, **kwargs)
 
             def extend(self, dist):
@@ -434,6 +453,6 @@ class Parallelism(Scene):
         self.play(t.create(), run_time=0)
         t.set_opacity(0)
         self.frame.add_updater(updater)
-        self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
+        # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
         # self.play(Restore(self.frame, run_time=2))
         # self.play(t.duplicate_to(t2))
