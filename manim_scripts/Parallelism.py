@@ -354,69 +354,6 @@ class Parallelism(Scene):
         t = TransformerBlock(4, 4)
         t2 = Transformer(4, 4).next_to(t, DOWN)
         
-        def monkey_patch_interp(self, alpha, full=t):
-            x_min = t.get_left()[0]
-            x_max = t.get_right()[0]
-            x_total = x_max - x_min
-            m_x_min = self.mobject.get_left()[0]
-            m_x_max = self.mobject.get_right()[0]
-            m_x_total = m_x_max - m_x_min
-            percentage = m_x_total/x_total
-
-            x_curr = alpha*x_total
-            x_start = (m_x_min - x_min) / x_total
-            x_end = (m_x_max - x_min) / x_total
-            new_alpha = (alpha - x_start)/(x_end - x_start + 1e-6)
-            print(new_alpha, alpha, x_start, x_end, percentage)
-            return self.interpolate_mobject(clip(new_alpha, 0, 1))
-
-        def get_sub_alpha(
-            self,
-            alpha: float,
-            index: int,
-            num_submobjects: int
-        ) -> float:
-            # TODO, make this more understanable, and/or combine
-            # its functionality with AnimationGroup's method
-            # build_animations_with_timings
-            # lag_ratio = self.lag_ratio
-            # full_length = (num_submobjects - 1) * lag_ratio + 1
-            # value = alpha * full_length
-            # lower = index * lag_ratio
-            # raw_sub_alpha = clip((value - lower), 0, 1)
-            raw_sub_alpha = alpha
-
-
-            x_min = t.get_left()[0]
-            x_max = t.get_right()[0]
-            x_total = x_max - x_min
-            m_x_min = self.mobject.get_left()[0]
-            m_x_max = self.mobject.get_right()[0]
-            m_x_total = m_x_max - m_x_min
-
-            x_start = (m_x_min - x_min) / x_total
-            x_end = (m_x_max - x_min) / x_total
-            new_alpha = (raw_sub_alpha - x_start)/(x_end - x_start + 1e-6)
-            # print(alpha, new_alpha)
-
-            return self.rate_func(new_alpha)
-
-        def rgba_func(
-        ) -> float:
-            x_min = t.get_left()[0]
-            x_max = t.get_right()[0]
-            x_total = x_max - x_min
-            m_x_min = self.mobject.get_left()[0]
-            m_x_max = self.mobject.get_right()[0]
-            m_x_total = m_x_max - m_x_min
-
-            x_start = (m_x_min - x_min) / x_total
-            x_end = (m_x_max - x_min) / x_total
-            new_alpha = (raw_sub_alpha - x_start)/(x_end - x_start + 1e-6)
-            # print(alpha, new_alpha)
-
-            return self.rate_func(new_alpha)
-
         def updater(m, dt):
             camera_x = self.frame.get_center()[0]
             for mob in t.get_family(True):
