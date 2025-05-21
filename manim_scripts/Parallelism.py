@@ -224,7 +224,7 @@ class Parallelism(Scene):
 
                 lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
-                    l = Connector(x1, x2)
+                    l = Connector(x1, x2, width=0.1, color=WHITE)
                     lines.append(l)
                 i = len(self.submobjects) - 1
                 for l in reversed(lines):
@@ -233,9 +233,9 @@ class Parallelism(Scene):
 
                 res_y = self.rms_norm1.get_top()[1] + 1
 
-                self.res = Residual(self.rms_norm1, self.residual1, res_y)
+                self.res = Residual(self.rms_norm1, self.residual1, res_y, width=0.1, color=WHITE)
                 self.add(self.res)
-                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y)
+                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y, width=0.1, color=WHITE)
                 self.add(self.res2)
 
                 self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
@@ -325,7 +325,7 @@ class Parallelism(Scene):
 
                 lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
-                    l = Connector(x1, x2)
+                    l = Connector(x1, x2, width=0.1, color=WHITE)
                     lines.append(l)
                 i = len(self.submobjects) - 1
                 for l in reversed(lines):
@@ -351,8 +351,8 @@ class Parallelism(Scene):
                 return AnimationGroup(*anims)
 
 
-        t = TransformerBlock(4, 4)
-        t2 = Transformer(4, 4).next_to(t, DOWN)
+        t = Transformer(4, 4)
+        # t2 = Transformer(4, 4).next_to(t, DOWN)
         
         def updater(m, dt):
             camera_x = self.frame.get_center()[0]
@@ -388,8 +388,8 @@ class Parallelism(Scene):
         # self.frame.save_state()
         # #TODO get camera to move to start
         self.play(t.create(), run_time=0)
-        t.set_opacity(0)
-        self.frame.add_updater(updater)
+        # t.set_opacity(0)
+        # self.frame.add_updater(updater)
         # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
         # self.play(Restore(self.frame, run_time=2))
         # self.play(t.duplicate_to(t2))
