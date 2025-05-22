@@ -72,7 +72,6 @@ class Parallelism(Scene):
                     self.add(self.t)
                 if formula is not None:
                     self.f = Tex(formula).move_to(self.block.get_corner(OUT)).scale(text_scale)
-                    self.add(self.f)
 
             def create(self, *args, **kwargs):
                 anims = [ShowCreation(self.block, *args, **kwargs)]
@@ -83,7 +82,11 @@ class Parallelism(Scene):
             def transform(self):
                 self.showing_text = not self.showing_text
                 if self.showing_text:
+                    self.add(self.t)
+                    self.remove(self.f)
                     return ReplacementTransform(self.f, self.t)
+                self.add(self.f)
+                self.remove(self.t)
                 return ReplacementTransform(self.t, self.f)
 
         class Connector(Group):
@@ -414,7 +417,7 @@ class Parallelism(Scene):
         self.play(t.create(), self.frame.animate.match_width(t))
         # self.frame.save_state()
         # #TODO get camera to move to start
-        self.play(t.create(), run_time=0)
+        # self.play(t.create(), run_time=0)
         self.play(t.pipeline_parallelize(3))
         # t.set_opacity(0)
         # self.frame.add_updater(updater)
