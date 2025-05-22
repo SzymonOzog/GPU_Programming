@@ -20,6 +20,9 @@ def get_vline_start_end(start, end):
         for smo in start.submobjects:
             max_y = max(max_y, smo.get_left()[1])
             min_y = min(min_y, smo.get_left()[1])
+    else:
+        max_y = max(max_y, start.get_left()[1])
+        min_y = min(min_y, end.get_left()[1])
 
     if isinstance(end, Group):
         for smo in end.submobjects:
@@ -41,7 +44,9 @@ def connect(v_line, obj, up=True, *args, **kwargs):
             lines.append(Line3D(start, end, *args, **kwargs))
         return lines
     loc = obj.get_left() if up else obj.get_right()
-    return [Line3D(v_line.get_center(), loc, *args, **kwargs)]
+    start = v_line.get_center()
+    start[1] = loc[1] 
+    return [Line3D(start, loc, *args, **kwargs)]
 
 
 class Parallelism(Scene):
@@ -323,12 +328,12 @@ class Parallelism(Scene):
 
                 self.arrange(RIGHT, buff=3)
 
-                lines = []
+                self.lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
                     l = Connector(x1, x2, width=0.1, color=WHITE)
-                    lines.append(l)
+                    self.lines.append(l)
                 i = len(self.submobjects) - 1
-                for l in reversed(lines):
+                for l in reversed(self.lines):
                     self.insert_submobject(i, l)
                     i -= 1
 
@@ -340,6 +345,28 @@ class Parallelism(Scene):
                     else:
                         anims.append(ShowCreation(obj, *args, **kwargs))
                 return AnimationGroup(*anims)
+
+            def pipeline_parallelize(self, n, dist=8):
+                split_blocks = []
+                anims = []
+                cum_dist = 0
+                for i, b in enumerate(self.transformer_layers):
+                    if i % (len(self.transformer_layers)/n) == 0 and i != 0:
+                        cum_dist += dist
+                    anims.append(b.animate.shift(cum_dist*DOWN))
+
+                cum_dist = 0
+                for i, b in enumerate(self.lines):
+                    if i % (len(self.lines)/n) == 0 and i != 0:
+                        tmp = Dot().move_to(b.get_left() + cum_dist*DOWN)
+                        cum_dist += dist
+                        tmp2 = Dot().move_to(b.get_right() + cum_dist*DOWN)
+                        #TODO this is too much hacks
+                        anims.append(Transform(b, Connector(tmp, Group(tmp2), width=0.1, color=WHITE)))
+                    else:
+                        anims.append(b.animate.shift(cum_dist*DOWN))
+                return AnimationGroup(*anims)
+
 
             def duplicate_to(self, target):
                 anims = []
@@ -384,10 +411,11 @@ class Parallelism(Scene):
         b2 = FBlock(width=8).next_to(b, RIGHT)
         # self.play(t.create(), run_time=10)
 
-        # self.play(t.create(), self.frame.animate.match_width(t))
+        self.play(t.create(), self.frame.animate.match_width(t))
         # self.frame.save_state()
         # #TODO get camera to move to start
         self.play(t.create(), run_time=0)
+        self.play(t.pipeline_parallelize(3))
         # t.set_opacity(0)
         # self.frame.add_updater(updater)
         # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
