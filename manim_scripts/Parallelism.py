@@ -48,6 +48,8 @@ def connect(v_line, obj, up=True, *args, **kwargs):
     start[1] = loc[1] 
     return [Line3D(start, loc, *args, **kwargs)]
 
+mats = []
+
 
 class Parallelism(Scene):
     def construct(self):
@@ -59,7 +61,7 @@ class Parallelism(Scene):
         Square3D.shader_folder = shader_dir
 
         class FBlock(Group):
-            def __init__(self, text=None, formula=None, text_scale=1, *args, **kwargs):
+            def __init__(self, text=None, formula=None, text_scale=1, weights=None, *args, **kwargs):
                 super().__init__()
                 self.block = Prism(square_resolution=(10,10),*args, **kwargs)
                 
@@ -72,6 +74,9 @@ class Parallelism(Scene):
                     self.add(self.t)
                 if formula is not None:
                     self.f = Tex(formula).move_to(self.block.get_corner(OUT)).scale(text_scale)
+                # if weights:
+                #     mats.appen 
+
 
             def create(self, *args, **kwargs):
                 anims = [ShowCreation(self.block, *args, **kwargs)]
@@ -195,6 +200,15 @@ class Parallelism(Scene):
                                         width=self.std_width, height=self.std_height)
                 
                 self.q_proj = FBlock("Q = XW_q", width=self.std_width, height=self.std_height/3)
+
+                self.mat = Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]) for _ in range(4)])
+                self.mat.arrange(OUT, buff=0.5).rotate(radians(25), DOWN)
+                self.mat_end = self.mat.copy().scale(0.1).shift(4*LEFT)
+                mats.append((self.mat.copy(), self.mat, self.mat_end))
+
                 self.k_proj = FBlock("K = XW_k", width=self.std_width, height=self.std_height/3)
                 self.v_proj = FBlock("V = XW_v", width=self.std_width, height=self.std_height/3)
                 self.qkv_group = Group(self.q_proj, self.k_proj, self.v_proj)
@@ -381,7 +395,7 @@ class Parallelism(Scene):
                 return AnimationGroup(*anims)
 
 
-        t = Transformer(4, 4)
+        t = TransformerBlock(4, 4)
         # t2 = Transformer(4, 4).next_to(t, DOWN)
         
         def updater(m, dt):
@@ -406,21 +420,33 @@ class Parallelism(Scene):
                         rgba_s[:, 3] = np.clip((camera_x-points[:, 0]), 0, 1)
                         mob.set_rgba_array(rgba_s, name="stroke_rgba")
                         mob.set_rgba_array(rgba_f, name="fill_rgba")
+            for s, c, e in mats:
+                MAT_START_OFFSET = 1
+                m_x_min = s.get_left()[0] - MAT_START_OFFSET
+                m_x_max = s.get_right()[0] - MAT_START_OFFSET
+                alpha = clip(camera_x - m_x_min, 0, 1)
+                alpha2 = clip(camera_x - m_x_max, 0, 1)
+                for m_s, m_c, m_e in zip(s.get_family(True), c.get_family(True), e.get_family(True)):
+                    m_c = m_c.interpolate(m_s, m_e, alpha2)
+                    if alpha <= 1:
+                        points = m_c.get_points()
+                        if len(points):
+                            rgba_s = m_c.data["stroke_rgba"].copy()
+                            rgba_f = m_c.data["fill_rgba"].copy()
+                            rgba_f[:, 3] = np.clip((camera_x-points[:, 0]+MAT_START_OFFSET), 0, 1)
+                            rgba_s[:, 3] = np.clip((camera_x-points[:, 0]+MAT_START_OFFSET), 0, 1)
+                            m_c.set_rgba_array(rgba_s, name="stroke_rgba")
+                            m_c.set_rgba_array(rgba_f, name="fill_rgba")
                 
 
-        # self.play(t.create(), self.frame.animate.match_width(t))
-        # Animation.get_sub_alpha = get_sub_alpha
-        b = FBlock(width=8).next_to(t, DOWN)
-        b2 = FBlock(width=8).next_to(b, RIGHT)
-        # self.play(t.create(), run_time=10)
-
         self.play(t.create(), self.frame.animate.match_width(t))
+        self.add(t.mat)
         # self.frame.save_state()
         # #TODO get camera to move to start
         # self.play(t.create(), run_time=0)
-        self.play(t.pipeline_parallelize(3))
-        # t.set_opacity(0)
-        # self.frame.add_updater(updater)
+        t.set_opacity(0)
+        print(t.mat.get_center())
+        self.frame.add_updater(updater)
         # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
         # self.play(Restore(self.frame, run_time=2))
         # self.play(t.duplicate_to(t2))
