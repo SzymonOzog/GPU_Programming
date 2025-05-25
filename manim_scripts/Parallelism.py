@@ -202,13 +202,17 @@ class Parallelism(Scene):
                 self.rms_norm1 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width, height=self.std_height)
                 
-
+                self.rotary1 = FBlock("RoPE", width=self.std_width/2, height=self.std_height/3)
+                self.rotary2 = FBlock("RoPE", width=self.std_width/2, height=self.std_height/3)
 
                 self.q_proj = FBlock("Q Proj","Q = XW_q", width=self.std_width, height=self.std_height/3)
                 self.k_proj = FBlock("K Proj","K = XW_k", width=self.std_width, height=self.std_height/3)
                 self.v_proj = FBlock("V Proj","V = XW_v", width=self.std_width, height=self.std_height/3)
-                self.qkv_group = Group(self.q_proj, self.k_proj, self.v_proj)
-                self.qkv_group.arrange(DOWN, buff=0.5)
+                self.qkv_group = Group(
+                        Group(self.rotary1, self.q_proj).arrange(RIGHT, buff=0.2).add(Connector(self.rotary1, self.q_proj, width=0.1, color=WHITE)) , 
+                        Group(self.rotary2, self.k_proj).arrange(RIGHT, buff=0.2).add(Connector(self.rotary2, self.k_proj, width=0.1, color=WHITE)) , 
+                        self.v_proj)
+                self.qkv_group.arrange(DOWN, buff=0.5, aligned_edge=RIGHT)
 
                 self.attn = FBlock("Attention", "\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V",
                                    width=self.std_width, height=self.std_height)
@@ -240,7 +244,7 @@ class Parallelism(Scene):
                 self.add(self.ffn_down)
                 self.add(self.residual2)
 
-                self.arrange(RIGHT, buff=1)
+                self.arrange(RIGHT, buff=1.5)
 
                 lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
@@ -487,6 +491,6 @@ class Parallelism(Scene):
         # self.play(t.create(), run_time=0)
         # t.set_opacity(0)
         # self.frame.add_updater(updater)
-        # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
+        # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=0.1)
         # self.play(Restore(self.frame, run_time=2))
         # self.play(t.duplicate_to(t2))
