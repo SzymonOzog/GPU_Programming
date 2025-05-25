@@ -204,9 +204,9 @@ class Parallelism(Scene):
                 
 
 
-                self.q_proj = FBlock("Q = XW_q", width=self.std_width, height=self.std_height/3)
-                self.k_proj = FBlock("K = XW_k", width=self.std_width, height=self.std_height/3)
-                self.v_proj = FBlock("V = XW_v", width=self.std_width, height=self.std_height/3)
+                self.q_proj = FBlock("Q Proj","Q = XW_q", width=self.std_width, height=self.std_height/3)
+                self.k_proj = FBlock("K Proj","K = XW_k", width=self.std_width, height=self.std_height/3)
+                self.v_proj = FBlock("V Proj","V = XW_v", width=self.std_width, height=self.std_height/3)
                 self.qkv_group = Group(self.q_proj, self.k_proj, self.v_proj)
                 self.qkv_group.arrange(DOWN, buff=0.5)
 
@@ -218,8 +218,8 @@ class Parallelism(Scene):
                 self.rms_norm2 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width, height=self.std_height)
                 
-                self.ffn_gate = FBlock("XW_g", width=self.std_width, height=self.std_height/2)
-                self.ffn_up = FBlock("XW_u", width=self.std_width, height=self.std_height/2)
+                self.ffn_gate = FBlock("Gate", "XW_g", width=self.std_width, height=self.std_height/2)
+                self.ffn_up = FBlock("Up Proj", "XW_u", width=self.std_width, height=self.std_height/2)
                 
                 self.ffn_group = Group(self.ffn_gate, self.ffn_up)
                 self.ffn_group.arrange(DOWN, buff=0.5)
@@ -227,7 +227,7 @@ class Parallelism(Scene):
                 self.swiglu = FBlock("SwiGLU", r"x \cdot w \cdot \frac{1}{e^{-x}}",
                                      width=self.std_width, height=self.std_height)
                 
-                self.ffn_down =  FBlock("XW_d", width=self.std_width, height=self.std_height)
+                self.ffn_down =  FBlock("Down Proj", "XW_d", width=self.std_width, height=self.std_height)
                 self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
                 self.add(self.rms_norm1)
