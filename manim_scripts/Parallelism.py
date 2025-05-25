@@ -227,6 +227,7 @@ class Parallelism(Scene):
                 self.swiglu = FBlock("SwiGLU", r"x \cdot w \cdot \frac{1}{e^{-x}}",
                                      width=self.std_width, height=self.std_height)
                 
+                self.ffn_down =  FBlock("XW_d", width=self.std_width, height=self.std_height)
                 self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height)
                 
                 self.add(self.rms_norm1)
@@ -236,6 +237,7 @@ class Parallelism(Scene):
                 self.add(self.rms_norm2)
                 self.add(self.ffn_group)
                 self.add(self.swiglu)
+                self.add(self.ffn_down)
                 self.add(self.residual2)
 
                 self.arrange(RIGHT, buff=1)
@@ -273,6 +275,14 @@ class Parallelism(Scene):
                 Group(*mats).arrange(DOWN).move_to(self.ffn_group)
                 self.ffn_gate.set_weights(mats[0])
                 self.ffn_up.set_weights(mats[1])
+
+                mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.7)
+                mat.move_to(self.ffn_down)
+                self.ffn_down.set_weights(mat)
+
                 self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
 
             def extend_at(self, obj, dist=2):
