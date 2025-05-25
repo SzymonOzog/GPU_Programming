@@ -74,8 +74,11 @@ class Parallelism(Scene):
                     self.add(self.t)
                 if formula is not None:
                     self.f = Tex(formula).move_to(self.block.get_corner(OUT)).scale(text_scale)
-                # if weights:
-                #     mats.appen 
+
+            def set_weights(self, weights):
+                self.w = weights
+                self.w_end = self.w.copy().move_to(self.block.get_center()).scale(0.01)
+                mats.append((self.w.copy(), self.w, self.w_end))
 
 
             def create(self, *args, **kwargs):
@@ -199,16 +202,9 @@ class Parallelism(Scene):
                 self.rms_norm1 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width, height=self.std_height)
                 
+
+
                 self.q_proj = FBlock("Q = XW_q", width=self.std_width, height=self.std_height/3)
-
-                self.mat = Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
-                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
-                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]) for _ in range(4)])
-                self.mat.arrange(OUT, buff=0.5).rotate(radians(25), DOWN)
-                self.mat_end = self.mat.copy().scale(0.1).shift(4*LEFT)
-                mats.append((self.mat.copy(), self.mat, self.mat_end))
-
                 self.k_proj = FBlock("K = XW_k", width=self.std_width, height=self.std_height/3)
                 self.v_proj = FBlock("V = XW_v", width=self.std_width, height=self.std_height/3)
                 self.qkv_group = Group(self.q_proj, self.k_proj, self.v_proj)
@@ -260,6 +256,23 @@ class Parallelism(Scene):
                 self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y, width=0.1, color=WHITE)
                 self.add(self.res2)
 
+                mats = [Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]) 
+                                for _ in range(4)]).arrange(OUT, buff=0.5).rotate(radians(25), DOWN).scale(0.7) for _ in range(3)]
+                Group(*mats).arrange(DOWN).move_to(self.k_proj)
+                self.q_proj.set_weights(mats[0])
+                self.k_proj.set_weights(mats[1])
+                self.v_proj.set_weights(mats[2])
+
+                mats = [TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.7) for _ in range(3)]
+                Group(*mats).arrange(DOWN).move_to(self.ffn_group)
+                self.ffn_gate.set_weights(mats[0])
+                self.ffn_up.set_weights(mats[1])
                 self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
 
             def extend_at(self, obj, dist=2):
@@ -421,7 +434,7 @@ class Parallelism(Scene):
                         mob.set_rgba_array(rgba_s, name="stroke_rgba")
                         mob.set_rgba_array(rgba_f, name="fill_rgba")
             for s, c, e in mats:
-                MAT_START_OFFSET = 1
+                MAT_START_OFFSET = 3.5
                 m_x_min = s.get_left()[0] - MAT_START_OFFSET
                 m_x_max = s.get_right()[0] - MAT_START_OFFSET
                 alpha = clip(camera_x - m_x_min, 0, 1)
@@ -440,12 +453,13 @@ class Parallelism(Scene):
                 
 
         self.play(t.create(), self.frame.animate.match_width(t))
-        self.add(t.mat)
+        for s,c,e in mats:
+            self.add(c)
+        # self.add(t.mat)
         # self.frame.save_state()
         # #TODO get camera to move to start
         # self.play(t.create(), run_time=0)
         t.set_opacity(0)
-        print(t.mat.get_center())
         self.frame.add_updater(updater)
         # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
         # self.play(Restore(self.frame, run_time=2))
