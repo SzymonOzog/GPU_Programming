@@ -366,6 +366,15 @@ class Parallelism(Scene):
                 for tb in self.transformer_layers:
                     self.add(tb)
 
+                self.rms_norm = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
+                                        width=self.std_width, height=self.std_height)
+                self.linear = FBlock("Linear", "XW", width=self.std_width, height=self.std_height)
+                self.softmax = FBlock("Softmax", 
+                                      r"\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{K} e^{x_j}}",
+                                      width=self.std_width, height=self.std_height)
+                self.add(self.linear)
+                self.add(self.softmax)
+
                 self.arrange(RIGHT, buff=3)
 
                 self.lines = []
@@ -376,6 +385,13 @@ class Parallelism(Scene):
                 for l in reversed(self.lines):
                     self.insert_submobject(i, l)
                     i -= 1
+
+                mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.7)
+                mat.move_to(self.linear)
+                self.linear.set_weights(mat)
 
             def create(self, *args, **kwargs):
                 anims = []
@@ -418,7 +434,7 @@ class Parallelism(Scene):
                 return AnimationGroup(*anims)
 
 
-        t = TransformerBlock(4, 4)
+        t = Transformer(4, 4)
         # t2 = Transformer(4, 4).next_to(t, DOWN)
         
         def updater(m, dt):
@@ -469,8 +485,8 @@ class Parallelism(Scene):
         # self.frame.save_state()
         # #TODO get camera to move to start
         # self.play(t.create(), run_time=0)
-        t.set_opacity(0)
-        self.frame.add_updater(updater)
+        # t.set_opacity(0)
+        # self.frame.add_updater(updater)
         # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
         # self.play(Restore(self.frame, run_time=2))
         # self.play(t.duplicate_to(t2))
