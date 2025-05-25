@@ -490,11 +490,11 @@ class Parallelism(Scene):
         for s,c,e in mats:
             self.add(c)
         # self.add(t.mat)
-        # self.frame.save_state()
-        # #TODO get camera to move to start
-        # self.play(t.create(), run_time=0)
-        # t.set_opacity(0)
-        # self.frame.add_updater(updater)
-        # self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=0.1)
+        self.frame.save_state()
+        self.frame.animate.set_euler_angles(-1.48825591,  0.56322505,  1.49707077).set_shape(25.415405, 14.285004).move_to([-153.10306  ,    0.3141844,   -1.4780358])
+        #animate creation
+        t.set_opacity(0)
+        self.frame.add_updater(updater)
+        self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
         # self.play(Restore(self.frame, run_time=2))
         # self.play(t.duplicate_to(t2))
