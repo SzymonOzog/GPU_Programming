@@ -386,8 +386,9 @@ class Parallelism(Scene):
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
                     l = Connector(x1, x2, width=0.1, color=WHITE)
                     self.lines.append(l)
-                    if isinstance(x2, TransformerBlock):
-                        x2.create_residuals(l)
+
+                for l, tb in zip(self.lines, self.transformer_layers):
+                    tb.create_residuals(l)
                 i = len(self.submobjects) - 1
                 for l in reversed(self.lines):
                     self.insert_submobject(i, l)
