@@ -255,13 +255,6 @@ class Parallelism(Scene):
                     self.insert_submobject(i, l)
                     i -= 1
 
-                res_y = self.rms_norm1.get_top()[1] + 1
-
-                self.res = Residual(self.rms_norm1, self.residual1, res_y, width=0.1, color=WHITE)
-                self.add(self.res)
-                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y, width=0.1, color=WHITE)
-                self.add(self.res2)
-
                 mats = [Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
@@ -288,6 +281,14 @@ class Parallelism(Scene):
                 self.ffn_down.set_weights(mat)
 
                 self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
+
+            def create_residuals(self, inp):
+                res_y = self.rms_norm1.get_top()[1] + 1
+                self.res = Residual(inp, self.residual1, res_y, width=0.1, color=WHITE)
+                self.add(self.res)
+                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y, width=0.1, color=WHITE)
+                self.add(self.res2)
+
 
             def extend_at(self, obj, dist=2):
                 idx = self.submobjects.index(obj)
@@ -385,6 +386,8 @@ class Parallelism(Scene):
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
                     l = Connector(x1, x2, width=0.1, color=WHITE)
                     self.lines.append(l)
+                    if isinstance(x2, TransformerBlock):
+                        x2.create_residuals(l)
                 i = len(self.submobjects) - 1
                 for l in reversed(self.lines):
                     self.insert_submobject(i, l)
