@@ -490,20 +490,51 @@ class Parallelism(Scene):
                             rgba_s[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
                             m_c.set_rgba_array(rgba_s, name="stroke_rgba")
-        t.set_opacity(0)
-        self.play(t.create(), self.frame.animate.match_width(t))
-        for s,c,e,b in mats:
-            self.add(c)
-        # self.add(t.mat)
-        self.frame.save_state()
-        # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
-        self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
-        #animate creation
-        t.set_opacity(0)
-        self.wait(1)
-        self.frame.add_updater(updater)
-        self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
-        self.frame.remove_updater(updater)
-        self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
-        self.wait(1)
-        # self.play(t.duplicate_to(t2))
+                
+        mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]])
+
+        self.add(mat)
+        #Create rowwise split 
+        self.wait()
+        mat.shift(1*LEFT)
+
+        mat_up = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{\\frac{m}{2},0}", "w_{\\frac{m}{2},1}", "\\cdots", "w_{\\frac{m}{2},n}"]],
+                           h_buff=1.15)
+
+        mat_down = TexMatrix([["w_{\\frac{m}{2}+1,0}", "w_{\\frac{m}{2}+1,1}", "\\cdots", "w_{\\frac{m}{2}+1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]])
+        mat_up.shift(2*UP)
+        mat_down.shift(2*DOWN)
+
+        mat_up.get_brackets()[0]
+        self.play(ReplacementTransform(mat.get_brackets()[0], VGroup(mat_up.get_brackets()[0], mat_down.get_brackets()[0])),
+                  ReplacementTransform(mat.get_brackets()[1], VGroup(mat_up.get_brackets()[1], mat_down.get_brackets()[1])),
+                  ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
+                  ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=5)
+
+
+
+
+        # t.set_opacity(0)
+        # self.play(t.create(), self.frame.animate.match_width(t))
+        # for s,c,e,b in mats:
+        #     self.add(c)
+        # # self.add(t.mat)
+        # self.frame.save_state()
+        # # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
+        # self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
+        # #animate creation
+        # t.set_opacity(0)
+        # self.wait(1)
+        # self.frame.add_updater(updater)
+        # self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
+        # self.frame.remove_updater(updater)
+        # self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
+        # self.wait(1)
+        # # self.play(t.duplicate_to(t2))
