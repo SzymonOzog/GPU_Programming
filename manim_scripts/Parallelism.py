@@ -78,7 +78,7 @@ class Parallelism(Scene):
             def set_weights(self, weights):
                 self.w = weights
                 self.w_end = self.w.copy().move_to(self.block.get_center()).scale(0.01)
-                mats.append((self.w.copy(), self.w, self.w_end))
+                mats.append((self.w.copy(), self.w, self.w_end, self))
 
 
             def create(self, *args, **kwargs):
@@ -200,39 +200,39 @@ class Parallelism(Scene):
                 self.std_height = height 
                 
                 self.rms_norm1 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
-                                        width=self.std_width, height=self.std_height)
+                                        width=self.std_width*2/3, height=self.std_height, color=YELLOW_E)
                 
-                self.rotary1 = FBlock("RoPE", width=self.std_width/2, height=self.std_height/3)
-                self.rotary2 = FBlock("RoPE", width=self.std_width/2, height=self.std_height/3)
+                self.rotary1 = FBlock("RoPE", width=self.std_width/3, height=self.std_height/3)
+                self.rotary2 = FBlock("RoPE", width=self.std_width/3, height=self.std_height/3)
 
-                self.q_proj = FBlock("Q Proj","Q = XW_q", width=self.std_width, height=self.std_height/3)
-                self.k_proj = FBlock("K Proj","K = XW_k", width=self.std_width, height=self.std_height/3)
-                self.v_proj = FBlock("V Proj","V = XW_v", width=self.std_width, height=self.std_height/3)
+                self.q_proj = FBlock("Q Proj","Q = XW_q", width=self.std_width*2/3, height=self.std_height/3, color=TEAL)
+                self.k_proj = FBlock("K Proj","K = XW_k", width=self.std_width*2/3, height=self.std_height/3, color=TEAL)
+                self.v_proj = FBlock("V Proj","V = XW_v", width=self.std_width*2/3, height=self.std_height/3, color=TEAL)
                 self.qkv_group = Group(
-                        Group(self.rotary1, self.q_proj).arrange(RIGHT, buff=0.2).add(Connector(self.rotary1, self.q_proj, width=0.1, color=WHITE)) , 
-                        Group(self.rotary2, self.k_proj).arrange(RIGHT, buff=0.2).add(Connector(self.rotary2, self.k_proj, width=0.1, color=WHITE)) , 
+                        Group(self.rotary1, self.q_proj).arrange(RIGHT, buff=0.4).add(Connector(self.rotary1, self.q_proj, width=0.1, color=WHITE)) , 
+                        Group(self.rotary2, self.k_proj).arrange(RIGHT, buff=0.4).add(Connector(self.rotary2, self.k_proj, width=0.1, color=WHITE)) , 
                         self.v_proj)
                 self.qkv_group.arrange(DOWN, buff=0.5, aligned_edge=RIGHT)
 
                 self.attn = FBlock("Attention", "\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V",
-                                   width=self.std_width, height=self.std_height)
+                                   width=self.std_width, height=self.std_height, color=GOLD_E)
                 
-                self.residual1 = FBlock("+", width=self.std_width//4, height=self.std_height)
+                self.residual1 = FBlock("+", width=self.std_width//4, height=self.std_height//4)
                 
                 self.rms_norm2 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
-                                        width=self.std_width, height=self.std_height)
+                                        width=self.std_width*2/3, height=self.std_height, color=YELLOW_E)
                 
-                self.ffn_gate = FBlock("Gate", "XW_g", width=self.std_width, height=self.std_height/2)
-                self.ffn_up = FBlock("Up Proj", "XW_u", width=self.std_width, height=self.std_height/2)
+                self.ffn_gate = FBlock("Gate", "XW_g", width=self.std_width, height=self.std_height/2, color=TEAL)
+                self.ffn_up = FBlock("Up Proj", "XW_u", width=self.std_width, height=self.std_height/2, color=TEAL)
                 
                 self.ffn_group = Group(self.ffn_gate, self.ffn_up)
                 self.ffn_group.arrange(DOWN, buff=0.5)
                 
                 self.swiglu = FBlock("SwiGLU", r"x \cdot w \cdot \frac{1}{e^{-x}}",
-                                     width=self.std_width, height=self.std_height)
+                                     width=self.std_width/2, height=self.std_height)
                 
-                self.ffn_down =  FBlock("Down Proj", "XW_d", width=self.std_width, height=self.std_height)
-                self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height)
+                self.ffn_down =  FBlock("Down Proj", "XW_d", width=self.std_width, height=self.std_height, color=TEAL)
+                self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height//4)
                 
                 self.add(self.rms_norm1)
                 self.add(self.qkv_group)
@@ -255,12 +255,13 @@ class Parallelism(Scene):
                     self.insert_submobject(i, l)
                     i -= 1
 
+            def set_mats(self):
                 mats = [Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]) 
-                                for _ in range(4)]).arrange(OUT, buff=0.5).rotate(radians(25), DOWN).scale(0.7) for _ in range(3)]
-                Group(*mats).arrange(DOWN).move_to(self.k_proj)
+                                for _ in range(4)]).arrange(OUT, buff=0.5).rotate(radians(25), DOWN).scale(0.5) for _ in range(3)]
+                Group(*mats).arrange(DOWN).move_to(self.k_proj).shift(2*RIGHT)
                 self.q_proj.set_weights(mats[0])
                 self.k_proj.set_weights(mats[1])
                 self.v_proj.set_weights(mats[2])
@@ -268,16 +269,16 @@ class Parallelism(Scene):
                 mats = [TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.7) for _ in range(3)]
-                Group(*mats).arrange(DOWN).move_to(self.ffn_group)
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.7) for _ in range(2)]
+                Group(*mats).arrange(DOWN).move_to(self.ffn_group).shift(2*RIGHT)
                 self.ffn_gate.set_weights(mats[0])
                 self.ffn_up.set_weights(mats[1])
 
                 mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.7)
-                mat.move_to(self.ffn_down)
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.9)
+                mat.move_to(self.ffn_down).shift(2*RIGHT)
                 self.ffn_down.set_weights(mat)
 
                 self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
@@ -354,7 +355,7 @@ class Parallelism(Scene):
                 return AnimationGroup(*anims)
 
         class Transformer(Group):
-            def __init__(self, std_width=4, std_height=4, num_blocks=6, *args, **kwargs):
+            def __init__(self, std_width=4, std_height=4, num_blocks=4, *args, **kwargs):
                 super().__init__()
 
                 self.std_width = std_width
@@ -365,22 +366,23 @@ class Parallelism(Scene):
                     self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height))
 
                 self.embeddings = FBlock("Embedding", width=self.std_width*1.5,
-                                         height=self.transformer_layers[-1].get_height(), text_scale=2)
+                                         height=self.transformer_layers[-1].get_height(), text_scale=2, color=RED)
                 self.add(self.embeddings)
 
                 for tb in self.transformer_layers:
                     self.add(tb)
 
                 self.rms_norm = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
-                                        width=self.std_width, height=self.std_height)
-                self.linear = FBlock("Linear", "XW", width=self.std_width, height=self.std_height)
+                                        width=self.std_width*2/3, height=self.std_height, color=YELLOW_E)
+                self.linear = FBlock("Linear", "XW", width=self.std_width, height=self.std_height, color=TEAL)
                 self.softmax = FBlock("Softmax", 
                                       r"\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{K} e^{x_j}}",
-                                      width=self.std_width, height=self.std_height)
+                                      width=self.std_width*2/3, height=self.std_height, color=GREEN)
+                self.add(self.rms_norm)
                 self.add(self.linear)
                 self.add(self.softmax)
 
-                self.arrange(RIGHT, buff=3)
+                self.arrange(RIGHT, buff=2)
 
                 self.lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
@@ -389,6 +391,7 @@ class Parallelism(Scene):
 
                 for l, tb in zip(self.lines, self.transformer_layers):
                     tb.create_residuals(l)
+                    tb.set_mats()
                 i = len(self.submobjects) - 1
                 for l in reversed(self.lines):
                     self.insert_submobject(i, l)
@@ -447,6 +450,7 @@ class Parallelism(Scene):
         
         def updater(m, dt):
             camera_x = self.frame.get_center()[0]
+            speed = 0.2
             for mob in t.get_family(True):
                 points = mob.get_points()
                 if len(points):
@@ -455,7 +459,7 @@ class Parallelism(Scene):
                         m_x_min = np.min(points[:, 0])
                         m_x_max = np.max(points[:, 0])
                         m_x_total = m_x_max - m_x_min
-                        rgba[:, 3] = np.clip((camera_x-points[:, 0]), 0, 1)
+                        rgba[:, 3] = np.clip(((camera_x-points[:, 0])*speed), 0, 1)
                         mob.set_rgba_array(rgba)
                     else:
                         rgba_s = mob.data["stroke_rgba"].copy()
@@ -463,16 +467,18 @@ class Parallelism(Scene):
                         m_x_min = np.min(points[:, 0])
                         m_x_max = np.max(points[:, 0])
                         m_x_total = m_x_max - m_x_min
-                        rgba_f[:, 3] = np.clip((camera_x-points[:, 0]), 0, 1)
-                        rgba_s[:, 3] = np.clip((camera_x-points[:, 0]), 0, 1)
-                        mob.set_rgba_array(rgba_s, name="stroke_rgba")
+                        rgba_f[:, 3] = np.clip(((camera_x-points[:, 0])*speed), 0, 1)
+                        rgba_s[:, 3] = np.clip(((camera_x-points[:, 0])*speed), 0, 1)
                         mob.set_rgba_array(rgba_f, name="fill_rgba")
-            for s, c, e in mats:
-                MAT_START_OFFSET = 3.5
-                m_x_min = s.get_left()[0] - MAT_START_OFFSET
-                m_x_max = s.get_right()[0] - MAT_START_OFFSET
+                        mob.set_rgba_array(rgba_s, name="stroke_rgba")
+            for s, c, e, b in mats:
+                # m_x_min = s.get_left()[0] - MAT_START_OFFSET - 1
+                # m_x_max = s.get_right()[0] - MAT_START_OFFSET
+                m_x_min = b.get_left()[0]
+                m_x_max = b.get_center()[0]
+                MAT_START_OFFSET = (s.get_left()[0] - m_x_min)/speed
                 alpha = clip(camera_x - m_x_min, 0, 1)
-                alpha2 = clip(camera_x - m_x_max, 0, 1)
+                alpha2 = clip((camera_x - m_x_max)*speed, 0, 1)
                 for m_s, m_c, m_e in zip(s.get_family(True), c.get_family(True), e.get_family(True)):
                     m_c = m_c.interpolate(m_s, m_e, alpha2)
                     if alpha <= 1:
@@ -480,21 +486,24 @@ class Parallelism(Scene):
                         if len(points):
                             rgba_s = m_c.data["stroke_rgba"].copy()
                             rgba_f = m_c.data["fill_rgba"].copy()
-                            rgba_f[:, 3] = np.clip((camera_x-points[:, 0]+MAT_START_OFFSET), 0, 1)
-                            rgba_s[:, 3] = np.clip((camera_x-points[:, 0]+MAT_START_OFFSET), 0, 1)
-                            m_c.set_rgba_array(rgba_s, name="stroke_rgba")
+                            rgba_f[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
+                            rgba_s[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
-                
-
+                            m_c.set_rgba_array(rgba_s, name="stroke_rgba")
+        t.set_opacity(0)
         self.play(t.create(), self.frame.animate.match_width(t))
-        for s,c,e in mats:
+        for s,c,e,b in mats:
             self.add(c)
         # self.add(t.mat)
         self.frame.save_state()
-        self.frame.animate.set_euler_angles(-1.48825591,  0.56322505,  1.49707077).set_shape(25.415405, 14.285004).move_to([-153.10306  ,    0.3141844,   -1.4780358])
+        # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
+        self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
         #animate creation
         t.set_opacity(0)
+        self.wait(1)
         self.frame.add_updater(updater)
-        self.play(self.frame.animate.shift(RIGHT * t.get_width()), run_time=10)
-        # self.play(Restore(self.frame, run_time=2))
+        self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
+        self.frame.remove_updater(updater)
+        self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
+        self.wait(1)
         # self.play(t.duplicate_to(t2))
