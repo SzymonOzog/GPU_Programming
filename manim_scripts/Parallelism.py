@@ -518,6 +518,42 @@ class Parallelism(Scene):
                   ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
                   ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=5)
 
+        #create colwise split
+        mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]])
+        self.remove(mat_up)
+        self.remove(mat_down)
+        self.add(mat)
+        mat_left = TexMatrix([["w_{0,0}", "\\cdots", "w_{0,\\frac{n}{2}}"],
+                                      ["w_{1,0}", "\\cdots", "w_{1,\\frac{n}{2}}"],
+                                      ["\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "\\cdots", "w_{m,\\frac{n}{2}}"]], h_buff=1.15).shift(2*LEFT).scale(0.6)
+
+        mat_right = TexMatrix([["w_{0,\\frac{n}{2}+1}", "\\cdots", "w_{0,n}"],
+                              ["w_{1,\\frac{n}{2}+1}", "\\cdots", "w_{1,n}"],
+                              ["\\vdots", "\\ddots", "\\vdots"],
+                              ["w_{m,\\frac{n}{2}+1}", "\\cdots", "w_{m,n}"]]).shift(2*RIGHT).scale(0.6)
+        # self.remove(mat)
+        # self.add(mat_left)
+        # self.add(mat_right)
+
+        mat_up.get_brackets()[0]
+        l = []
+        r = []
+        for i, e in enumerate(mat.elements):
+            if i%4 < 2:
+                l.append(e)
+            else:
+                r.append(e)
+        self.play(ReplacementTransform(mat.get_brackets()[0], mat_left.get_brackets()[0]),
+                  ReplacementTransform(mat.get_brackets()[1],  mat_right.get_brackets()[1]),
+                  ShowCreation(mat_left.get_brackets()[1]),
+                  ShowCreation(mat_right.get_brackets()[0]),
+                  ReplacementTransform(VGroup(*l), VGroup(*mat_left.elements)),
+                  ReplacementTransform(VGroup(*r), VGroup(*mat_right.elements)), run_time=5)
+
 
 
 
