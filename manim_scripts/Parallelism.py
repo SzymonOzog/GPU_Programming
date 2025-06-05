@@ -259,35 +259,35 @@ class Parallelism(Scene):
                     i -= 1
 
             def set_mats(self):
-                mats = [Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
-                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                mats = [Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]) 
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]]) 
                                 for _ in range(4)]).arrange(OUT, buff=0.5).rotate(radians(25), DOWN).scale(0.5) for _ in range(3)]
                 Group(*mats).arrange(DOWN).move_to(self.k_proj).shift(2*RIGHT)
                 self.q_proj.set_weights(mats[0])
                 self.k_proj.set_weights(mats[1])
                 self.v_proj.set_weights(mats[2])
 
-                mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
-                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,m}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,m}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.9)
+                                      ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]]).rotate(radians(25), DOWN).scale(0.9)
                 mat.move_to(self.up_proj).shift(2*RIGHT)
                 self.up_proj.set_weights(mat)
 
-                mats = [TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
-                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                mats = [TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.7) for _ in range(2)]
+                                      ["w_{i,0}", "w_{i,1}", "\\cdots", "w_{i,h}"]]).rotate(radians(25), DOWN).scale(0.7) for _ in range(2)]
                 Group(*mats).arrange(DOWN).move_to(self.ffn_group).shift(2*RIGHT)
                 self.ffn_gate.set_weights(mats[0])
                 self.ffn_up.set_weights(mats[1])
 
-                mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
-                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,i}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,i}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.9)
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,i}"]]).rotate(radians(25), DOWN).scale(0.9)
                 mat.move_to(self.ffn_down).shift(2*RIGHT)
                 self.ffn_down.set_weights(mat)
 
