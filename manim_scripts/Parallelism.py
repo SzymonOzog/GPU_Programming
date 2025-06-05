@@ -209,10 +209,10 @@ class Parallelism(Scene):
                 self.k_proj = FBlock("K Proj","K = XW_k", width=self.std_width*2/3, height=self.std_height/3, color=TEAL)
                 self.v_proj = FBlock("V Proj","V = XW_v", width=self.std_width*2/3, height=self.std_height/3, color=TEAL)
                 self.qkv_group = Group(
-                        Group(self.rotary1, self.q_proj).arrange(RIGHT, buff=0.4).add(Connector(self.rotary1, self.q_proj, width=0.1, color=WHITE)) , 
-                        Group(self.rotary2, self.k_proj).arrange(RIGHT, buff=0.4).add(Connector(self.rotary2, self.k_proj, width=0.1, color=WHITE)) , 
+                        Group(self.q_proj, self.rotary1).arrange(RIGHT, buff=0.4).add(Connector(self.q_proj, self.rotary1, width=0.1, color=WHITE)) , 
+                        Group(self.k_proj, self.rotary2).arrange(RIGHT, buff=0.4).add(Connector(self.k_proj, self.rotary2, width=0.1, color=WHITE)) , 
                         self.v_proj)
-                self.qkv_group.arrange(DOWN, buff=0.5, aligned_edge=RIGHT)
+                self.qkv_group.arrange(DOWN, buff=0.5, aligned_edge=LEFT)
 
                 self.attn = FBlock("Attention", "\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V",
                                    width=self.std_width, height=self.std_height, color=GOLD_E)
