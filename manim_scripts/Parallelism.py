@@ -216,6 +216,8 @@ class Parallelism(Scene):
 
                 self.attn = FBlock("Attention", "\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V",
                                    width=self.std_width, height=self.std_height, color=GOLD_E)
+
+                self.up_proj = FBlock("Up Proj","Y = XW_v", width=self.std_width, height=self.std_height, color=TEAL)
                 
                 self.residual1 = FBlock("+", width=self.std_width//4, height=self.std_height//4)
                 
@@ -237,6 +239,7 @@ class Parallelism(Scene):
                 self.add(self.rms_norm1)
                 self.add(self.qkv_group)
                 self.add(self.attn)
+                self.add(self.up_proj)
                 self.add(self.residual1)
                 self.add(self.rms_norm2)
                 self.add(self.ffn_group)
@@ -265,6 +268,13 @@ class Parallelism(Scene):
                 self.q_proj.set_weights(mats[0])
                 self.k_proj.set_weights(mats[1])
                 self.v_proj.set_weights(mats[2])
+
+                mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.9)
+                mat.move_to(self.up_proj).shift(2*RIGHT)
+                self.up_proj.set_weights(mat)
 
                 mats = [TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
