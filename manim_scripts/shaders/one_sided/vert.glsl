@@ -17,7 +17,15 @@ const float EPSILON = 1e-10;
 void main(){
     vec3 unit_normal = normalize(d_normal_point - point);
     vec3 new_point = point;
-    new_point += (1 - rgba.w) * unit_normal;
+    vec4 out_rgba = rgba;
+
+    // HACK for the nice creation
+    if (rgba.w < 0)
+    {
+        out_rgba.w = -1*rgba.w;
+        new_point += (1 - out_rgba.w) * unit_normal;
+    }
+
     emit_gl_Position(new_point);
     vec3 camera_normal = normalize(camera_position - point);
     if (dot(camera_normal, unit_normal) < 0)
@@ -26,6 +34,6 @@ void main(){
     }
     else
     {
-        v_color = finalize_color(rgba, point, unit_normal);
+        v_color = finalize_color(out_rgba, point, unit_normal);
     }
 }

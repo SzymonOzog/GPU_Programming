@@ -469,7 +469,7 @@ class Parallelism(Scene):
                         m_x_min = np.min(points[:, 0])
                         m_x_max = np.max(points[:, 0])
                         m_x_total = m_x_max - m_x_min
-                        rgba[:, 3] = np.clip(((camera_x-points[:, 0])*speed), 0, 1)
+                        rgba[:, 3] = -np.clip(((camera_x-points[:, 0])*speed), 0, 1)
                         mob.set_rgba_array(rgba)
                     else:
                         rgba_s = mob.data["stroke_rgba"].copy()
