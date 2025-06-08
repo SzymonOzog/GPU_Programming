@@ -511,30 +511,6 @@ class Parallelism(Scene):
                 smo.set_color(GREY).set_opacity(1)
         self.play(t2.create())
 
-        down = t.up_proj.block.copy().set_height(t.std_height/2, True)
-        down.move_to(t.up_proj, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
-
-        up = t.up_proj.block.copy().set_height(t.std_height/2, True)
-        up.move_to(t2.up_proj, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
-        self.play(Transform(down, up, remover=True))
-
-        mid = t.up_proj.get_center()[1]
-        for smo in t.up_proj.block.submobjects:
-            print(smo)
-            points = smo.get_points()
-            if len(points):
-                rgba = smo.data["rgba"].copy()
-                rgba[points[:, 1] < mid, :] = color_to_rgba(GREY)
-                smo.set_rgba_array(rgba)
-
-        mid = t2.up_proj.get_center()[1]
-        for smo in t2.up_proj.block.submobjects:
-            print(smo)
-            points = smo.get_points()
-            if len(points):
-                rgba = smo.data["rgba"].copy()
-                rgba[points[:, 1] < mid, :] = color_to_rgba(TEAL)
-                smo.set_rgba_array(rgba)
 
         self.wait(1)
 
@@ -589,7 +565,35 @@ class Parallelism(Scene):
                   ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
                   ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=5)
         self.wait(1)
-        return
+
+        anims = []
+        for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
+
+            down = b.copy().set_height(t.std_height/2, True)
+            down.move_to(b, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
+
+            up = b.copy().set_height(t.std_height/2, True)
+            up.move_to(b2, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
+            anims.append(Transform(down, up, remover=True))
+
+            mid = b.get_center()[1]
+            for smo in b.block.submobjects:
+                print(smo)
+                points = smo.get_points()
+                if len(points):
+                    rgba = smo.data["rgba"].copy()
+                    rgba[points[:, 1] < mid, :] = color_to_rgba(GREY)
+                    smo.set_rgba_array(rgba)
+
+            mid = b2.get_center()[1]
+            for smo in b2.block.submobjects:
+                print(smo)
+                points = smo.get_points()
+                if len(points):
+                    rgba = smo.data["rgba"].copy()
+                    rgba[points[:, 1] < mid, :] = color_to_rgba(TEAL)
+                    smo.set_rgba_array(rgba)
+        self.play(*anims)
 
         #create colwise split
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
