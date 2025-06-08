@@ -569,10 +569,10 @@ class Parallelism(Scene):
         anims = []
         for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
 
-            down = b.copy().set_height(t.std_height/2, True)
+            down = b.copy().set_height(b.get_height()/2, True)
             down.move_to(b, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
 
-            up = b.copy().set_height(t.std_height/2, True)
+            up = b.copy().set_height(b.get_height()/2, True)
             up.move_to(b2, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
             anims.append(Transform(down, up, remover=True))
 
@@ -584,6 +584,9 @@ class Parallelism(Scene):
                     rgba[points[:, 1] < mid, :] = color_to_rgba(GREY)
                     smo.set_rgba_array(rgba)
 
+        self.play(*anims)
+
+        for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
             mid = b2.get_center()[1]
             for smo in b2.block.submobjects:
                 points = smo.get_points()
@@ -591,7 +594,6 @@ class Parallelism(Scene):
                     rgba = smo.data["rgba"].copy()
                     rgba[points[:, 1] < mid, :] = color_to_rgba(TEAL)
                     smo.set_rgba_array(rgba)
-        self.play(*anims)
 
         #create colwise split
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
