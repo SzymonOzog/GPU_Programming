@@ -565,6 +565,7 @@ class Parallelism(Scene):
                   ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
                   ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=5)
         self.wait(1)
+        self.play(FadeOut(mat_up), FadeOut(mat_down))
 
         anims = []
         for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
@@ -595,26 +596,33 @@ class Parallelism(Scene):
                     rgba[points[:, 1] < mid, :] = color_to_rgba(TEAL)
                     smo.set_rgba_array(rgba)
 
-        #create colwise split
-        mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
-                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+        inp_up = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,b}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]])
-        self.remove(mat_up)
-        self.remove(mat_down)
-        self.add(mat)
-        mat_left = TexMatrix([["w_{0,0}", "\\cdots", "w_{0,\\frac{n}{2}}"],
-                                      ["w_{1,0}", "\\cdots", "w_{1,\\frac{n}{2}}"],
-                                      ["\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "\\cdots", "w_{m,\\frac{n}{2}}"]], h_buff=1.15).shift(2*LEFT).scale(0.6)
+                                      ["x_{\\frac{m}{2},0}", "x_{\\frac{m}{2},1}", "\\cdots", "x_{\\frac{m}{2},b}"]],
+                           h_buff=1.15)
 
-        mat_right = TexMatrix([["w_{0,\\frac{n}{2}+1}", "\\cdots", "w_{0,n}"],
-                              ["w_{1,\\frac{n}{2}+1}", "\\cdots", "w_{1,n}"],
+        inp_down = TexMatrix([["x_{\\frac{m}{2}+1,0}", "x_{\\frac{m}{2}+1,1}", "\\cdots", "x_{\\frac{m}{2}+1,b}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["x_{m,0}", "x_{m,1}", "\\cdots", "x_{m,b}"]])
+
+        #create colwise split
+        mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,m}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,m}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]])
+        w = t.up_proj.w.copy()
+        mat.move_to(Group(t.up_proj, t2.up_proj))
+        self.play(ReplacementTransform(w, mat))
+        mat_left = TexMatrix([["w_{0,0}", "\\cdots", "w_{0,\\frac{m}{2}}"],
+                                      ["w_{1,0}", "\\cdots", "w_{1,\\frac{m}{2}}"],
+                                      ["\\vdots", "\\ddots", "\\vdots"],
+                                      ["w_{h,0}", "\\cdots", "w_{h,\\frac{m}{2}}"]], h_buff=1.15).scale(0.6)
+
+        mat_right = TexMatrix([["w_{0,\\frac{m}{2}+1}", "\\cdots", "w_{0,n}"],
+                              ["w_{1,\\frac{m}{2}+1}", "\\cdots", "w_{1,n}"],
                               ["\\vdots", "\\ddots", "\\vdots"],
-                              ["w_{m,\\frac{n}{2}+1}", "\\cdots", "w_{m,n}"]]).shift(2*RIGHT).scale(0.6)
-        # self.remove(mat)
-        # self.add(mat_left)
-        # self.add(mat_right)
+                              ["w_{h,\\frac{m}{2}+1}", "\\cdots", "w_{h,n}"]]).scale(0.6)
+        Group(mat_left, mat_right).arrange(RIGHT).move_to(mat)
 
         mat_up.get_brackets()[0]
         l = []
