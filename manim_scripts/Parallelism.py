@@ -455,7 +455,7 @@ class Parallelism(Scene):
                 return AnimationGroup(*anims)
 
 
-        t = Transformer(4, 4)
+        t = TransformerBlock(4, 4)
         # t2 = Transformer(4, 4).next_to(t, DOWN)
         
         def updater(m, dt):
@@ -501,6 +501,65 @@ class Parallelism(Scene):
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
                             m_c.set_rgba_array(rgba_s, name="stroke_rgba")
                 
+        # t.set_opacity(0)
+        self.play(t.create(), self.frame.animate.match_width(t))
+
+        # Create empty copy
+        t2 = TransformerBlock(4,4).next_to(t, DOWN, buff=5)
+        for smo in t2.get_family():
+            if isinstance(smo, Prism):
+                smo.set_color(GREY).set_opacity(1)
+        self.play(t2.create())
+
+        down = t.up_proj.block.copy().set_height(t.std_height/2, True)
+        down.move_to(t.up_proj, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
+
+        up = t.up_proj.block.copy().set_height(t.std_height/2, True)
+        up.move_to(t2.up_proj, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
+        self.play(Transform(down, up, remover=True))
+
+        mid = t.up_proj.get_center()[1]
+        for smo in t.up_proj.block.submobjects:
+            print(smo)
+            points = smo.get_points()
+            if len(points):
+                rgba = smo.data["rgba"].copy()
+                rgba[points[:, 1] < mid, :] = color_to_rgba(GREY)
+                smo.set_rgba_array(rgba)
+
+        mid = t2.up_proj.get_center()[1]
+        for smo in t2.up_proj.block.submobjects:
+            print(smo)
+            points = smo.get_points()
+            if len(points):
+                rgba = smo.data["rgba"].copy()
+                rgba[points[:, 1] < mid, :] = color_to_rgba(TEAL)
+                smo.set_rgba_array(rgba)
+
+        self.wait(1)
+
+        return
+
+
+
+
+        for s,c,e,b in mats:
+            self.add(c)
+        # self.add(t.mat)
+        self.frame.save_state()
+        # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
+        self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
+        #animate creation
+        t.set_opacity(0)
+        self.wait(1)
+        self.frame.add_updater(updater)
+        self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
+        self.frame.remove_updater(updater)
+        self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
+        self.wait(1)
+        # self.play(t.duplicate_to(t2))
+
+
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
@@ -567,20 +626,3 @@ class Parallelism(Scene):
 
 
 
-        # t.set_opacity(0)
-        # self.play(t.create(), self.frame.animate.match_width(t))
-        # for s,c,e,b in mats:
-        #     self.add(c)
-        # # self.add(t.mat)
-        # self.frame.save_state()
-        # # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
-        # self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
-        # #animate creation
-        # t.set_opacity(0)
-        # self.wait(1)
-        # self.frame.add_updater(updater)
-        # self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
-        # self.frame.remove_updater(updater)
-        # self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
-        # self.wait(1)
-        # # self.play(t.duplicate_to(t2))
