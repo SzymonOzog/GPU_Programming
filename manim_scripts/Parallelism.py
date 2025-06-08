@@ -538,54 +538,58 @@ class Parallelism(Scene):
 
         self.wait(1)
 
-        return
 
 
-
-
-        for s,c,e,b in mats:
-            self.add(c)
-        # self.add(t.mat)
-        self.frame.save_state()
-        # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
-        self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
-        #animate creation
-        t.set_opacity(0)
-        self.wait(1)
-        self.frame.add_updater(updater)
-        self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
-        self.frame.remove_updater(updater)
-        self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
-        self.wait(1)
+        # for s,c,e,b in mats:
+        #     self.add(c)
+        # # self.add(t.mat)
+        # self.frame.save_state()
+        # # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
+        # self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
+        # #animate creation
+        # t.set_opacity(0)
+        # self.wait(1)
+        # self.frame.add_updater(updater)
+        # self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
+        # self.frame.remove_updater(updater)
+        # self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
+        # self.wait(1)
         # self.play(t.duplicate_to(t2))
 
+        t.set_mats()
+        w = t.q_proj.w.copy()
+        w.scale(0.5).move_to(Group(t.qkv_group, t2.qkv_group)).rotate(radians(-25), DOWN)
+        self.add(w)
+        w.arrange(DOWN).move_to(Group(t.qkv_group, t2.qkv_group))
 
-        mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
-                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,n}"],
+
+        mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
+                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]])
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]])
+        mat.move_to(w)
+        self.play(ReplacementTransform(w, Group(mat)))
 
-        self.add(mat)
         #Create rowwise split 
         self.wait()
-        mat.shift(1*LEFT)
 
-        mat_up = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
+        mat_up = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{\\frac{m}{2},0}", "w_{\\frac{m}{2},1}", "\\cdots", "w_{\\frac{m}{2},n}"]],
+                                      ["w_{\\frac{m}{2},0}", "w_{\\frac{m}{2},1}", "\\cdots", "w_{\\frac{m}{2},h}"]],
                            h_buff=1.15)
 
-        mat_down = TexMatrix([["w_{\\frac{m}{2}+1,0}", "w_{\\frac{m}{2}+1,1}", "\\cdots", "w_{\\frac{m}{2}+1,n}"],
+        mat_down = TexMatrix([["w_{\\frac{m}{2}+1,0}", "w_{\\frac{m}{2}+1,1}", "\\cdots", "w_{\\frac{m}{2}+1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]])
-        mat_up.shift(2*UP)
-        mat_down.shift(2*DOWN)
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]])
+        Group(mat_up, mat_down).scale(0.8).arrange(DOWN).move_to(mat,aligned_edge=LEFT)
 
         mat_up.get_brackets()[0]
         self.play(ReplacementTransform(mat.get_brackets()[0], VGroup(mat_up.get_brackets()[0], mat_down.get_brackets()[0])),
                   ReplacementTransform(mat.get_brackets()[1], VGroup(mat_up.get_brackets()[1], mat_down.get_brackets()[1])),
                   ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
                   ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=5)
+        self.wait(1)
+        return
 
         #create colwise split
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,n}"],
