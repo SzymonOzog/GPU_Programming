@@ -578,7 +578,6 @@ class Parallelism(Scene):
 
             mid = b.get_center()[1]
             for smo in b.block.submobjects:
-                print(smo)
                 points = smo.get_points()
                 if len(points):
                     rgba = smo.data["rgba"].copy()
@@ -587,7 +586,6 @@ class Parallelism(Scene):
 
             mid = b2.get_center()[1]
             for smo in b2.block.submobjects:
-                print(smo)
                 points = smo.get_points()
                 if len(points):
                     rgba = smo.data["rgba"].copy()
