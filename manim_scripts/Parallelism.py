@@ -640,5 +640,34 @@ class Parallelism(Scene):
                   ReplacementTransform(VGroup(*r), VGroup(*mat_right.elements)), run_time=5)
 
 
+        #transfer data
+        anims = []
+        for b, b2 in zip([t.up_proj], [t2.up_proj]):
+
+            down = b.copy().set_width(b.get_width()/2, True)
+            down.move_to(b, aligned_edge=RIGHT).set_color(TEAL).scale(1.01)
+
+            up = b.copy().set_width(b.get_width()/2, True)
+            up.move_to(b2, aligned_edge=RIGHT).set_color(TEAL).scale(1.01)
+            anims.append(Transform(down, up, remover=True))
+
+            mid = b.get_center()[0]
+            for smo in b.block.submobjects:
+                points = smo.get_points()
+                if len(points):
+                    rgba = smo.data["rgba"].copy()
+                    rgba[points[:, 0] > mid, :] = color_to_rgba(GREY)
+                    smo.set_rgba_array(rgba)
+
+        self.play(*anims)
+
+        for b, b2 in zip([t.up_proj], [t2.up_proj]):
+            mid = b2.get_center()[0]
+            for smo in b2.block.submobjects:
+                points = smo.get_points()
+                if len(points):
+                    rgba = smo.data["rgba"].copy()
+                    rgba[points[:, 0] > mid, :] = color_to_rgba(TEAL)
+                    smo.set_rgba_array(rgba)
 
 
