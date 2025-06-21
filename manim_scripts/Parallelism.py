@@ -601,6 +601,7 @@ class Parallelism(Scene):
                     rgba[points[:, 1] < mid, :] = color_to_rgba(TEAL)
                     smo.set_rgba_array(rgba)
 
+        #create input
         inp_up = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,b}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["x_{\\frac{m}{2},0}", "x_{\\frac{m}{2},1}", "\\cdots", "x_{\\frac{m}{2},b}"]],
@@ -609,6 +610,9 @@ class Parallelism(Scene):
         inp_down = TexMatrix([["x_{\\frac{m}{2}+1,0}", "x_{\\frac{m}{2}+1,1}", "\\cdots", "x_{\\frac{m}{2}+1,b}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["x_{m,0}", "x_{m,1}", "\\cdots", "x_{m,b}"]])
+        
+        Group(inp_up, inp_down).arrange(DOWN,buff=1).move_to(Group(t.attn, t2.attn)).scale(0.7)
+        self.play(ReplacementTransform(t.attn.t.copy(), inp_up), ReplacementTransform(t2.attn.t.copy(), inp_down))
 
         #create colwise split
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,m}"],
@@ -616,8 +620,6 @@ class Parallelism(Scene):
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]])
         w = t.up_proj.w.copy()
-        mat.move_to(Group(t.up_proj, t2.up_proj))
-        self.play(ReplacementTransform(w, mat))
         mat_left = TexMatrix([["w_{0,0}", "\\cdots", "w_{0,\\frac{m}{2}}"],
                                       ["w_{1,0}", "\\cdots", "w_{1,\\frac{m}{2}}"],
                                       ["\\vdots", "\\ddots", "\\vdots"],
@@ -627,7 +629,9 @@ class Parallelism(Scene):
                               ["w_{1,\\frac{m}{2}+1}", "\\cdots", "w_{1,n}"],
                               ["\\vdots", "\\ddots", "\\vdots"],
                               ["w_{h,\\frac{m}{2}+1}", "\\cdots", "w_{h,n}"]]).scale(0.6)
-        Group(mat_left, mat_right).arrange(RIGHT).move_to(mat)
+        Group(mat_left, mat_right).arrange(RIGHT).next_to(Group(inp_up, inp_down), RIGHT)
+        mat.move_to(Group(mat_left, mat_right))
+        self.play(ReplacementTransform(w, mat))
 
         mat_up.get_brackets()[0]
         l = []
@@ -647,6 +651,25 @@ class Parallelism(Scene):
         #move matrices
         self.wait()
         self.play(Group(mat_left, mat_right).animate.arrange(DOWN).move_to(mat))
+
+        #create output
+        out_up = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,h}"],
+                                      ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,h}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,h}"]]).scale(0.6).next_to(mat_left, RIGHT, buff=1)
+
+        out_down = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,h}"],
+                                      ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,h}"],
+                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                                      ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,h}"]]).scale(0.6).next_to(mat_right, RIGHT, buff=1)
+        u = mat_left.copy()
+        d = mat_right.copy()
+        self.play(ReplacementTransform(inp_up, u), ReplacementTransform(inp_down, d))
+        self.play(ReplacementTransform(u, out_up), ReplacementTransform(d, out_down))
+
+        x_sum = out_up.copy().move_to(Group(out_up, out_down))
+        self.play(Transform(Group(out_up, out_down), Group(x_sum)))
+        
 
         #transfer data
         anims = []
@@ -668,7 +691,7 @@ class Parallelism(Scene):
                 if len(points):
                     rgba = smo.data["rgba"].copy()
                     rgba[points[:, 0] > mid, :] = color_to_rgba(GREY)
-                    smo.set_rgba_array(rgba)
+                    smo.set_rgba_array(rgbak)
         for b, b2 in zip([t.up_proj], [t2.up_proj]):
             self.add(b.t)
             self.add(b2.t)
