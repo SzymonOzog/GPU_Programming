@@ -708,3 +708,13 @@ class Parallelism(Scene):
                     smo.set_rgba_array(rgba)
 
 
+    
+        # create allreduce
+        l1 = t.submobjects[t.submobjects.index(t.up_proj) + 1]
+        l2 = t2.submobjects[t2.submobjects.index(t2.up_proj) + 1]
+        all_reduce1 = FBlock("All Reduce\nSum", width=2.8, height=1.4).move_to(Group(l1, l2))
+        self.add(all_reduce1)
+        c1 = Line3D(l1.get_center(), all_reduce1.get_top(), width=0.1)
+        c2 = Line3D(all_reduce1.get_bottom(), l2.get_center(), width=0.1)
+        self.add(c1, c2)
+
