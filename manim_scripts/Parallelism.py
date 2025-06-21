@@ -547,8 +547,6 @@ class Parallelism(Scene):
         self.play(ReplacementTransform(w, Group(mat)))
 
         #Create rowwise split 
-        self.wait()
-
         mat_up = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{\\frac{m}{2},0}", "w_{\\frac{m}{2},1}", "\\cdots", "w_{\\frac{m}{2},h}"]],
@@ -563,7 +561,7 @@ class Parallelism(Scene):
         self.play(ReplacementTransform(mat.get_brackets()[0], VGroup(mat_up.get_brackets()[0], mat_down.get_brackets()[0])),
                   ReplacementTransform(mat.get_brackets()[1], VGroup(mat_up.get_brackets()[1], mat_down.get_brackets()[1])),
                   ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
-                  ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=5)
+                  ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=1)
         self.wait(1)
         self.play(FadeOut(mat_up), FadeOut(mat_down))
 
@@ -578,14 +576,21 @@ class Parallelism(Scene):
             anims.append(Transform(down, up, remover=True))
 
             mid = b.get_center()[1]
+            self.add(down)
+            self.add(up)
+            self.remove(up)
             for smo in b.block.submobjects:
                 points = smo.get_points()
                 if len(points):
                     rgba = smo.data["rgba"].copy()
                     rgba[points[:, 1] < mid, :] = color_to_rgba(GREY)
                     smo.set_rgba_array(rgba)
+        # some hacky way to fix manim z ordering
+        for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
+            self.add(b.t)
+            self.add(b2.t)
 
-        self.play(*anims)
+        self.play(*anims, run_time=5)
 
         for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
             mid = b2.get_center()[1]
@@ -639,6 +644,9 @@ class Parallelism(Scene):
                   ReplacementTransform(VGroup(*l), VGroup(*mat_left.elements)),
                   ReplacementTransform(VGroup(*r), VGroup(*mat_right.elements)), run_time=5)
 
+        #move matrices
+        self.wait()
+        self.play(Group(mat_left, mat_right).animate.arrange(DOWN).move_to(mat))
 
         #transfer data
         anims = []
@@ -652,12 +660,18 @@ class Parallelism(Scene):
             anims.append(Transform(down, up, remover=True))
 
             mid = b.get_center()[0]
+            self.add(down)
+            self.add(up)
+            self.remove(up)
             for smo in b.block.submobjects:
                 points = smo.get_points()
                 if len(points):
                     rgba = smo.data["rgba"].copy()
                     rgba[points[:, 0] > mid, :] = color_to_rgba(GREY)
                     smo.set_rgba_array(rgba)
+        for b, b2 in zip([t.up_proj], [t2.up_proj]):
+            self.add(b.t)
+            self.add(b2.t)
 
         self.play(*anims)
 
