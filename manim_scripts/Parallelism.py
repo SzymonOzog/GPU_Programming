@@ -360,7 +360,7 @@ class Parallelism(Scene):
                 if self.is_hl:
                     anims.append(ReplacementTransform(self.high_level.copy(), target.high_level.move_to(target)))
                 else:
-                    for i, x in self.submobjects:
+                    for i, x in enumerate(self.submobjects):
                         anims.append(ReplacementTransform(x.copy(), target.submobjects[i]))
                 return AnimationGroup(*anims)
 
