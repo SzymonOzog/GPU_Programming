@@ -668,9 +668,9 @@ class Parallelism(Scene):
         self.play(ReplacementTransform(u, out_up), ReplacementTransform(d, out_down))
 
         x_sum = out_up.copy().move_to(Group(out_up, out_down))
-        self.play(Transform(Group(out_up, out_down), Group(x_sum)))
+        self.play(ReplacementTransform(Group(out_up, out_down), Group(x_sum)))
         
-
+        self.play(FadeOut(x_sum), FadeOut(mat_left), FadeOut(mat_right))
         #transfer data
         anims = []
         for b, b2 in zip([t.up_proj], [t2.up_proj]):
@@ -691,7 +691,7 @@ class Parallelism(Scene):
                 if len(points):
                     rgba = smo.data["rgba"].copy()
                     rgba[points[:, 0] > mid, :] = color_to_rgba(GREY)
-                    smo.set_rgba_array(rgbak)
+                    smo.set_rgba_array(rgba)
         for b, b2 in zip([t.up_proj], [t2.up_proj]):
             self.add(b.t)
             self.add(b2.t)
