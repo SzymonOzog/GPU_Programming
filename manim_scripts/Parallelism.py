@@ -257,6 +257,12 @@ class Parallelism(Scene):
                 for l in reversed(lines):
                     self.insert_submobject(i, l)
                     i -= 1
+                self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
+
+            def get_family(self, recurse: bool = True) -> list[Mobject]:
+                if hasattr(self, "high_level"):
+                    return super().get_family(recurse) + self.high_level.get_family(recurse)
+                return super().get_family(recurse)
 
             def set_mats(self):
                 mats = [Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
@@ -499,23 +505,29 @@ class Parallelism(Scene):
                             rgba_f[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             rgba_s[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
-                            m_c.set_rgba_array(rgba_s, name="stroke_rgba")
+
+        saved_colors = {}
+        def flash_updater(m, dt):
+            flash_x = self.frame.get_center()[0]
+            speed = 0.2
+            for mob in transformer.get_family(True):
+                points = mob.get_points()
+                if len(points):
+                    if "rgba" in mob.data_dtype.names:
+                        if mob not in saved_colors:
+                            saved_colors[mob] = color_to_rgb(mob.get_color())
+                        rgba = mob.data["rgba"].copy()
+                        m_x_min = np.min(points[:, 0])
+                        m_x_max = np.max(points[:, 0])
+                        m_x_total = m_x_max - m_x_min
+                        start = np.stack((color_to_rgb(YELLOW),)*len(points))
+                        end = np.stack((saved_colors[mob],)*len(points))
+                        alpha = np.clip(np.abs(flash_x - points[:, 0]), 0, 1)
+                        new_color = start*(1 - alpha)[..., np.newaxis] + end*alpha[..., np.newaxis]
+                        rgba[:, :3] = new_color
+                        mob.set_rgba_array(rgba)
                 
         # t.set_opacity(0)
-        self.play(t.create(), self.frame.animate.match_width(t))
-
-        # Create empty copy
-        t2 = TransformerBlock(4,4).next_to(t, DOWN, buff=5)
-        for smo in t2.get_family():
-            if isinstance(smo, Prism):
-                smo.set_color(GREY).set_opacity(1)
-        self.play(t2.create())
-
-
-        self.wait(1)
-
-
-
         # for s,c,e,b in mats:
         #     self.add(c)
         # # self.add(t.mat)
