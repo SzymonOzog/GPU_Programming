@@ -297,7 +297,6 @@ class Parallelism(Scene):
                 mat.move_to(self.ffn_down).shift(2*RIGHT)
                 self.ffn_down.set_weights(mat)
 
-                self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
 
             def create_residuals(self, inp):
                 res_y = self.rms_norm1.get_top()[1] + 1
@@ -506,26 +505,34 @@ class Parallelism(Scene):
                             rgba_s[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
 
-        saved_colors = {}
-        def flash_updater(m, dt):
-            flash_x = self.frame.get_center()[0]
-            speed = 0.2
-            for mob in transformer.get_family(True):
-                points = mob.get_points()
-                if len(points):
-                    if "rgba" in mob.data_dtype.names:
-                        if mob not in saved_colors:
-                            saved_colors[mob] = color_to_rgb(mob.get_color())
-                        rgba = mob.data["rgba"].copy()
-                        m_x_min = np.min(points[:, 0])
-                        m_x_max = np.max(points[:, 0])
-                        m_x_total = m_x_max - m_x_min
-                        start = np.stack((color_to_rgb(YELLOW),)*len(points))
-                        end = np.stack((saved_colors[mob],)*len(points))
-                        alpha = np.clip(np.abs(flash_x - points[:, 0]), 0, 1)
-                        new_color = start*(1 - alpha)[..., np.newaxis] + end*alpha[..., np.newaxis]
-                        rgba[:, :3] = new_color
-                        mob.set_rgba_array(rgba)
+        def run_transformer(transformer, run_time=1):
+            global saved_colors, flash_x, change
+            saved_colors = {}
+            flash_x = transformer.get_left()[0]
+            change = transformer.get_width()/run_time
+            def flash_updater(m, dt):
+                global saved_colors, flash_x, change
+                flash_x += change*dt
+                print(flash_x, change)
+                for mob in transformer.get_family(True):
+                    points = mob.get_points()
+                    if len(points):
+                        if "rgba" in mob.data_dtype.names:
+                            if mob not in saved_colors:
+                                saved_colors[mob] = color_to_rgb(mob.get_color())
+                            rgba = mob.data["rgba"].copy()
+                            m_x_min = np.min(points[:, 0])
+                            m_x_max = np.max(points[:, 0])
+                            m_x_total = m_x_max - m_x_min
+                            start = np.stack((color_to_rgb(YELLOW),)*len(points))
+                            end = np.stack((saved_colors[mob],)*len(points))
+                            alpha = np.clip(np.abs(flash_x - points[:, 0]), 0, 1)
+                            new_color = start*(1 - alpha)[..., np.newaxis] + end*alpha[..., np.newaxis]
+                            rgba[:, :3] = new_color
+                            mob.set_rgba_array(rgba)
+            self.frame.add_updater(flash_updater)
+            self.wait(run_time)
+            self.frame.remove_updater(flash_updater)
                 
         # t.set_opacity(0)
         # for s,c,e,b in mats:
