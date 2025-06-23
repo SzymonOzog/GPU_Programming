@@ -551,6 +551,43 @@ class Parallelism(Scene):
         # self.wait(1)
         # self.play(t.duplicate_to(t2))
 
+        #Create the transformer
+        transformer = Transformer(4, 12)
+        self.play(transformer.create(True), self.frame.animate.match_width(transformer))
+
+        # Create CPU
+        cpu = SVGMobject("./icons/cpu.svg").scale(10).set_color(WHITE).next_to(transformer, UP).shift(10*UP)
+        self.play(ShowCreation(cpu))
+
+        #run transformer
+        request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
+        self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
+        run_transformer(transformer)
+        request = Square3D(color=RED, side_length=6).move_to(cpu)
+        self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
+
+        anim = RunThrough(transformer)
+        self.play(anim)
+
+        self.play(ShowPassingFlash(transformer, remover=False))
+
+
+        # Copy to data parallel
+        transformer2 = Transformer(4, 12).next_to(transformer, DOWN, buff=8)
+        self.play(transformer.duplicate_to(transformer2))
+
+        # Create empty copy
+        t2 = TransformerBlock(4,4).next_to(t, DOWN, buff=5)
+        for smo in t2.get_family():
+            if isinstance(smo, Prism):
+                smo.set_color(GREY).set_opacity(1)
+        self.play(t2.create())
+
+
+        self.wait(1)
+
+
+
         t.set_mats()
         w = t.q_proj.w.copy()
         w.scale(0.5).move_to(Group(t.qkv_group, t2.qkv_group)).rotate(radians(-25), DOWN)
