@@ -509,7 +509,7 @@ class Parallelism(Scene):
             global saved_colors, flash_x, change
             saved_colors = {}
             flash_x = transformer.get_left()[0]
-            change = transformer.get_width()/run_time
+            change = (transformer.get_width()+2)/run_time
             def flash_updater(m, dt):
                 global saved_colors, flash_x, change
                 flash_x += change*dt
