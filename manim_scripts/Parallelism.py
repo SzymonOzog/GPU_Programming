@@ -554,9 +554,17 @@ class Parallelism(Scene):
         transformer = Transformer(4, 12)
         self.play(transformer.create(True), self.frame.animate.match_width(transformer))
 
+        # Create GPU
+        gpu0 = SurroundingRectangle(transformer, buff=2, color=GREEN)
+        gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
+        self.play(ShowCreation(gpu0))
+        self.play(self.frame.animate.rescale_to_fit(gpu0.get_width() + 10, dim=0), Write(gpu0_t))
+
         # Create CPU
-        cpu = SVGMobject("./icons/cpu.svg").scale(10).set_color(WHITE).next_to(transformer, UP).shift(10*UP)
-        self.play(ShowCreation(cpu))
+        cpu = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
+        cpu0 = SurroundingRectangle(cpu, buff=2, color=BLUE)
+        cpu0_t = Text("CPU").set_color(BLUE).scale(10).next_to(cpu0, UP, aligned_edge=LEFT, buff=2)
+        self.play(ShowCreation(cpu), ShowCreation(cpu0), Write(cpu0_t))
 
         #run transformer
         request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
