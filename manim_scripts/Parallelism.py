@@ -460,7 +460,6 @@ class Parallelism(Scene):
                 return AnimationGroup(*anims)
 
 
-        t = TransformerBlock(4, 4)
         # t2 = Transformer(4, 4).next_to(t, DOWN)
         
         def updater(m, dt):
@@ -565,11 +564,6 @@ class Parallelism(Scene):
         run_transformer(transformer)
         request = Square3D(color=RED, side_length=6).move_to(cpu)
         self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
-
-        anim = RunThrough(transformer)
-        self.play(anim)
-
-        self.play(ShowPassingFlash(transformer, remover=False))
 
 
         # Copy to data parallel
