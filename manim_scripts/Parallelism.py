@@ -504,31 +504,35 @@ class Parallelism(VoiceoverScene):
                             rgba_s[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
 
-        def run_transformer(transformer, run_time=1):
-            global saved_colors, flash_x, change
+        # This is so hacky I feel stupid
+        def run_transformers(transformers, run_time=1):
+            global saved_colors, saved_x
             saved_colors = {}
-            flash_x = transformer.get_left()[0]
-            change = (transformer.get_width()+2)/run_time
+            saved_x = {}
+            for t in transformers:
+                saved_x[t] = t.get_left()[0]
             def flash_updater(m, dt):
-                global saved_colors, flash_x, change
-                flash_x += change*dt
-                print(flash_x, change)
-                for mob in transformer.get_family(True):
-                    points = mob.get_points()
-                    if len(points):
-                        if "rgba" in mob.data_dtype.names:
-                            if mob not in saved_colors:
-                                saved_colors[mob] = color_to_rgb(mob.get_color())
-                            rgba = mob.data["rgba"].copy()
-                            m_x_min = np.min(points[:, 0])
-                            m_x_max = np.max(points[:, 0])
-                            m_x_total = m_x_max - m_x_min
-                            start = np.stack((color_to_rgb(YELLOW),)*len(points))
-                            end = np.stack((saved_colors[mob],)*len(points))
-                            alpha = np.clip(np.abs(flash_x - points[:, 0]), 0, 1)
-                            new_color = start*(1 - alpha)[..., np.newaxis] + end*alpha[..., np.newaxis]
-                            rgba[:, :3] = new_color
-                            mob.set_rgba_array(rgba)
+                global saved_colors, saved_x
+                for t in transformers:
+                    change = (t.get_width()+2)/run_time
+                    saved_x[t] += change*dt
+                    flash_x = saved_x[t]
+                    for mob in t.get_family(True):
+                        points = mob.get_points()
+                        if len(points):
+                            if "rgba" in mob.data_dtype.names:
+                                if mob not in saved_colors:
+                                    saved_colors[mob] = color_to_rgb(mob.get_color())
+                                rgba = mob.data["rgba"].copy()
+                                m_x_min = np.min(points[:, 0])
+                                m_x_max = np.max(points[:, 0])
+                                m_x_total = m_x_max - m_x_min
+                                start = np.stack((color_to_rgb(YELLOW),)*len(points))
+                                end = np.stack((saved_colors[mob],)*len(points))
+                                alpha = np.clip(np.abs(flash_x - points[:, 0]), 0, 1)
+                                new_color = start*(1 - alpha)[..., np.newaxis] + end*alpha[..., np.newaxis]
+                                rgba[:, :3] = new_color
+                                mob.set_rgba_array(rgba)
             self.frame.add_updater(flash_updater)
             self.wait(run_time)
             self.frame.remove_updater(flash_updater)
@@ -554,18 +558,18 @@ class Parallelism(VoiceoverScene):
         transformer = Transformer(4, 12)
         self.play(transformer.create(True), self.frame.animate.match_width(transformer))
 
+        gpu0 = SurroundingRectangle(transformer, buff=2, color=GREEN)
+        gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
         # Create GPU
         with self.voiceover(text="""In the simple case we have our model that is living on the GPU""") as trk:
-            gpu0 = SurroundingRectangle(transformer, buff=2, color=GREEN)
-            gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
             self.play(ShowCreation(gpu0))
             self.play(self.frame.animate.rescale_to_fit(gpu0.get_width() + 10, dim=0), Write(gpu0_t))
 
+        cpu = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
+        cpu0 = SurroundingRectangle(cpu, buff=2, color=BLUE)
+        cpu0_t = Text("CPU").set_color(BLUE).scale(10).next_to(cpu0, UP, aligned_edge=LEFT, buff=2)
         # Create CPU
         with self.voiceover(text="""And a CPU that is orchestrating it""") as trk:
-            cpu = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
-            cpu0 = SurroundingRectangle(cpu, buff=2, color=BLUE)
-            cpu0_t = Text("CPU").set_color(BLUE).scale(10).next_to(cpu0, UP, aligned_edge=LEFT, buff=2)
             self.play(ShowCreation(cpu), ShowCreation(cpu0), Write(cpu0_t))
 
         #run transformer
@@ -574,25 +578,58 @@ class Parallelism(VoiceoverScene):
             while trk.get_remaining_duration() > 0:
                 request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
                 self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
-                run_transformer(transformer)
+                run_transformers([transformer])
                 request = Square3D(color=RED, side_length=6).move_to(cpu)
                 self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
 
 
-        # Copy to data parallel
-        transformer2 = Transformer(4, 12).next_to(transformer, DOWN, buff=8)
-        self.play(transformer.duplicate_to(transformer2))
+        # Create next GPU
+        transformer2 = Transformer(4, 12).next_to(transformer, DOWN, buff=16)
+        gpu1 = SurroundingRectangle(transformer2, buff=2, color=GREEN)
+        gpu1_t = Text("GPU1").set_color(GREEN).scale(10).next_to(gpu1, UP, aligned_edge=LEFT, buff=2)
 
-        # Create empty copy
-        t2 = TransformerBlock(4,4).next_to(t, DOWN, buff=5)
-        for smo in t2.get_family():
-            if isinstance(smo, Prism):
-                smo.set_color(GREY).set_opacity(1)
-        self.play(t2.create())
+        with self.voiceover(text="""But let's say we get another GPU and want to use this fact to speed up our inference""") as trk:
+            self.play(ShowCreation(gpu1))
+            self.play(Write(gpu1_t))
 
 
-        self.wait(1)
+        # Data parallel
+        with self.voiceover(text="""One simple thing to do would be to just make an entire copy of our model and put it on the second GPU""") as trk:
+            self.play(transformer.duplicate_to(transformer2))
 
+        # run both
+        with self.voiceover(text="""In this case, each GPU can process a different request, this essentially doubles our throughput. 
+                            But there are a couple of issues with it""") as trk:
+            while trk.get_remaining_duration() > 0:
+                transformers = [transformer, transformer2]
+                start_anims = []
+                end_anims = []
+                for t in transformers:
+                    request_s = Square3D(color=RED, side_length=6).move_to(t.embeddings.get_left())
+                    start_anims.append(FadeIn(request_s, shift=request_s.get_center() - cpu.get_center(), remover=True))
+                    request_e = Square3D(color=RED, side_length=6).move_to(cpu)
+                    end_anims.append(FadeIn(request_e, shift=request_e.get_center() - t.softmax.get_right(), remover=True))
+
+                self.play(*start_anims, run_time=2)
+                run_transformers(transformers)
+                self.play(*end_anims, run_time=2)
+
+        # Insufficient load
+        with self.voiceover(text="""First of all, we might not have enough load, in this case the CPU is unable to 
+                            schedule a task on both GPUs at once meaning that essentially one of those becomes idle""") as trk:
+            while trk.get_remaining_duration() > 0:
+                transformers = [transformer, transformer2]
+                for t in transformers:
+                    request = Square3D(color=RED, side_length=6).move_to(t.embeddings.get_left())
+                    self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
+                    run_transformers([t])
+                    request = Square3D(color=RED, side_length=6).move_to(cpu)
+                    self.play(FadeIn(request, shift=request.get_center() - t.softmax.get_right(), remover=True), run_time=2)
+
+        
+        with self.voiceover(text="""But the more popular reason for ditching data parallel is just the simple fact that the models of today
+                            no longer fit on a single GPU""") as trk:
+            pass
 
 
         t.set_mats()
