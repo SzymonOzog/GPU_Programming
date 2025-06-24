@@ -2,11 +2,11 @@ import os
 from manimlib import *
 from math import radians
 
-# from manim_voiceover.services.gtts import GTTSService
-# from manim_voiceover.services.recorder import RecorderService
+from manim_voiceover.services.gtts import GTTSService
+from manim_voiceover.services.recorder import RecorderService
 #TODO why do I have to do this
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-# from voicover_gl import VoiceoverScene
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from voicover_gl import VoiceoverScene
 import moderngl
 
 def is_grp(obj):
@@ -51,12 +51,12 @@ def connect(v_line, obj, up=True, *args, **kwargs):
 mats = []
 
 
-class Parallelism(Scene):
+class Parallelism(VoiceoverScene):
     def construct(self):
-        # self.set_speech_service(
-        #     # RecorderService(transcription_model="base")
-        #     GTTSService(transcription_model="base")
-        #     )
+        self.set_speech_service(
+            # RecorderService(transcription_model="base")
+            GTTSService(transcription_model="base")
+            )
         shader_dir = os.path.dirname(os.path.abspath(__file__)) + "/shaders/one_sided"
         Square3D.shader_folder = shader_dir
 
@@ -555,23 +555,28 @@ class Parallelism(Scene):
         self.play(transformer.create(True), self.frame.animate.match_width(transformer))
 
         # Create GPU
-        gpu0 = SurroundingRectangle(transformer, buff=2, color=GREEN)
-        gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
-        self.play(ShowCreation(gpu0))
-        self.play(self.frame.animate.rescale_to_fit(gpu0.get_width() + 10, dim=0), Write(gpu0_t))
+        with self.voiceover(text="""In the simple case we have our model that is living on the GPU""") as trk:
+            gpu0 = SurroundingRectangle(transformer, buff=2, color=GREEN)
+            gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
+            self.play(ShowCreation(gpu0))
+            self.play(self.frame.animate.rescale_to_fit(gpu0.get_width() + 10, dim=0), Write(gpu0_t))
 
         # Create CPU
-        cpu = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
-        cpu0 = SurroundingRectangle(cpu, buff=2, color=BLUE)
-        cpu0_t = Text("CPU").set_color(BLUE).scale(10).next_to(cpu0, UP, aligned_edge=LEFT, buff=2)
-        self.play(ShowCreation(cpu), ShowCreation(cpu0), Write(cpu0_t))
+        with self.voiceover(text="""And a CPU that is orchestrating it""") as trk:
+            cpu = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
+            cpu0 = SurroundingRectangle(cpu, buff=2, color=BLUE)
+            cpu0_t = Text("CPU").set_color(BLUE).scale(10).next_to(cpu0, UP, aligned_edge=LEFT, buff=2)
+            self.play(ShowCreation(cpu), ShowCreation(cpu0), Write(cpu0_t))
 
         #run transformer
-        request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
-        self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
-        run_transformer(transformer)
-        request = Square3D(color=RED, side_length=6).move_to(cpu)
-        self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
+        with self.voiceover(text="""In a very simplified form the CPU is sending a task to process to the model,
+                            getting the output, processing it and sending another task to our model living on the GPU""") as trk:
+            while trk.get_remaining_duration() > 0:
+                request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
+                self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
+                run_transformer(transformer)
+                request = Square3D(color=RED, side_length=6).move_to(cpu)
+                self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
 
 
         # Copy to data parallel
