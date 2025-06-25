@@ -566,7 +566,7 @@ class Parallelism(VoiceoverScene):
                 self.wait(run_time)
             else:
                 for a in anim:
-                    self.play(a, run_time=run_time/len(anim))
+                    self.play(a)
             self.frame.remove_updater(flash_updater)
                 
         # t.set_opacity(0)
