@@ -443,11 +443,9 @@ class Parallelism(VoiceoverScene):
                         anims.append(b.high_level.animate.shift(cum_dist*DOWN))
                     else:
                         anims.append(b.animate.shift(cum_dist*DOWN))
-                print(cum_dist)
 
                 cum_dist = 0
                 for i, b in enumerate(self.lines):
-                    print(i, b, cum_dist)
                     if i % (len(self.transformer_layers)/n) == 0 and i != 0 and i < len(self.transformer_layers):
                         tmp = Dot().move_to(b.get_left() + cum_dist*DOWN)
                         cum_dist += dist
@@ -535,7 +533,7 @@ class Parallelism(VoiceoverScene):
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
 
         # This is so hacky I feel stupid
-        def run_transformers(transformers, run_time=1):
+        def run_transformers(transformers, run_time=1, anim=[]):
             global saved_colors, saved_x
             saved_colors = {}
             saved_x = {}
@@ -564,7 +562,11 @@ class Parallelism(VoiceoverScene):
                                 rgba[:, :3] = new_color
                                 mob.set_rgba_array(rgba)
             self.frame.add_updater(flash_updater)
-            self.wait(run_time)
+            if anim is None:
+                self.wait(run_time)
+            else:
+                for a in anim:
+                    self.play(a, run_time=run_time/len(anim))
             self.frame.remove_updater(flash_updater)
                 
         # t.set_opacity(0)
@@ -668,10 +670,22 @@ class Parallelism(VoiceoverScene):
 
         # Pipeline parallel
         dist = gpu0.get_center()[1] - gpu1.get_center() [1]
-        print(dist)
         with self.voiceover(text="""One such method would be Pipeline Parallelizm. In this setting, in this setting, a subset of 
                             our model layers is placed on one GPU  while the rest is placed on a different one""") as trk:
             self.play(transformer.pipeline_parallelize(2, dist))
+
+
+        with self.voiceover(text="""This effectively splits our model between two GPUs but introduces a few drawbacks""") as trk:
+            while trk.get_remaining_duration() > 0:
+                request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
+                self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
+                a1 = AnimationGroup(gpu0.animate.set_color(GREEN), gpu1.animate.set_color(GREY))
+                a2 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREEN))
+                a3 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREY))
+                run_transformers([transformer], 3, [a1, a2, a3])
+                request = Square3D(color=RED, side_length=6).move_to(cpu)
+                self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
+
 
         t.set_mats()
         w = t.q_proj.w.copy()
