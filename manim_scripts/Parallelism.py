@@ -439,11 +439,16 @@ class Parallelism(VoiceoverScene):
                 for i, b in enumerate(self.transformer_layers):
                     if i % (len(self.transformer_layers)/n) == 0 and i != 0:
                         cum_dist += dist
-                    anims.append(b.animate.shift(cum_dist*DOWN))
+                    if b.is_hl:
+                        anims.append(b.high_level.animate.shift(cum_dist*DOWN))
+                    else:
+                        anims.append(b.animate.shift(cum_dist*DOWN))
+                print(cum_dist)
 
                 cum_dist = 0
                 for i, b in enumerate(self.lines):
-                    if i % (len(self.lines)/n) == 0 and i != 0:
+                    print(i, b, cum_dist)
+                    if i % (len(self.transformer_layers)/n) == 0 and i != 0 and i < len(self.transformer_layers):
                         tmp = Dot().move_to(b.get_left() + cum_dist*DOWN)
                         cum_dist += dist
                         tmp2 = Dot().move_to(b.get_right() + cum_dist*DOWN)
@@ -451,6 +456,9 @@ class Parallelism(VoiceoverScene):
                         anims.append(Transform(b, Connector(tmp, Group(tmp2), width=0.1, color=WHITE)))
                     else:
                         anims.append(b.animate.shift(cum_dist*DOWN))
+                anims.append(self.rms_norm.animate.shift(cum_dist*DOWN))
+                anims.append(self.linear.animate.shift(cum_dist*DOWN))
+                anims.append(self.softmax.animate.shift(cum_dist*DOWN))
                 return AnimationGroup(*anims)
 
             def transform(self, indices=[]):
@@ -578,7 +586,8 @@ class Parallelism(VoiceoverScene):
 
         #Create the transformer
         transformer = Transformer(4, 12)
-        self.play(transformer.create(True), self.frame.animate.match_width(transformer))
+        self.play(transformer.create(), self.frame.animate.match_width(transformer))
+
 
         gpu0 = SurroundingRectangle(transformer, buff=2, color=GREEN)
         gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
@@ -653,6 +662,16 @@ class Parallelism(VoiceoverScene):
                             no longer fit on a single GPU""") as trk:
             pass
 
+        with self.voiceover(text="""This has created a needs for methods that split our model parameters across multiple GPUs""") as trk:
+            self.play(FadeOut(transformer2))
+            pass
+
+        # Pipeline parallel
+        dist = gpu0.get_center()[1] - gpu1.get_center() [1]
+        print(dist)
+        with self.voiceover(text="""One such method would be Pipeline Parallelizm. In this setting, in this setting, a subset of 
+                            our model layers is placed on one GPU  while the rest is placed on a different one""") as trk:
+            self.play(transformer.pipeline_parallelize(2, dist))
 
         t.set_mats()
         w = t.q_proj.w.copy()
