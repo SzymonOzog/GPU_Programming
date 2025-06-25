@@ -259,11 +259,6 @@ class Parallelism(VoiceoverScene):
                     i -= 1
                 self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
 
-            def get_family(self, recurse: bool = True) -> list[Mobject]:
-                if hasattr(self, "high_level"):
-                    return super().get_family(recurse) + self.high_level.get_family(recurse)
-                return super().get_family(recurse)
-
             def set_mats(self):
                 mats = [Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
@@ -370,22 +365,29 @@ class Parallelism(VoiceoverScene):
                 return AnimationGroup(*anims)
 
         class Transformer(Group):
-            def __init__(self, std_width=4, std_height=4, num_blocks=4, *args, **kwargs):
+            def __init__(self, std_width=4, std_height=4, num_blocks=4, high_level=True, *args, **kwargs):
                 super().__init__()
 
                 self.std_width = std_width
                 self.std_height = std_height
 
                 self.transformer_layers = []
+                self.high_levels = []
                 for _ in range(num_blocks):
                     self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height))
+                    self.high_levels.append(self.transformer_layers[-1].high_level)
+                    self.transformer_layers[-1].is_hl = high_level
 
                 self.embeddings = FBlock("Embedding", width=self.std_width*1.5,
                                          height=self.transformer_layers[-1].get_height(), text_scale=2, color=RED)
                 self.add(self.embeddings)
 
-                for tb in self.transformer_layers:
-                    self.add(tb)
+                if high_level:
+                    for tb in self.high_levels:
+                        self.add(tb)
+                else:
+                    for tb in self.transformer_layers:
+                        self.add(tb)
 
                 self.rms_norm = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width*2/3, height=self.std_height, color=YELLOW_E)
@@ -404,7 +406,9 @@ class Parallelism(VoiceoverScene):
                     l = Connector(x1, x2, width=0.1, color=WHITE)
                     self.lines.append(l)
 
-                for l, tb in zip(self.lines, self.transformer_layers):
+                for l, tb, hl in zip(self.lines, self.transformer_layers, self.high_levels):
+                    if high_level:
+                        tb.move_to(hl)
                     tb.create_residuals(l)
                     tb.set_mats()
                 i = len(self.submobjects) - 1
@@ -449,6 +453,24 @@ class Parallelism(VoiceoverScene):
                         anims.append(b.animate.shift(cum_dist*DOWN))
                 return AnimationGroup(*anims)
 
+            def transform(self, indices=[]):
+                anims = []
+                for i in indices:
+                    block = self.transformer_layers[i]
+                    high_level = self.high_levels[i]
+                    if block.is_hl:
+                        block.move_to(high_level)
+                        idx = self.submobjects.index(high_level)
+                        self.remove(high_level)
+                        self.insert_submobject(idx, block)
+                    else:
+                        high_level.move_to(block)
+                        idx = self.submobjects.index(block)
+                        self.remove(block)
+                        self.insert_submobject(idx, high_level)
+                    anims.append(block.transform())
+
+                return AnimationGroup(*anims)
 
             def duplicate_to(self, target):
                 anims = []
