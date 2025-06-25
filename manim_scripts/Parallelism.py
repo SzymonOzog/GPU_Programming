@@ -533,16 +533,20 @@ class Parallelism(VoiceoverScene):
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
 
         # This is so hacky I feel stupid
-        def run_transformers(transformers, run_time=1, anim=[]):
+        def run_transformers(transformers, run_time=1, anim=None):
             global saved_colors, saved_x
             saved_colors = {}
             saved_x = {}
+            if anim is not None:
+                run_time = 0
+                for a in anim:
+                    run_time += a.run_time
             for t in transformers:
                 saved_x[t] = t.get_left()[0]
             def flash_updater(m, dt):
                 global saved_colors, saved_x
                 for t in transformers:
-                    change = (t.get_width()+2)/run_time
+                    change = (t.get_width())/run_time
                     saved_x[t] += change*dt
                     flash_x = saved_x[t]
                     for mob in t.get_family(True):
@@ -567,6 +571,7 @@ class Parallelism(VoiceoverScene):
             else:
                 for a in anim:
                     self.play(a)
+            self.wait(0.1)
             self.frame.remove_updater(flash_updater)
                 
         # t.set_opacity(0)
@@ -682,7 +687,7 @@ class Parallelism(VoiceoverScene):
                 a1 = AnimationGroup(gpu0.animate.set_color(GREEN), gpu1.animate.set_color(GREY))
                 a2 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREEN))
                 a3 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREY))
-                run_transformers([transformer], 3, [a1, a2, a3])
+                run_transformers([transformer], 1, [a1, a2, a3])
                 request = Square3D(color=RED, side_length=6).move_to(cpu)
                 self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
 
