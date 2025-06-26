@@ -691,6 +691,17 @@ class Parallelism(VoiceoverScene):
                 request = Square3D(color=RED, side_length=6).move_to(cpu)
                 self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
 
+        with self.voiceover(text="""The most important of which is simillar to the issue we had in data parallel. 
+                            When we don't have enough running requests, only one of our GPU's is doing the work, while the other one is idling""") as trk:
+            while trk.get_remaining_duration() > 0:
+                request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
+                self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
+                a1 = AnimationGroup(gpu0.animate.set_color(GREEN), gpu1.animate.set_color(GREY), run_time=2)
+                a2 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREEN), run_time=2)
+                a3 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREY), run_time=2)
+                run_transformers([transformer], anim=[a1, a2, a3])
+                request = Square3D(color=RED, side_length=6).move_to(cpu)
+                self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
 
         t.set_mats()
         w = t.q_proj.w.copy()
