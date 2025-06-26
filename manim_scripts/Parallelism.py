@@ -592,7 +592,7 @@ class Parallelism(VoiceoverScene):
         # self.play(t.duplicate_to(t2))
 
         #Create the transformer
-        transformer = Transformer(4, 12)
+        transformer = Transformer(4, 12).shift(5*DOWN)
         self.play(transformer.create(), self.frame.animate.match_width(transformer))
 
 
@@ -603,21 +603,21 @@ class Parallelism(VoiceoverScene):
             self.play(ShowCreation(gpu0))
             self.play(self.frame.animate.rescale_to_fit(gpu0.get_width() + 10, dim=0), Write(gpu0_t))
 
-        cpu = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
-        cpu0 = SurroundingRectangle(cpu, buff=2, color=BLUE)
+        cpu0_i = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
+        cpu0 = SurroundingRectangle(cpu0_i, buff=2, color=BLUE)
         cpu0_t = Text("CPU").set_color(BLUE).scale(10).next_to(cpu0, UP, aligned_edge=LEFT, buff=2)
         # Create CPU
         with self.voiceover(text="""And a CPU that is orchestrating it""") as trk:
-            self.play(ShowCreation(cpu), ShowCreation(cpu0), Write(cpu0_t))
+            self.play(ShowCreation(cpu0_i), ShowCreation(cpu0), Write(cpu0_t))
 
         #run transformer
         with self.voiceover(text="""In a very simplified form the CPU is sending a task to process to the model,
                             getting the output, processing it and sending another task to our model living on the GPU""") as trk:
             while trk.get_remaining_duration() > 0:
                 request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
-                self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
+                self.play(FadeIn(request, shift=request.get_center() - cpu0_i.get_center(), remover=True), run_time=2)
                 run_transformers([transformer])
-                request = Square3D(color=RED, side_length=6).move_to(cpu)
+                request = Square3D(color=RED, side_length=6).move_to(cpu0_i)
                 self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
 
 
@@ -635,6 +635,11 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""One simple thing to do would be to just make an entire copy of our model and put it on the second GPU""") as trk:
             self.play(transformer.duplicate_to(transformer2))
 
+        # Name it
+        dp_t = Text("Data Parallel").scale(50).next_to(cpu0, UP, buff=8).set_color(RED)
+        with self.voiceover(text="""This is called data parallelizm""") as trk:
+            self.play(Write(dp_t))
+
         # run both
         with self.voiceover(text="""In this case, each GPU can process a different request, this essentially doubles our throughput. 
                             But there are a couple of issues with it""") as trk:
@@ -644,8 +649,8 @@ class Parallelism(VoiceoverScene):
                 end_anims = []
                 for t in transformers:
                     request_s = Square3D(color=RED, side_length=6).move_to(t.embeddings.get_left())
-                    start_anims.append(FadeIn(request_s, shift=request_s.get_center() - cpu.get_center(), remover=True))
-                    request_e = Square3D(color=RED, side_length=6).move_to(cpu)
+                    start_anims.append(FadeIn(request_s, shift=request_s.get_center() - cpu0_i.get_center(), remover=True))
+                    request_e = Square3D(color=RED, side_length=6).move_to(cpu0_i)
                     end_anims.append(FadeIn(request_e, shift=request_e.get_center() - t.softmax.get_right(), remover=True))
 
                 self.play(*start_anims, run_time=2)
@@ -659,9 +664,9 @@ class Parallelism(VoiceoverScene):
                 transformers = [transformer, transformer2]
                 for t in transformers:
                     request = Square3D(color=RED, side_length=6).move_to(t.embeddings.get_left())
-                    self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
+                    self.play(FadeIn(request, shift=request.get_center() - cpu0_i.get_center(), remover=True), run_time=2)
                     run_transformers([t])
-                    request = Square3D(color=RED, side_length=6).move_to(cpu)
+                    request = Square3D(color=RED, side_length=6).move_to(cpu0_i)
                     self.play(FadeIn(request, shift=request.get_center() - t.softmax.get_right(), remover=True), run_time=2)
 
         
@@ -669,39 +674,67 @@ class Parallelism(VoiceoverScene):
                             no longer fit on a single GPU""") as trk:
             pass
 
+        # Make pp scene part
+        cpu1 = cpu0.copy()
+        cpu1_t = cpu0_t.copy()
+        cpu1_i = cpu0_i.copy()
+        transformer3 = transformer.copy()
+        gpu2 = gpu0.copy()
+        gpu2_t = gpu0_t.copy()
+        gpu3 = gpu1.copy()
+        gpu3_t = gpu1_t.copy()
+        cp = Group(cpu1, cpu1_t, cpu1_i, transformer3, gpu2, gpu2_t, gpu3, gpu3_t).next_to(
+                Group(cpu0_t, gpu1), RIGHT, buff = 20)
+        self.play(FadeIn(cp))
+
+        # Make tp scene part
+        cpu2 = cpu0.copy()
+        cpu2_t = cpu0_t.copy()
+        cpu2_i = cpu0_i.copy()
+        transformer4 = transformer.copy()
+        gpu4 = gpu0.copy()
+        gpu4_t = gpu0_t.copy()
+        gpu5 = gpu1.copy()
+        gpu5_t = gpu1_t.copy()
+        cp2 = Group(cpu2, cpu2_t, cpu2_i, transformer4, gpu4, gpu4_t, gpu5, gpu5_t).next_to(
+                Group(cpu1_t, gpu3), RIGHT, buff = 20)
+        self.play(FadeIn(cp2))
+
+
         with self.voiceover(text="""This has created a needs for methods that split our model parameters across multiple GPUs""") as trk:
-            self.play(FadeOut(transformer2))
-            pass
+            self.play(self.frame.animate.shift(gpu2.get_center() - gpu0.get_center()), run_time=trk.get_remaining_duration())
 
         # Pipeline parallel
-        dist = gpu0.get_center()[1] - gpu1.get_center() [1]
+        pp_t = Text("Pipeline Parallel").scale(50).next_to(cpu1, UP, buff=5).set_color(YELLOW)
+        dist = gpu2.get_center()[1] - gpu3.get_center() [1]
         with self.voiceover(text="""One such method would be Pipeline Parallelizm. In this setting, in this setting, a subset of 
                             our model layers is placed on one GPU  while the rest is placed on a different one""") as trk:
-            self.play(transformer.pipeline_parallelize(2, dist))
+            self.play(Write(pp_t))
+            self.play(transformer3.pipeline_parallelize(2, dist))
 
 
         with self.voiceover(text="""This effectively splits our model between two GPUs but introduces a few drawbacks""") as trk:
             while trk.get_remaining_duration() > 0:
-                request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
-                self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
-                a1 = AnimationGroup(gpu0.animate.set_color(GREEN), gpu1.animate.set_color(GREY))
-                a2 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREEN))
-                a3 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREY))
+                request = Square3D(color=RED, side_length=6).move_to(transformer3.embeddings.get_left())
+                self.play(FadeIn(request, shift=request.get_center() - cpu1_i.get_center(), remover=True), run_time=2)
+                a1 = AnimationGroup(gpu2.animate.set_color(GREEN), gpu3.animate.set_color(GREY))
+                a2 = AnimationGroup(gpu2.animate.set_color(GREY), gpu3.animate.set_color(GREEN))
+                a3 = AnimationGroup(gpu2.animate.set_color(GREY), gpu3.animate.set_color(GREY))
                 run_transformers([transformer], 1, [a1, a2, a3])
-                request = Square3D(color=RED, side_length=6).move_to(cpu)
-                self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
+                request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
+                self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
 
         with self.voiceover(text="""The most important of which is simillar to the issue we had in data parallel. 
                             When we don't have enough running requests, only one of our GPU's is doing the work, while the other one is idling""") as trk:
             while trk.get_remaining_duration() > 0:
-                request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
-                self.play(FadeIn(request, shift=request.get_center() - cpu.get_center(), remover=True), run_time=2)
-                a1 = AnimationGroup(gpu0.animate.set_color(GREEN), gpu1.animate.set_color(GREY), run_time=2)
-                a2 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREEN), run_time=2)
-                a3 = AnimationGroup(gpu0.animate.set_color(GREY), gpu1.animate.set_color(GREY), run_time=2)
+                request = Square3D(color=RED, side_length=6).move_to(transformer3.embeddings.get_left())
+                self.play(FadeIn(request, shift=request.get_center() - cpu1_i.get_center(), remover=True), run_time=2)
+                a1 = AnimationGroup(gpu2.animate.set_color(GREEN), gpu3.animate.set_color(GREY), run_time=2)
+                a2 = AnimationGroup(gpu2.animate.set_color(GREY), gpu3.animate.set_color(GREEN), run_time=2)
+                a3 = AnimationGroup(gpu2.animate.set_color(GREY), gpu3.animate.set_color(GREY), run_time=2)
                 run_transformers([transformer], anim=[a1, a2, a3])
-                request = Square3D(color=RED, side_length=6).move_to(cpu)
-                self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
+                request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
+                self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
 
         t.set_mats()
         w = t.q_proj.w.copy()
