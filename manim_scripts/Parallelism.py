@@ -61,7 +61,7 @@ class Parallelism(VoiceoverScene):
         Square3D.shader_folder = shader_dir
 
         class FBlock(Group):
-            def __init__(self, text=None, formula=None, text_scale=1, weights=None, *args, **kwargs):
+            def __init__(self, text=None, formula=None, text_scale=1, text_rotation_deg=-90, weights=None, *args, **kwargs):
                 super().__init__()
                 self.block = Prism(square_resolution=(10,10),*args, **kwargs)
                 
@@ -70,7 +70,7 @@ class Parallelism(VoiceoverScene):
                 self.add(self.block)
                 self.showing_text = True
                 if text is not None:
-                    self.t = Text(text).move_to(self.block.get_corner(OUT)).scale(text_scale)
+                    self.t = Text(text).move_to(self.block.get_corner(OUT)).rotate(radians(text_rotation_deg)).scale(text_scale)
                     self.add(self.t)
                 if formula is not None:
                     self.f = Tex(formula).move_to(self.block.get_corner(OUT)).scale(text_scale)
@@ -257,7 +257,7 @@ class Parallelism(VoiceoverScene):
                 for l in reversed(lines):
                     self.insert_submobject(i, l)
                     i -= 1
-                self.high_level = FBlock("Transformer\nBlock", width = self.get_width(), height = self.get_height(), text_scale=4)
+                self.high_level = FBlock("Transformer\nBlock", text_rotation_deg=0, width = self.get_width(), height = self.get_height(), text_scale=4)
 
             def set_mats(self):
                 mats = [Group(*[TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
@@ -437,10 +437,11 @@ class Parallelism(VoiceoverScene):
                 anims = []
                 cum_dist = 0
                 for i, b in enumerate(self.transformer_layers):
+                    print(i, b, cum_dist)
                     if i % (len(self.transformer_layers)/n) == 0 and i != 0:
                         cum_dist += dist
                     if b.is_hl:
-                        anims.append(b.high_level.animate.shift(cum_dist*DOWN))
+                        anims.append(self.high_levels[i].animate.shift(cum_dist*DOWN))
                     else:
                         anims.append(b.animate.shift(cum_dist*DOWN))
 
@@ -678,7 +679,7 @@ class Parallelism(VoiceoverScene):
         cpu1 = cpu0.copy()
         cpu1_t = cpu0_t.copy()
         cpu1_i = cpu0_i.copy()
-        transformer3 = transformer.copy()
+        transformer3 = Transformer(4, 12).move_to(transformer)
         gpu2 = gpu0.copy()
         gpu2_t = gpu0_t.copy()
         gpu3 = gpu1.copy()
@@ -691,7 +692,7 @@ class Parallelism(VoiceoverScene):
         cpu2 = cpu0.copy()
         cpu2_t = cpu0_t.copy()
         cpu2_i = cpu0_i.copy()
-        transformer4 = transformer.copy()
+        transformer4 = Transformer(4, 12).move_to(transformer)
         gpu4 = gpu0.copy()
         gpu4_t = gpu0_t.copy()
         gpu5 = gpu1.copy()
@@ -736,11 +737,23 @@ class Parallelism(VoiceoverScene):
                 request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
                 self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
 
+        self.play(self.frame.animate.shift(gpu4.get_center() - gpu2.get_center()), run_time=trk.get_remaining_duration())
+        # start TP
+        transformer5 = Transformer(4, 12).move_to(gpu5)
+        for mob in it.chain(transformer5.get_family(True), *[x.get_family(True) for x in transformer5.transformer_layers]):
+            if isinstance(mob, Prism):
+                print(mob)
+                mob.set_color(GREY)
+        self.play(transformer4.duplicate_to(transformer5))
+        self.play(transformer4.transform([0, 1, 2, 3]))
+        self.play(transformer5.transform([0, 1, 2, 3]))
+
+        t = transformer4.transformer_layers[0]
+        t2 = transformer5.transformer_layers[0]
+        # do mats
         t.set_mats()
         w = t.q_proj.w.copy()
-        w.scale(0.5).move_to(Group(t.qkv_group, t2.qkv_group)).rotate(radians(-25), DOWN)
-        self.add(w)
-        w.arrange(DOWN).move_to(Group(t.qkv_group, t2.qkv_group))
+        self.play(w.animate.rotate(radians(-25), DOWN).arrange(DOWN).move_to(Group(t.qkv_group, t2.qkv_group)))
 
 
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
