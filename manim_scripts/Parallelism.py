@@ -71,6 +71,17 @@ class Parallelism(VoiceoverScene):
                 self.showing_text = True
                 if text is not None:
                     self.t = Text(text).move_to(self.block.get_corner(OUT)).rotate(radians(text_rotation_deg)).scale(text_scale)
+                    t_h = self.t.get_height()
+                    t_w = self.t.get_width()
+                    b_h = self.block.get_height()
+                    b_w = self.block.get_width()
+                    if b_h/t_h > b_w/t_w:
+                        self.t.match_width(self.block)
+                        self.t.rescale_to_fit(b_w*0.8, dim=0)
+                        # self.t.match_x(
+                    else:
+                        # self.t.match_height(self.block)
+                        self.t.rescale_to_fit(b_h*0.8, dim=1)
                     self.add(self.t)
                 if formula is not None:
                     self.f = Tex(formula).move_to(self.block.get_corner(OUT)).scale(text_scale)
