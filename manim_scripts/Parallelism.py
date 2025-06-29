@@ -205,7 +205,7 @@ class Parallelism(VoiceoverScene):
                                       self.e_line.animate.shift(dist*RIGHT))
 
         class TransformerBlock(Group):
-            def __init__(self, width, height):
+            def __init__(self, width, height, *args, **kwargs):
                 super().__init__()
                 self.std_width = width 
                 self.std_height = height 
@@ -213,12 +213,12 @@ class Parallelism(VoiceoverScene):
                 self.rms_norm1 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width*2/3, height=self.std_height, color=YELLOW_E)
                 
-                self.rotary1 = FBlock("RoPE", width=self.std_width/3, height=self.std_height/3)
-                self.rotary2 = FBlock("RoPE", width=self.std_width/3, height=self.std_height/3)
+                self.rotary1 = FBlock("RoPE", width=self.std_width/3, height=self.std_height/3, *args, **kwargs)
+                self.rotary2 = FBlock("RoPE", width=self.std_width/3, height=self.std_height/3, *args, **kwargs)
 
-                self.q_proj = FBlock("Q Proj","Q = XW_q", width=self.std_width*2/3, height=self.std_height/3, color=TEAL)
-                self.k_proj = FBlock("K Proj","K = XW_k", width=self.std_width*2/3, height=self.std_height/3, color=TEAL)
-                self.v_proj = FBlock("V Proj","V = XW_v", width=self.std_width*2/3, height=self.std_height/3, color=TEAL)
+                self.q_proj = FBlock("Q Proj","Q = XW_q", width=self.std_width*2/3, height=self.std_height/3, color=TEAL, *args, **kwargs)
+                self.k_proj = FBlock("K Proj","K = XW_k", width=self.std_width*2/3, height=self.std_height/3, color=TEAL, *args, **kwargs)
+                self.v_proj = FBlock("V Proj","V = XW_v", width=self.std_width*2/3, height=self.std_height/3, color=TEAL, *args, **kwargs)
                 self.qkv_group = Group(
                         Group(self.q_proj, self.rotary1).arrange(RIGHT, buff=0.4).add(Connector(self.q_proj, self.rotary1, width=0.1, color=WHITE)) , 
                         Group(self.k_proj, self.rotary2).arrange(RIGHT, buff=0.4).add(Connector(self.k_proj, self.rotary2, width=0.1, color=WHITE)) , 
@@ -226,17 +226,17 @@ class Parallelism(VoiceoverScene):
                 self.qkv_group.arrange(DOWN, buff=0.5, aligned_edge=LEFT)
 
                 self.attn = FBlock("Attention", "\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V",
-                                   width=self.std_width, height=self.std_height, color=GOLD_E)
+                                   width=self.std_width, height=self.std_height, color=GOLD_E, *args, **kwargs)
 
-                self.up_proj = FBlock("Up Proj","Y = XW_v", width=self.std_width, height=self.std_height, color=TEAL)
+                self.up_proj = FBlock("Up Proj","Y = XW_v", width=self.std_width, height=self.std_height, color=TEAL, *args, **kwargs)
                 
                 self.residual1 = FBlock("+", width=self.std_width//4, height=self.std_height//4)
                 
                 self.rms_norm2 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width*2/3, height=self.std_height, color=YELLOW_E)
                 
-                self.ffn_gate = FBlock("Gate", "XW_g", width=self.std_width, height=self.std_height/2, color=TEAL)
-                self.ffn_up = FBlock("Up Proj", "XW_u", width=self.std_width, height=self.std_height/2, color=TEAL)
+                self.ffn_gate = FBlock("Gate", "XW_g", width=self.std_width, height=self.std_height/2, color=TEAL, *args, **kwargs)
+                self.ffn_up = FBlock("Up Proj", "XW_u", width=self.std_width, height=self.std_height/2, color=TEAL, *args, **kwargs)
                 
                 self.ffn_group = Group(self.ffn_gate, self.ffn_up)
                 self.ffn_group.arrange(DOWN, buff=0.5)
@@ -244,8 +244,8 @@ class Parallelism(VoiceoverScene):
                 self.swiglu = FBlock("SwiGLU", r"x \cdot w \cdot \frac{1}{e^{-x}}",
                                      width=self.std_width/2, height=self.std_height)
                 
-                self.ffn_down =  FBlock("Down Proj", "XW_d", width=self.std_width, height=self.std_height, color=TEAL)
-                self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height//4)
+                self.ffn_down =  FBlock("Down Proj", "XW_d", width=self.std_width, height=self.std_height, color=TEAL, *args, **kwargs)
+                self.residual2 = FBlock("+", width=self.std_width//4, height=self.std_height//4, *args, **kwargs)
                 
                 self.add(self.rms_norm1)
                 self.add(self.qkv_group)
@@ -366,13 +366,13 @@ class Parallelism(VoiceoverScene):
                     self.is_hl = True
                 return ret
 
-            def duplicate_to(self, target):
+            def duplicate_to(self, target, copy=True):
                 anims = []
                 if self.is_hl:
-                    anims.append(ReplacementTransform(self.high_level.copy(), target.high_level.move_to(target)))
+                    anims.append(ReplacementTransform(self.high_level.copy() if copy else self.high_level, target.high_level.move_to(target)))
                 else:
                     for i, x in enumerate(self.submobjects):
-                        anims.append(ReplacementTransform(x.copy(), target.submobjects[i]))
+                        anims.append(ReplacementTransform(x.copy() if copy else x, target.submobjects[i]))
                 return AnimationGroup(*anims)
 
         class Transformer(Group):
@@ -385,12 +385,12 @@ class Parallelism(VoiceoverScene):
                 self.transformer_layers = []
                 self.high_levels = []
                 for _ in range(num_blocks):
-                    self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height))
+                    self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height, *args, **kwargs))
                     self.high_levels.append(self.transformer_layers[-1].high_level)
                     self.transformer_layers[-1].is_hl = high_level
 
                 self.embeddings = FBlock("Embedding", width=self.std_width*1.5,
-                                         height=self.transformer_layers[-1].get_height(), text_scale=2, color=RED)
+                                         height=self.transformer_layers[-1].get_height(), text_scale=2, color=RED, *args, **kwargs)
                 self.add(self.embeddings)
 
                 if high_level:
@@ -401,11 +401,11 @@ class Parallelism(VoiceoverScene):
                         self.add(tb)
 
                 self.rms_norm = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
-                                        width=self.std_width*2/3, height=self.std_height, color=YELLOW_E)
-                self.linear = FBlock("Linear", "XW", width=self.std_width, height=self.std_height, color=TEAL)
+                                        width=self.std_width*2/3, height=self.std_height, color=YELLOW_E, *args, **kwargs)
+                self.linear = FBlock("Linear", "XW", width=self.std_width, height=self.std_height, color=TEAL, *args, **kwargs)
                 self.softmax = FBlock("Softmax", 
                                       r"\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{K} e^{x_j}}",
-                                      width=self.std_width*2/3, height=self.std_height, color=GREEN)
+                                      width=self.std_width*2/3, height=self.std_height, color=GREEN, *args, **kwargs)
                 self.add(self.rms_norm)
                 self.add(self.linear)
                 self.add(self.softmax)
@@ -490,13 +490,13 @@ class Parallelism(VoiceoverScene):
 
                 return AnimationGroup(*anims)
 
-            def duplicate_to(self, target):
+            def duplicate_to(self, target, copy=True):
                 anims = []
                 for i, x in enumerate(self.submobjects):
                     if hasattr(x, "duplicate_to"):
-                        anims.append(x.duplicate_to(target.submobjects[i]))
+                        anims.append(x.duplicate_to(target.submobjects[i], copy))
                     else:
-                        anims.append(ReplacementTransform(x.copy(), target.submobjects[i]))
+                        anims.append(ReplacementTransform(x.copy() if copy else x, target.submobjects[i]))
                 return AnimationGroup(*anims)
 
 
@@ -753,11 +753,14 @@ class Parallelism(VoiceoverScene):
         transformer5 = Transformer(4, 12).move_to(gpu5)
         for mob in it.chain(transformer5.get_family(True), *[x.get_family(True) for x in transformer5.transformer_layers]):
             if isinstance(mob, Prism):
-                print(mob)
                 mob.set_color(GREY)
         self.play(transformer4.duplicate_to(transformer5))
         self.play(transformer4.transform([0, 1, 2, 3]))
         self.play(transformer5.transform([0, 1, 2, 3]))
+        transformer6 = Transformer(4,4, high_level=False, text_rotation_deg=0).move_to(transformer4, aligned_edge=DOWN)
+        self.play(transformer4.duplicate_to(transformer6, copy=False))
+        
+        return
 
         t = transformer4.transformer_layers[0]
         t2 = transformer5.transformer_layers[0]
