@@ -759,6 +759,11 @@ class Parallelism(VoiceoverScene):
         self.play(transformer5.transform([0, 1, 2, 3]))
         transformer6 = Transformer(4,4, high_level=False, text_rotation_deg=0).move_to(transformer4, aligned_edge=DOWN)
         self.play(transformer4.duplicate_to(transformer6, copy=False))
+        transformer7 = Transformer(4,4, high_level=False, text_rotation_deg=0).move_to(transformer5, aligned_edge=UP)
+        for mob in it.chain(transformer7.get_family(True), *[x.get_family(True) for x in transformer7.transformer_layers]):
+            if isinstance(mob, Prism):
+                mob.set_color(GREY)
+        self.play(transformer5.duplicate_to(transformer7, copy=False))
         
         return
 
