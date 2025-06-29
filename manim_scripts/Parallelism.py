@@ -747,23 +747,28 @@ class Parallelism(VoiceoverScene):
                 run_transformers([transformer], anim=[a1, a2, a3])
                 request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
                 self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
-
-        self.play(self.frame.animate.shift(gpu4.get_center() - gpu2.get_center()), run_time=trk.get_remaining_duration())
         # start TP
+        tp_t = Text("Tensor Parallel").scale(50).next_to(cpu2, UP, buff=5).set_color(GREEN)
+        with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
+            self.play(self.frame.animate.shift(gpu4.get_center() - gpu2.get_center()), run_time=trk.get_remaining_duration())
+            self.play(Write(tp_t))
         transformer5 = Transformer(4, 12).move_to(gpu5)
         for mob in it.chain(transformer5.get_family(True), *[x.get_family(True) for x in transformer5.transformer_layers]):
             if isinstance(mob, Prism):
                 mob.set_color(GREY)
-        self.play(transformer4.duplicate_to(transformer5))
-        self.play(transformer4.transform([0, 1, 2, 3]))
-        self.play(transformer5.transform([0, 1, 2, 3]))
+        with self.voiceover(text="""In tensor parallelizm, we create a copy of an entire model on the second GPU""") as trk:
+            self.play(transformer4.duplicate_to(transformer5))
+            self.play(transformer4.transform([0, 1, 2, 3]), transformer5.transform([0, 1, 2, 3]))
+
+
         transformer6 = Transformer(4,4, high_level=False, text_rotation_deg=0).move_to(transformer4, aligned_edge=DOWN)
-        self.play(transformer4.duplicate_to(transformer6, copy=False))
         transformer7 = Transformer(4,4, high_level=False, text_rotation_deg=0).move_to(transformer5, aligned_edge=UP)
         for mob in it.chain(transformer7.get_family(True), *[x.get_family(True) for x in transformer7.transformer_layers]):
             if isinstance(mob, Prism):
                 mob.set_color(GREY)
-        self.play(transformer5.duplicate_to(transformer7, copy=False))
+        with self.voiceover(text="""And we split all model weights and calculations across all stages of the model""") as trk:
+            self.play(transformer4.duplicate_to(transformer6, copy=False), transformer5.duplicate_to(transformer7, copy=False))
+
         
         return
 
