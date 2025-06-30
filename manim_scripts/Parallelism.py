@@ -769,11 +769,54 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""And we split all model weights and calculations across all stages of the model""") as trk:
             self.play(transformer4.duplicate_to(transformer6, copy=False), transformer5.duplicate_to(transformer7, copy=False))
 
+        def split_weights(t1_mobs, t2_mobs, color, dim=0, run_time=1):
+            anims = []
+            for b, b2 in zip(t1_mobs, t2_mobs):
+
+                down = b.copy().set_height(b.get_height()/2, True)
+                down.move_to(b, aligned_edge=DOWN).set_color(color).scale(1.01)
+
+                up = b.copy().set_height(b.get_height()/2, True)
+                up.move_to(b2, aligned_edge=DOWN).set_color(color).scale(1.01)
+                anims.append(Transform(down, up, remover=True))
+
+                mid = b.get_center()[dim]
+                self.add(down)
+                self.add(up)
+                self.remove(up)
+                for smo in b.block.submobjects:
+                    points = smo.get_points()
+                    if len(points):
+                        rgba = smo.data["rgba"].copy()
+                        rgba[points[:, dim] < mid, :] = color_to_rgba(GREY)
+                        smo.set_rgba_array(rgba)
+            # some hacky way to fix manim z ordering
+            for b, b2 in zip(t1_mobs, t2_mobs):
+                self.add(b.t)
+                self.add(b2.t)
+
+            self.play(*anims, run_time=run_time)
+
+            for b, b2 in zip(t1_mobs, t2_mobs):
+                mid = b2.get_center()[dim]
+                for smo in b2.block.submobjects:
+                    points = smo.get_points()
+                    if len(points):
+                        rgba = smo.data["rgba"].copy()
+                        rgba[points[:, dim] < mid, :] = color_to_rgba(color)
+                        smo.set_rgba_array(rgba)
+
+        with self.voiceover(text="""The question becomes, how to split the weights across the model""") as trk:
+            pass
+
+        with self.voiceover(text="""Going layer by layer, we first encounter our embeddings. The way we split them is that we just
+                            divide them equally across all GPUs, each embedding only the tokens it has in it's range""") as trk:
+            split_weights([transformer6.embeddings], [transformer7.embeddings], RED, 1)
         
         return
-
         t = transformer4.transformer_layers[0]
         t2 = transformer5.transformer_layers[0]
+
         # do mats
         t.set_mats()
         w = t.q_proj.w.copy()
