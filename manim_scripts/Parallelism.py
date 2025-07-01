@@ -975,16 +975,16 @@ class Parallelism(VoiceoverScene):
             split_weights([t.out_proj], [t2.out_proj], TEAL)
     
         # create allreduce
-        l1 = t.submobjects[t.submobjects.index(t.out_proj) + 1]
-        l2 = t2.submobjects[t2.submobjects.index(t2.out_proj) + 1]
-        all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
-        self.add(all_reduce1)
-        line_kwargs = dict(color=RED, width=0.3)
-        c3 = Line3D(l1.get_center(), all_reduce2.get_top(), **line_kwargs)
-        c4 = Line3D(all_reduce2.get_bottom(), l2.get_center(), **line_kwargs)
-        self.add(c3, c4)
+        def create_allreduce(t, t2, obj, obj2):
+            l1 = t.submobjects[t.submobjects.index(obj) + 1]
+            l2 = t2.submobjects[t2.submobjects.index(obj2) + 1]
+            all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
+            line_kwargs = dict(color=RED, width=0.3)
+            c3 = Line3D(l1.get_center(), all_reduce2.get_top(), **line_kwargs)
+            c4 = Line3D(all_reduce2.get_bottom(), l2.get_center(), **line_kwargs)
+            self.play(ShowCreation(c3), ShowCreation(c4), all_reduce2.create())
         with self.voiceover(text="""It allows us to do a GPU to GPU sync every second matrix multiplication""") as trk:
-            self.play(ShowCreation(c1), ShowCreation(c2), all_reduce2.create())
+            create_allreduce(t, t2, t.out_proj, t2.out_proj)
 
         with self.voiceover(text="""And we do the same for the rest of the elements inside our transformer block""") as trk:
             self.play(self.frame.animate.shift((t2.swiglu.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
@@ -993,6 +993,7 @@ class Parallelism(VoiceoverScene):
             split_weights([t.ffn_gate, t.ffn_up], [t2.ffn_gate, t2.ffn_up], TEAL, dim=1)
             self.play(t2.swiglu.block.animate.set_color(BLUE))
             split_weights([t.ffn_down], [t2.ffn_down], TEAL)
+            create_allreduce(t, t2, t.ffn_down, t2.ffn_down)
             self.play(t2.residual2.block.animate.set_color(BLUE))
 
 
