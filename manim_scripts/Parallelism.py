@@ -834,12 +834,12 @@ class Parallelism(VoiceoverScene):
             self.play(self.frame.animate.shift((t2.rms_norm1.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
             self.play(t2.rms_norm1.block.animate.set_color(YELLOW_E))
 
-        return
-
         # do mats
         t.set_mats()
         w = t.q_proj.w.copy()
-        self.play(w.animate.rotate(radians(-25), DOWN).arrange(DOWN).move_to(Group(t.qkv_group, t2.qkv_group)))
+        with self.voiceover(text="""Next we have our Q, K and V matrices, they are structured in a simillar way so let's just take Q as an example""") as trk:
+            self.play(self.frame.animate.shift((t2.qkv_group.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
+            self.play(w.animate.rotate(radians(-25), DOWN).arrange(DOWN).move_to(Group(t.qkv_group, t2.qkv_group)))
 
 
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
@@ -847,7 +847,9 @@ class Parallelism(VoiceoverScene):
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]])
         mat.move_to(w)
-        self.play(ReplacementTransform(w, Group(mat)))
+        with self.voiceover(text="""They have multiple weights for each head but the way that it runs in the background, is that all 
+                            the head weights are stacked on top of each other and we run this as a single matrix multiplication""") as trk:
+            self.play(ReplacementTransform(w, Group(mat)))
 
         #Create rowwise split 
         mat_up = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
@@ -861,48 +863,19 @@ class Parallelism(VoiceoverScene):
         Group(mat_up, mat_down).scale(0.8).arrange(DOWN).move_to(mat,aligned_edge=LEFT)
 
         mat_up.get_brackets()[0]
-        self.play(ReplacementTransform(mat.get_brackets()[0], VGroup(mat_up.get_brackets()[0], mat_down.get_brackets()[0])),
-                  ReplacementTransform(mat.get_brackets()[1], VGroup(mat_up.get_brackets()[1], mat_down.get_brackets()[1])),
-                  ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
-                  ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=1)
-        self.wait(1)
-        self.play(FadeOut(mat_up), FadeOut(mat_down))
+        with self.voiceover(text="""The way that we split this matrix is that we cut it in the middle, and give one part to one GPU and another to the second one""") as trk:
+            self.play(ReplacementTransform(mat.get_brackets()[0], VGroup(mat_up.get_brackets()[0], mat_down.get_brackets()[0])),
+                      ReplacementTransform(mat.get_brackets()[1], VGroup(mat_up.get_brackets()[1], mat_down.get_brackets()[1])),
+                      ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
+                      ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=1)
+            self.wait(1)
+            self.play(FadeOut(mat_up), FadeOut(mat_down))
 
-        anims = []
-        for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
+        with self.voiceover(text="""This is called a rowwise split, we split all 3 matrices this way""") as trk:
+            split_weights([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj], TEAL, dim=1)
 
-            down = b.copy().set_height(b.get_height()/2, True)
-            down.move_to(b, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
+        return
 
-            up = b.copy().set_height(b.get_height()/2, True)
-            up.move_to(b2, aligned_edge=DOWN).set_color(TEAL).scale(1.01)
-            anims.append(Transform(down, up, remover=True))
-
-            mid = b.get_center()[1]
-            self.add(down)
-            self.add(up)
-            self.remove(up)
-            for smo in b.block.submobjects:
-                points = smo.get_points()
-                if len(points):
-                    rgba = smo.data["rgba"].copy()
-                    rgba[points[:, 1] < mid, :] = color_to_rgba(GREY)
-                    smo.set_rgba_array(rgba)
-        # some hacky way to fix manim z ordering
-        for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
-            self.add(b.t)
-            self.add(b2.t)
-
-        self.play(*anims, run_time=5)
-
-        for b, b2 in zip([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj]):
-            mid = b2.get_center()[1]
-            for smo in b2.block.submobjects:
-                points = smo.get_points()
-                if len(points):
-                    rgba = smo.data["rgba"].copy()
-                    rgba[points[:, 1] < mid, :] = color_to_rgba(TEAL)
-                    smo.set_rgba_array(rgba)
 
         #create input
         inp_up = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,b}"],
