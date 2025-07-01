@@ -228,7 +228,7 @@ class Parallelism(VoiceoverScene):
                 self.attn = FBlock("Attention", "\\text{softmax}(\\frac{QK^T}{\\sqrt{d_k}})V",
                                    width=self.std_width, height=self.std_height, color=GOLD_E, *args, **kwargs)
 
-                self.up_proj = FBlock("Up Proj","Y = XW_v", width=self.std_width, height=self.std_height, color=TEAL, *args, **kwargs)
+                self.out_proj = FBlock("Out Proj","Y = XW_v", width=self.std_width, height=self.std_height, color=TEAL, *args, **kwargs)
                 
                 self.residual1 = FBlock("+", width=self.std_width//4, height=self.std_height//4)
                 
@@ -250,7 +250,7 @@ class Parallelism(VoiceoverScene):
                 self.add(self.rms_norm1)
                 self.add(self.qkv_group)
                 self.add(self.attn)
-                self.add(self.up_proj)
+                self.add(self.out_proj)
                 self.add(self.residual1)
                 self.add(self.rms_norm2)
                 self.add(self.ffn_group)
@@ -285,8 +285,8 @@ class Parallelism(VoiceoverScene):
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,m}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]]).rotate(radians(25), DOWN).scale(0.9)
-                mat.move_to(self.up_proj).shift(2*RIGHT)
-                self.up_proj.set_weights(mat)
+                mat.move_to(self.out_proj).shift(2*RIGHT)
+                self.out_proj.set_weights(mat)
 
                 mats = [TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
@@ -894,7 +894,7 @@ class Parallelism(VoiceoverScene):
         
         Group(inp_up, inp_down).arrange(DOWN,buff=1).move_to(Group(t.attn, t2.attn)).scale(0.7)
         with self.voiceover(text="""Next we have our out projection matrix""") as trk:
-            self.play(self.frame.animate.shift((t2.up_proj.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
+            self.play(self.frame.animate.shift((t2.out_proj.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
 
         with self.voiceover(text="""And after our attention computation, each GPU has a different half of the input to this matrix""") as trk:
             self.play(ReplacementTransform(t.attn.t.copy(), inp_up), ReplacementTransform(t2.attn.t.copy(), inp_down))
@@ -907,7 +907,7 @@ class Parallelism(VoiceoverScene):
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,m}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]])
-        w = t.up_proj.w.copy()
+        w = t.out_proj.w.copy()
         mat_left = TexMatrix([["w_{0,0}", "\\cdots", "w_{0,\\frac{m}{2}}"],
                                       ["w_{1,0}", "\\cdots", "w_{1,\\frac{m}{2}}"],
                                       ["\\vdots", "\\ddots", "\\vdots"],
@@ -966,11 +966,11 @@ class Parallelism(VoiceoverScene):
         #transfer data
 
         with self.voiceover(text="""That's why we split every second matrix columnwise""") as trk:
-            split_weights([t.up_proj], [t2.up_proj], TEAL)
+            split_weights([t.out_proj], [t2.out_proj], TEAL)
     
         # create allreduce
-        l1 = t.submobjects[t.submobjects.index(t.up_proj) + 1]
-        l2 = t2.submobjects[t2.submobjects.index(t2.up_proj) + 1]
+        l1 = t.submobjects[t.submobjects.index(t.out_proj) + 1]
+        l2 = t2.submobjects[t2.submobjects.index(t2.out_proj) + 1]
         all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
         self.add(all_reduce1)
         line_kwargs = dict(color=RED, width=0.3)
