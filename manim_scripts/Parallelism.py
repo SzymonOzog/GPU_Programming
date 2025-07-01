@@ -812,6 +812,16 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""Going layer by layer, we first encounter our embeddings. The way we split them is that we just
                             divide them equally across all GPUs, each embedding only the tokens it has in it's range""") as trk:
             split_weights([transformer6.embeddings], [transformer7.embeddings], RED, 1)
+
+        # create allreduce
+        l1 = transformer6.submobjects[1]
+        l2 = transformer7.submobjects[1]
+        all_reduce1 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
+        line_kwargs = dict(color=RED, width=0.3)
+        c1 = Line3D(l1.get_center(), all_reduce1.get_top(), **line_kwargs)
+        c2 = Line3D(all_reduce1.get_bottom(), l2.get_center(), **line_kwargs)
+        with self.voiceover(text="""After running it, we perform an allreduce operation to synchronize our embeddings""") as trk:
+            self.play(ShowCreation(c1), ShowCreation(c2), all_reduce1.create())
         
         return
         t = transformer4.transformer_layers[0]
