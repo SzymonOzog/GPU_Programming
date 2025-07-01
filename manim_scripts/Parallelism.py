@@ -882,9 +882,6 @@ class Parallelism(VoiceoverScene):
                       t2.rotary2.block.animate.set_color(BLUE)
                       )
 
-        return
-
-
         #create input
         inp_up = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,b}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
@@ -896,7 +893,14 @@ class Parallelism(VoiceoverScene):
                                       ["x_{m,0}", "x_{m,1}", "\\cdots", "x_{m,b}"]])
         
         Group(inp_up, inp_down).arrange(DOWN,buff=1).move_to(Group(t.attn, t2.attn)).scale(0.7)
-        self.play(ReplacementTransform(t.attn.t.copy(), inp_up), ReplacementTransform(t2.attn.t.copy(), inp_down))
+        with self.voiceover(text="""Next we have our out projection matrix""") as trk:
+            self.play(self.frame.animate.shift((t2.up_proj.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
+
+        with self.voiceover(text="""And after our attention computation, each GPU has a different half of the input to this matrix""") as trk:
+            self.play(ReplacementTransform(t.attn.t.copy(), inp_up), ReplacementTransform(t2.attn.t.copy(), inp_down))
+
+        with self.voiceover(text="""We could do another allreduce but remember that this is a very slow operation, to the rescue comes an interesting observation""") as trk:
+            pass
 
         #create colwise split
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,m}"],
@@ -915,7 +919,8 @@ class Parallelism(VoiceoverScene):
                               ["w_{h,\\frac{m}{2}+1}", "\\cdots", "w_{h,n}"]]).scale(0.6)
         Group(mat_left, mat_right).arrange(RIGHT).next_to(Group(inp_up, inp_down), RIGHT)
         mat.move_to(Group(mat_left, mat_right))
-        self.play(ReplacementTransform(w, mat))
+        with self.voiceover(text="""We can take our input matrix from the out projection""") as trk:
+            self.play(ReplacementTransform(w, mat))
 
         mat_up.get_brackets()[0]
         l = []
@@ -925,16 +930,17 @@ class Parallelism(VoiceoverScene):
                 l.append(e)
             else:
                 r.append(e)
-        self.play(ReplacementTransform(mat.get_brackets()[0], mat_left.get_brackets()[0]),
-                  ReplacementTransform(mat.get_brackets()[1],  mat_right.get_brackets()[1]),
-                  ShowCreation(mat_left.get_brackets()[1]),
-                  ShowCreation(mat_right.get_brackets()[0]),
-                  ReplacementTransform(VGroup(*l), VGroup(*mat_left.elements)),
-                  ReplacementTransform(VGroup(*r), VGroup(*mat_right.elements)), run_time=5)
+        with self.voiceover(text="""And split it across the column dimension""") as trk:
+            self.play(ReplacementTransform(mat.get_brackets()[0], mat_left.get_brackets()[0]),
+                      ReplacementTransform(mat.get_brackets()[1],  mat_right.get_brackets()[1]),
+                      ShowCreation(mat_left.get_brackets()[1]),
+                      ShowCreation(mat_right.get_brackets()[0]),
+                      ReplacementTransform(VGroup(*l), VGroup(*mat_left.elements)),
+                      ReplacementTransform(VGroup(*r), VGroup(*mat_right.elements)), run_time=2)
 
         #move matrices
-        self.wait()
-        self.play(Group(mat_left, mat_right).animate.arrange(DOWN).move_to(mat))
+        with self.voiceover(text="""Right now, the shapes of those matrices are compatible with our inputs""") as trk:
+            self.play(Group(mat_left, mat_right).animate.arrange(DOWN).move_to(mat))
 
         #create output
         out_up = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,h}"],
@@ -948,57 +954,29 @@ class Parallelism(VoiceoverScene):
                                       ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,h}"]]).scale(0.6).next_to(mat_right, RIGHT, buff=1)
         u = mat_left.copy()
         d = mat_right.copy()
-        self.play(ReplacementTransform(inp_up, u), ReplacementTransform(inp_down, d))
-        self.play(ReplacementTransform(u, out_up), ReplacementTransform(d, out_down))
+        with self.voiceover(text="""And after we perform our matrix mutliplication""") as trk:
+            self.play(ReplacementTransform(inp_up, u), ReplacementTransform(inp_down, d))
+            self.play(ReplacementTransform(u, out_up), ReplacementTransform(d, out_down))
 
         x_sum = out_up.copy().move_to(Group(out_up, out_down))
-        self.play(ReplacementTransform(Group(out_up, out_down), Group(x_sum)))
-        
-        self.play(FadeOut(x_sum), FadeOut(mat_left), FadeOut(mat_right))
+        with self.voiceover(text="""We just need to sum both matrices for the final output""") as trk:
+            self.play(ReplacementTransform(Group(out_up, out_down), Group(x_sum)))
+            self.play(FadeOut(x_sum), FadeOut(mat_left), FadeOut(mat_right))
+
         #transfer data
-        anims = []
-        for b, b2 in zip([t.up_proj], [t2.up_proj]):
 
-            down = b.copy().set_width(b.get_width()/2, True)
-            down.move_to(b, aligned_edge=RIGHT).set_color(TEAL).scale(1.01)
-
-            up = b.copy().set_width(b.get_width()/2, True)
-            up.move_to(b2, aligned_edge=RIGHT).set_color(TEAL).scale(1.01)
-            anims.append(Transform(down, up, remover=True))
-
-            mid = b.get_center()[0]
-            self.add(down)
-            self.add(up)
-            self.remove(up)
-            for smo in b.block.submobjects:
-                points = smo.get_points()
-                if len(points):
-                    rgba = smo.data["rgba"].copy()
-                    rgba[points[:, 0] > mid, :] = color_to_rgba(GREY)
-                    smo.set_rgba_array(rgba)
-        for b, b2 in zip([t.up_proj], [t2.up_proj]):
-            self.add(b.t)
-            self.add(b2.t)
-
-        self.play(*anims)
-
-        for b, b2 in zip([t.up_proj], [t2.up_proj]):
-            mid = b2.get_center()[0]
-            for smo in b2.block.submobjects:
-                points = smo.get_points()
-                if len(points):
-                    rgba = smo.data["rgba"].copy()
-                    rgba[points[:, 0] > mid, :] = color_to_rgba(TEAL)
-                    smo.set_rgba_array(rgba)
-
-
+        with self.voiceover(text="""That's why we split every second matrix columnwise""") as trk:
+            split_weights([t.up_proj], [t2.up_proj], TEAL)
     
         # create allreduce
         l1 = t.submobjects[t.submobjects.index(t.up_proj) + 1]
         l2 = t2.submobjects[t2.submobjects.index(t2.up_proj) + 1]
-        all_reduce1 = FBlock("All Reduce\nSum", width=2.8, height=1.4).move_to(Group(l1, l2))
+        all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
         self.add(all_reduce1)
-        c1 = Line3D(l1.get_center(), all_reduce1.get_top(), width=0.1)
-        c2 = Line3D(all_reduce1.get_bottom(), l2.get_center(), width=0.1)
-        self.add(c1, c2)
+        line_kwargs = dict(color=RED, width=0.3)
+        c3 = Line3D(l1.get_center(), all_reduce2.get_top(), **line_kwargs)
+        c4 = Line3D(all_reduce2.get_bottom(), l2.get_center(), **line_kwargs)
+        self.add(c3, c4)
+        with self.voiceover(text="""It allows us to do a GPU to GPU sync every second matrix multiplication""") as trk:
+            self.play(ShowCreation(c1), ShowCreation(c2), all_reduce2.create())
 
