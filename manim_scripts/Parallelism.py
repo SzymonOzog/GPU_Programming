@@ -809,8 +809,11 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""The question becomes, how to split the weights across the model""") as trk:
             pass
 
+        focus_obj = Group(transformer6.embeddings, transformer7.embeddings)
+
         with self.voiceover(text="""Going layer by layer, we first encounter our embeddings. The way we split them is that we just
                             divide them equally across all GPUs, each embedding only the tokens it has in it's range""") as trk:
+            self.play(self.frame.animate.rescale_to_fit(focus_obj.get_height() + 3, 1).move_to(focus_obj))
             split_weights([transformer6.embeddings], [transformer7.embeddings], RED, 1)
 
         # create allreduce
