@@ -874,6 +874,14 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""This is called a rowwise split, we split all 3 matrices this way""") as trk:
             split_weights([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj], TEAL, dim=1)
 
+        with self.voiceover(text="""RoPE as well as attention we also run independently across the GPUs, as the input to those will 
+                            differ after our rowwise split so we don't repeat any calculations""") as trk:
+            self.play(self.frame.animate.shift((t2.attn.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
+            self.play(t2.attn.block.animate.set_color(GOLD_E),
+                      t2.rotary1.block.animate.set_color(BLUE),
+                      t2.rotary2.block.animate.set_color(BLUE)
+                      )
+
         return
 
 
