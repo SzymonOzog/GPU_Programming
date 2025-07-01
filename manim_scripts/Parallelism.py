@@ -986,3 +986,13 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""It allows us to do a GPU to GPU sync every second matrix multiplication""") as trk:
             self.play(ShowCreation(c1), ShowCreation(c2), all_reduce2.create())
 
+        with self.voiceover(text="""And we do the same for the rest of the elements inside our transformer block""") as trk:
+            self.play(self.frame.animate.shift((t2.swiglu.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
+            self.play(t2.residual1.block.animate.set_color(BLUE))
+            self.play(t2.rms_norm2.block.animate.set_color(YELLOW_E))
+            split_weights([t.ffn_gate, t.ffn_up], [t2.ffn_gate, t2.ffn_up], TEAL, dim=1)
+            self.play(t2.swiglu.block.animate.set_color(BLUE))
+            split_weights([t.ffn_down], [t2.ffn_down], TEAL)
+            self.play(t2.residual2.block.animate.set_color(BLUE))
+
+
