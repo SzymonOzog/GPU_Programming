@@ -826,9 +826,15 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""After running it, we perform an allreduce operation to synchronize our embeddings""") as trk:
             self.play(ShowCreation(c1), ShowCreation(c2), all_reduce1.create())
         
+        t = transformer6.transformer_layers[0]
+        t2 = transformer7.transformer_layers[0]
+
+        with self.voiceover(text="""Next we have our RMS norm, for this one we just performe it on both GPU's, it doesn't have any weights
+                            and is a memory bound operation so there is no speedups from spliting this""") as trk:
+            self.play(self.frame.animate.shift((t2.rms_norm1.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
+            self.play(t2.rms_norm1.block.animate.set_color(YELLOW_E))
+
         return
-        t = transformer4.transformer_layers[0]
-        t2 = transformer5.transformer_layers[0]
 
         # do mats
         t.set_mats()
