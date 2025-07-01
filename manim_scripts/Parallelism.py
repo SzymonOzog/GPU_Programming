@@ -788,7 +788,10 @@ class Parallelism(VoiceoverScene):
                     points = smo.get_points()
                     if len(points):
                         rgba = smo.data["rgba"].copy()
-                        rgba[points[:, dim] < mid, :] = color_to_rgba(GREY)
+                        if dim == 0:
+                            rgba[points[:, dim] > mid, :] = color_to_rgba(GREY)
+                        else:
+                            rgba[points[:, dim] < mid, :] = color_to_rgba(GREY)
                         smo.set_rgba_array(rgba)
             # some hacky way to fix manim z ordering
             for b, b2 in zip(t1_mobs, t2_mobs):
@@ -803,7 +806,10 @@ class Parallelism(VoiceoverScene):
                     points = smo.get_points()
                     if len(points):
                         rgba = smo.data["rgba"].copy()
-                        rgba[points[:, dim] < mid, :] = color_to_rgba(color)
+                        if dim == 0:
+                            rgba[points[:, dim] > mid, :] = color_to_rgba(color)
+                        else:
+                            rgba[points[:, dim] < mid, :] = color_to_rgba(color)
                         smo.set_rgba_array(rgba)
 
         with self.voiceover(text="""The question becomes, how to split the weights across the model""") as trk:
