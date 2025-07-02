@@ -997,3 +997,26 @@ class Parallelism(VoiceoverScene):
             self.play(t2.residual2.block.animate.set_color(BLUE))
 
 
+        print(transformer6.transformer_layers)
+        print(transformer7.transformer_layers)
+        print(len(transformer6.transformer_layers))
+        for i in range(1, len(transformer6.transformer_layers)):
+            print(i)
+            t = transformer6.transformer_layers[i]
+            t2 = transformer7.transformer_layers[i]
+            self.play(t2.rms_norm1.block.animate.set_color(YELLOW_E))
+            split_weights([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj], TEAL, dim=1)
+            self.play(t2.attn.block.animate.set_color(GOLD_E),
+                      t2.rotary1.block.animate.set_color(BLUE),
+                      t2.rotary2.block.animate.set_color(BLUE))
+            split_weights([t.out_proj], [t2.out_proj], TEAL)
+            create_allreduce(t, t2, t.out_proj, t2.out_proj)
+            self.play(t2.residual1.block.animate.set_color(BLUE))
+            self.play(t2.rms_norm2.block.animate.set_color(YELLOW_E))
+            split_weights([t.ffn_gate, t.ffn_up], [t2.ffn_gate, t2.ffn_up], TEAL, dim=1)
+            self.play(t2.swiglu.block.animate.set_color(BLUE))
+            split_weights([t.ffn_down], [t2.ffn_down], TEAL)
+            create_allreduce(t, t2, t.ffn_down, t2.ffn_down)
+            self.play(t2.residual2.block.animate.set_color(BLUE))
+            print("end")
+        print("end2")
