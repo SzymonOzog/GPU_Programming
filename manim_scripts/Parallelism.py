@@ -997,9 +997,15 @@ class Parallelism(VoiceoverScene):
             self.play(t2.residual2.block.animate.set_color(BLUE))
 
 
-        print(transformer6.transformer_layers)
-        print(transformer7.transformer_layers)
-        print(len(transformer6.transformer_layers))
+        total_time = 66 # Take from print below
+        total_distance = transformer7.get_right()[0] - self.frame.get_center()[0]
+        def updater(m, dt):
+            dist = dt*(total_distance/total_time)
+            print(dt, dist)
+            self.frame.shift(dist*RIGHT)
+
+        self.frame.add_updater(updater)
+        start_time = self.time 
         for i in range(1, len(transformer6.transformer_layers)):
             print(i)
             t = transformer6.transformer_layers[i]
@@ -1018,5 +1024,6 @@ class Parallelism(VoiceoverScene):
             split_weights([t.ffn_down], [t2.ffn_down], TEAL)
             create_allreduce(t, t2, t.ffn_down, t2.ffn_down)
             self.play(t2.residual2.block.animate.set_color(BLUE))
-            print("end")
-        print("end2")
+
+        print("creating took", self.time - start_time)
+        self.frame.remove_updater(updater)
