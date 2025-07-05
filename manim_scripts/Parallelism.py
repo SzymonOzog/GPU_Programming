@@ -565,13 +565,14 @@ class Parallelism(VoiceoverScene):
                         if len(points):
                             if "rgba" in mob.data_dtype.names:
                                 if mob not in saved_colors:
-                                    saved_colors[mob] = color_to_rgb(mob.get_color())
+                                    # saved_colors[mob] = color_to_rgb(mob.get_color())
+                                    saved_colors[mob] = mob.data["rgba"][..., :3].copy()
                                 rgba = mob.data["rgba"].copy()
                                 m_x_min = np.min(points[:, 0])
                                 m_x_max = np.max(points[:, 0])
                                 m_x_total = m_x_max - m_x_min
                                 start = np.stack((color_to_rgb(YELLOW),)*len(points))
-                                end = np.stack((saved_colors[mob],)*len(points))
+                                end = saved_colors[mob]
                                 alpha = np.clip(np.abs(flash_x - points[:, 0]), 0, 1)
                                 new_color = start*(1 - alpha)[..., np.newaxis] + end*alpha[..., np.newaxis]
                                 rgba[:, :3] = new_color
@@ -1055,4 +1056,4 @@ class Parallelism(VoiceoverScene):
             self.play(Restore(self.frame),
                       transformer6.duplicate_to(transformer4, False),
                       transformer7.duplicate_to(transformer5, False))
-            # run_transformers(Group(transformer4, transformer5))
+            run_transformers(Group(transformer4, transformer5))
