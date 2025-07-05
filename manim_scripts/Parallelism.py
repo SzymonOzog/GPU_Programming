@@ -1025,3 +1025,17 @@ class Parallelism(VoiceoverScene):
 
         print("creating took", self.time - start_time)
         self.frame.remove_updater(updater)
+
+
+        with self.voiceover(text="""For the LM head we run RMS norm on both GPUs""") as trk:
+            self.play(transformer7.rms_norm.animate.set_color(YELLOW_E))
+
+        with self.voiceover(text="""We split the linear layer weights""") as trk:
+            split_weights([transformer6.linear], [transformer7.linear], TEAL)
+
+        with self.voiceover(text="""And we perform an allreduce operation to get the final output""") as trk:
+            create_allreduce(transformer6, transformer7, transformer6.linear, transformer7.linear)
+
+        with self.voiceover(text="""The output probabilites are calculated only on one GPU so we skip this layer on all other tensor parallel
+                            ranks except for rank 0""") as trk:
+            pass
