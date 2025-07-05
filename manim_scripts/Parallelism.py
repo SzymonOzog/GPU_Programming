@@ -815,6 +815,7 @@ class Parallelism(VoiceoverScene):
             pass
 
         focus_obj = Group(transformer6.embeddings, transformer7.embeddings)
+        self.frame.save_state()
 
         with self.voiceover(text="""Going layer by layer, we first encounter our embeddings. The way we split them is that we just
                             divide them equally across all GPUs, each embedding only the tokens it has in it's range""") as trk:
@@ -1039,3 +1040,19 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""The output probabilites are calculated only on one GPU so we skip this layer on all other tensor parallel
                             ranks except for rank 0""") as trk:
             pass
+
+        transformer4 = Transformer(4, 12, high_level=False).move_to(gpu4)
+        transformer5 = Transformer(4, 12, high_level=False).move_to(gpu5)
+        for mob1, mob2 in zip(transformer6.get_family(), transformer4.get_family()):
+            if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+                mob2.set_rgba_array(mob1.data["rgba"].copy())
+
+        for mob1, mob2 in zip(transformer7.get_family(), transformer5.get_family()):
+            if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+                mob2.set_rgba_array(mob1.data["rgba"].copy())
+
+        with self.voiceover(text="""""") as trk:
+            self.play(Restore(self.frame),
+                      transformer6.duplicate_to(transformer4, False),
+                      transformer7.duplicate_to(transformer5, False))
+            # run_transformers(Group(transformer4, transformer5))
