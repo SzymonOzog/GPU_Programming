@@ -823,15 +823,28 @@ class Parallelism(VoiceoverScene):
             self.play(self.frame.animate.rescale_to_fit(focus_obj.get_height() + 3, 1).move_to(focus_obj))
             split_weights([transformer6.embeddings], [transformer7.embeddings], RED, 1)
 
+    
         # create allreduce
-        l1 = transformer6.submobjects[1]
-        l2 = transformer7.submobjects[1]
-        all_reduce1 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
-        line_kwargs = dict(color=RED, width=0.3)
-        c1 = Line3D(l1.get_center(), all_reduce1.get_top(), **line_kwargs)
-        c2 = Line3D(all_reduce1.get_bottom(), l2.get_center(), **line_kwargs)
+        def create_allreduce(t, t2, obj, obj2):
+            l1 = t.submobjects[t.submobjects.index(obj) + 1]
+            l2 = t2.submobjects[t2.submobjects.index(obj2) + 1]
+            all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
+            line_kwargs = dict(color=RED, width=0.3)
+            start = l1.get_center().copy()
+            start[1] = gpu4.get_bottom()[1]
+            c3 = Line3D(start, all_reduce2.get_top(), **line_kwargs)
+            end = l2.get_center().copy()
+            end[1] = gpu5.get_top()[1]
+            c4 = Line3D(all_reduce2.get_bottom(), end, **line_kwargs)
+            self.play(ShowCreation(c3), ShowCreation(c4), all_reduce2.create())
+        # l1 = transformer6.submobjects[1]
+        # l2 = transformer7.submobjects[1]
+        # all_reduce1 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
+        # line_kwargs = dict(color=RED, width=0.3)
+        # c1 = Line3D(l1.get_center(), all_reduce1.get_top(), **line_kwargs)
+        # c2 = Line3D(all_reduce1.get_bottom(), l2.get_center(), **line_kwargs)
         with self.voiceover(text="""After running it, we perform an allreduce operation to synchronize our embeddings""") as trk:
-            self.play(ShowCreation(c1), ShowCreation(c2), all_reduce1.create())
+            create_allreduce(transformer6, transformer7, transformer6.embeddings, transformer7.embeddings)
         
         t = transformer6.transformer_layers[0]
         t2 = transformer7.transformer_layers[0]
@@ -974,16 +987,7 @@ class Parallelism(VoiceoverScene):
 
         with self.voiceover(text="""That's why we split every second matrix columnwise""") as trk:
             split_weights([t.out_proj], [t2.out_proj], TEAL)
-    
-        # create allreduce
-        def create_allreduce(t, t2, obj, obj2):
-            l1 = t.submobjects[t.submobjects.index(obj) + 1]
-            l2 = t2.submobjects[t2.submobjects.index(obj2) + 1]
-            all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
-            line_kwargs = dict(color=RED, width=0.3)
-            c3 = Line3D(l1.get_center(), all_reduce2.get_top(), **line_kwargs)
-            c4 = Line3D(all_reduce2.get_bottom(), l2.get_center(), **line_kwargs)
-            self.play(ShowCreation(c3), ShowCreation(c4), all_reduce2.create())
+
         with self.voiceover(text="""It allows us to do a GPU to GPU sync every second matrix multiplication""") as trk:
             create_allreduce(t, t2, t.out_proj, t2.out_proj)
 
