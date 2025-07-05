@@ -1003,6 +1003,7 @@ class Parallelism(VoiceoverScene):
             #TODO why is the updater called twice?
             dist = dt*total_distance/(2*total_time)
             self.frame.shift(dist*RIGHT)
+        self.frame.add_updater(updater)
 
         for i in range(1, len(transformer6.transformer_layers)):
             t = transformer6.transformer_layers[i]
@@ -1027,7 +1028,7 @@ class Parallelism(VoiceoverScene):
 
 
         with self.voiceover(text="""For the LM head we run RMS norm on both GPUs""") as trk:
-            self.play(transformer7.rms_norm.animate.set_color(YELLOW_E))
+            self.play(transformer7.rms_norm.block.animate.set_color(YELLOW_E))
 
         with self.voiceover(text="""We split the linear layer weights""") as trk:
             split_weights([transformer6.linear], [transformer7.linear], TEAL)
