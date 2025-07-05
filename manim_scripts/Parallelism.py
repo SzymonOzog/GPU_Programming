@@ -448,7 +448,6 @@ class Parallelism(VoiceoverScene):
                 anims = []
                 cum_dist = 0
                 for i, b in enumerate(self.transformer_layers):
-                    print(i, b, cum_dist)
                     if i % (len(self.transformer_layers)/n) == 0 and i != 0:
                         cum_dist += dist
                     if b.is_hl:
