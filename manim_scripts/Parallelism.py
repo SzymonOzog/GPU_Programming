@@ -997,17 +997,15 @@ class Parallelism(VoiceoverScene):
             self.play(t2.residual2.block.animate.set_color(BLUE))
 
 
-        total_time = 66 # Take from print below
+        total_time = 36 # Take from print below
         total_distance = transformer7.get_right()[0] - self.frame.get_center()[0]
+        start_time = self.time 
         def updater(m, dt):
-            dist = dt*(total_distance/total_time)
-            print(dt, dist)
+            #TODO why is the updater called twice?
+            dist = dt*total_distance/(2*total_time)
             self.frame.shift(dist*RIGHT)
 
-        self.frame.add_updater(updater)
-        start_time = self.time 
         for i in range(1, len(transformer6.transformer_layers)):
-            print(i)
             t = transformer6.transformer_layers[i]
             t2 = transformer7.transformer_layers[i]
             self.play(t2.rms_norm1.block.animate.set_color(YELLOW_E))
