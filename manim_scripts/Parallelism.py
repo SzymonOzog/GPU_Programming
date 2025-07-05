@@ -1061,3 +1061,6 @@ class Parallelism(VoiceoverScene):
                       transformer6.duplicate_to(transformer4, False),
                       transformer7.duplicate_to(transformer5, False))
             run_transformers(Group(transformer4, transformer5))
+
+        focus = Group(gpu0, gpu5)
+        self.play(self.frame.animate.rescale_to_fit(focus.get_width() + 20, dim=0).move_to(focus).align_to(pp_t, UP).shift(10*UP))
