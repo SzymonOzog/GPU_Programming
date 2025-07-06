@@ -9,6 +9,35 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from voicover_gl import VoiceoverScene
 import moderngl
 
+class MyBulletedList(VGroup):
+    def __init__(
+        self,
+        *items: str,
+        buff: float = MED_LARGE_BUFF,
+        aligned_edge = LEFT,
+        label = "",
+        **kwargs
+    ):
+        labelled_content = [R"\item" + label + " " + item for item in items]
+        tex_string = "\n".join([
+            R"\begin{itemize}",
+            *labelled_content,
+            R"\end{itemize}"
+        ])
+        tex_text = TexText(tex_string, isolate=labelled_content, **kwargs)
+        lines = (tex_text.select_part(part) for part in labelled_content)
+
+        super().__init__(*lines)
+
+        self.arrange(DOWN, buff=buff, aligned_edge=aligned_edge)
+
+    def fade_all_but(self, index: int, opacity: float = 0.25, scale_factor=0.7) -> None:
+        max_dot_height = max([item[0].get_height() for item in self.submobjects])
+        for i, part in enumerate(self.submobjects):
+            trg_dot_height = (1.0 if i == index else scale_factor) * max_dot_height
+            part.set_fill(opacity=(1.0 if i == index else opacity))
+            part.scale(trg_dot_height / part[0].get_height(), about_edge=LEFT)
+
 def is_grp(obj):
     return obj.__class__ is Group
 
