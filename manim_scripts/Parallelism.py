@@ -1111,113 +1111,154 @@ class Parallelism(VoiceoverScene):
         table_line_h1 = Line(line_start, line_end, stroke_width=4)
 
         focus = Group(gpu0, gpu5, table_line_h1)
-        self.play(self.frame.animate.rescale_to_fit(focus.get_width() + 20, dim=0).move_to(focus).align_to(pp_t, UP).shift(10*UP))
+        with self.voiceover(text="""While Tensor Parallel is probably the most used across the industry, 
+                            all different parallelism methods have their upsides and downsides""") as trk:
+            self.play(self.frame.animate.rescale_to_fit(focus.get_width() + 20, dim=0).move_to(focus).align_to(pp_t, UP).shift(10*UP))
 
-        self.play(ShowCreation(table_line_v1),
-                  ShowCreation(table_line_v2),
-                  ShowCreation(table_line_v3),
-                  ShowCreation(table_line_h1),
-                  )
+            self.play(ShowCreation(table_line_v1),
+                      ShowCreation(table_line_v2),
+                      ShowCreation(table_line_v3),
+                      ShowCreation(table_line_h1),
+                      )
 
         # Compare implementation
         text_scale = 40
         text_buff = 15
         c1 = Text("Implementation").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h1, UP).shift(text_buff*DOWN)
-        self.play(Write(c1))
 
         loc = Group(table_line_v3, table_line_v1).get_center()
         dp_c1 = Text("Easy").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h1, UP).shift(text_buff*DOWN)
-        self.play(Write(dp_c1))
 
         loc = Group(table_line_v2, table_line_v1).get_center()
         pp_c1 = Text("Medium").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h1, UP).shift(text_buff*DOWN)
-        self.play(Write(pp_c1))
 
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
         tp_c1 = Text("Hard").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h1, UP).shift(text_buff*DOWN)
-        self.play(Write(tp_c1))
 
         # Compere memory reduction
         line_start = dp_c1.get_bottom() + text_buff*DOWN + 310*LEFT
         line_end = line_start + 880*RIGHT
         table_line_h2 = Line(line_start, line_end, stroke_width=4)
-        self.play(ShowCreation(table_line_h2))
+
+        with self.voiceover(text="""Looking at implementation complexity""") as trk:
+            self.play(Write(c1))
+        with self.voiceover(text="""Data parallel is quite trivial, for a minimal working example
+                            we can reuse single GPU code and just route our requests
+                            to a different endpoint""") as trk:
+            self.play(Write(dp_c1))
+
+        with self.voiceover(text="""For pipeline parallel we would need to edit our codebase to initialize some distributed framework
+                            and send data between GPUs""") as trk:
+            self.play(Write(pp_c1))
+
+        with self.voiceover(text="""And Tensor Parallel is the most complicated to implement, it requires intergpu communication 
+                            across many steps""") as trk:
+            self.play(Write(tp_c1))
 
         c2 = Text("Memory Reduction").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h2, UP).shift(text_buff*DOWN)
-        self.play(Write(c2))
+        with self.voiceover(text="""Next we can compare how all methods reduce our memory footprint""") as trk:
+            self.play(ShowCreation(table_line_h2))
+            self.play(Write(c2))
 
         loc = Group(table_line_v3, table_line_v1).get_center()
         dp_c2 = Text("None").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h2, UP).shift(text_buff*DOWN)
-        self.play(Write(dp_c2))
 
         loc = Group(table_line_v2, table_line_v1).get_center()
         pp_c2 = Text("High").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h2, UP).shift(text_buff*DOWN)
-        self.play(Write(pp_c2))
 
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
         tp_c2 = Text("High").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h2, UP).shift(text_buff*DOWN)
-        self.play(Write(tp_c2))
+        with self.voiceover(text="""Data parallel doesn't reduce our memory requirements at all
+                            <bookmark mark='1'/>while pipeline parallel and tensor parallel give us a big 
+                            memory reduction
+                            """) as trk:
+            self.play(Write(dp_c2))
+            self.wait_until_bookmark("1")
+            self.play(Write(pp_c2))
+            self.play(Write(tp_c2))
 
         # Compere speed 
         line_start = dp_c2.get_bottom() + text_buff*DOWN + 310*LEFT
         line_end = line_start + 880*RIGHT
         table_line_h3 = Line(line_start, line_end, stroke_width=4)
-        self.play(ShowCreation(table_line_h3))
 
         c3 = Text("Speedup").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h3, UP).shift(text_buff*DOWN)
-        self.play(Write(c3))
 
         loc = Group(table_line_v3, table_line_v1).get_center()
         dp_c3 = Text("For big batches").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
-        self.play(Write(dp_c3))
 
         loc = Group(table_line_v2, table_line_v1).get_center()
         pp_c3 = Text("For big batches").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
-        self.play(Write(pp_c3))
 
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
         tp_c3 = Text("Since batch size 1").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
-        self.play(Write(tp_c3))
+
+        with self.voiceover(text="""Comparing speed benefits, we can see that <bookmark mark='1'/> data parallel and pipeline parallel
+                            give us a speed benefit only for big batch sizes <bookmark mark='2'/> while tensor parallel increases the speed
+                            since batch size of 1""") as trk:
+            self.play(ShowCreation(table_line_h3))
+            self.play(Write(c3))
+            self.wait_until_bookmark("1")
+            self.play(Write(dp_c3))
+            self.play(Write(pp_c3))
+            self.wait_until_bookmark("2")
+            self.play(Write(tp_c3))
 
         # Compere GPU communication 
         line_start = dp_c3.get_bottom() + text_buff*DOWN + 310*LEFT
         line_end = line_start + 880*RIGHT
         table_line_h4 = Line(line_start, line_end, stroke_width=4)
-        self.play(ShowCreation(table_line_h4))
 
         c4 = Text("GPU communication").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h4, UP).shift(text_buff*DOWN)
-        self.play(Write(c4))
 
         loc = Group(table_line_v3, table_line_v1).get_center()
         dp_c4 = Text("None").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
-        self.play(Write(dp_c4))
 
         loc = Group(table_line_v2, table_line_v1).get_center()
         pp_c4 = Text("Very little").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
-        self.play(Write(pp_c4))
 
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
         tp_c4 = Text("Very high").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
-        self.play(Write(tp_c4))
+        with self.voiceover(text="""Next we can compare communication needs, <bookmark mark='1'/> data parallel requires no GPU communication,""") as trk:
+            self.play(ShowCreation(table_line_h4))
+            self.play(Write(c4))
+            self.wait_until_bookmark("1")
+            self.play(Write(dp_c4))
+
+        with self.voiceover(text="""pipeline parallel reqires us to send the activations only between 2 GPUs at the time and 
+                            the number of synchronization points is equal to our pipeline parallel size""") as trk:
+            self.play(Write(pp_c4))
+
+        with self.voiceover(text="""Tensor parallel requires the most communication, as we have to synchronize our activations every second forward
+                            layer""") as trk:
+            self.play(Write(tp_c4))
 
         # Compere maximum parallelism 
         line_start = dp_c4.get_bottom() + text_buff*DOWN + 310*LEFT
         line_end = line_start + 880*RIGHT
         table_line_h5 = Line(line_start, line_end, stroke_width=4)
-        self.play(ShowCreation(table_line_h5))
-
         c5 = Text("Parallelism limit").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h5, UP).shift(text_buff*DOWN)
-        self.play(Write(c5))
-
         loc = Group(table_line_v3, table_line_v1).get_center()
         dp_c5 = Text("None").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
-        self.play(Write(dp_c5))
-
         loc = Group(table_line_v2, table_line_v1).get_center()
         pp_c5 = Text("Compute blocks").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
-        self.play(Write(pp_c5))
-
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
         tp_c5 = Text("Matrix shape").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
-        self.play(Write(tp_c5))
+
+        with self.voiceover(text="""As for the limitations on how much we can parallelize""") as trk:
+            self.play(ShowCreation(table_line_h5))
+            self.play(Write(c5))
+
+        with self.voiceover(text="""Data parallel has no limitations, we can scale to infinity and beyond""") as trk:
+            self.play(Write(dp_c5))
+
+        with self.voiceover(text="""For pipeline parallel we are limited by the amount of compute blocks inside our model,
+                            this is essentially a very artificial limit as it's not really something that we can hit before
+                            we start getting bottlenecked by scheduling and communications""") as trk:
+            self.play(Write(pp_c5))
+
+        with self.voiceover(text="""For Tensor Parallel the limit is more tricky, it's the shape of the matrix that we are sharding across the GPUs
+                            this can be very problematic as GPUs really like big matrix multiplications. When we shard them too much, we can start
+                            seeing performance degradations because our GPUs are underutilized during matrix multiplication""") as trk:
+            self.play(Write(tp_c5))
 
