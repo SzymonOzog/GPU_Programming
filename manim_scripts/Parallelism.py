@@ -1091,9 +1091,6 @@ class Parallelism(VoiceoverScene):
                       transformer7.duplicate_to(transformer5, False))
             run_transformers(Group(transformer4, transformer5))
 
-        focus = Group(gpu0, gpu5)
-        self.play(self.frame.animate.rescale_to_fit(focus.get_width() + 20, dim=0).move_to(focus).align_to(pp_t, UP).shift(10*UP))
-
         
         # Create bullet list
         line_start = (dp_t.get_center() + pp_t.get_center())/2 + 10*UP
@@ -1109,9 +1106,13 @@ class Parallelism(VoiceoverScene):
         table_line_v3 = Line(line_start, line_end, stroke_width=4)
 
 
-        line_start = gpu1.get_bottom() + 20*DOWN + 300*LEFT
-        line_end = line_start + 900*RIGHT
+        line_start = gpu1.get_bottom() + 20*DOWN + 310*LEFT
+        line_end = line_start + 880*RIGHT
         table_line_h1 = Line(line_start, line_end, stroke_width=4)
+
+        focus = Group(gpu0, gpu5, table_line_h1)
+        self.play(self.frame.animate.rescale_to_fit(focus.get_width() + 20, dim=0).move_to(focus).align_to(pp_t, UP).shift(10*UP))
+
         self.play(ShowCreation(table_line_v1),
                   ShowCreation(table_line_v2),
                   ShowCreation(table_line_v3),
@@ -1119,9 +1120,9 @@ class Parallelism(VoiceoverScene):
                   )
 
         # Compare implementation
-        text_scale = 45
+        text_scale = 40
         text_buff = 15
-        c1 = Text("Implementation").scale(text_scale).next_to(table_line_v3, LEFT, buff=20).align_to(table_line_h1, UP).shift(text_buff*DOWN)
+        c1 = Text("Implementation").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h1, UP).shift(text_buff*DOWN)
         self.play(Write(c1))
 
         loc = Group(table_line_v3, table_line_v1).get_center()
@@ -1137,20 +1138,23 @@ class Parallelism(VoiceoverScene):
         self.play(Write(tp_c1))
 
         # Compere memory reduction
-        line_start = dp_c1.get_bottom() + text_buff*DOWN + 300*LEFT
-        line_end = line_start + 900*RIGHT
+        line_start = dp_c1.get_bottom() + text_buff*DOWN + 310*LEFT
+        line_end = line_start + 880*RIGHT
         table_line_h2 = Line(line_start, line_end, stroke_width=4)
         self.play(ShowCreation(table_line_h2))
 
-        # kp_good = MyBulletedList("Easy to implement",
-        #                          "No communication\\\\between GPUs",
-        #                          label="[+]").set_color(GREEN)
-        #
-        # dp_bad = MyBulletedList("Doesn't reduce \\\\memory footprint",
-        #                         "Requires a lot of \\\\requests for a speedup",
-        #                         label="[-]").set_color(RED)
-        #
-        # Group(dp_good, dp_bad).arrange(RIGHT).next_to(gpu1, DOWN, buff=32).scale(20)
-        # self.play(ShowCreation(dp_good), ShowCreation(dp_bad))
+        c2 = Text("Memory Reduction").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h2, UP).shift(text_buff*DOWN)
+        self.play(Write(c2))
 
-        
+        loc = Group(table_line_v3, table_line_v1).get_center()
+        dp_c2 = Text("None").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h2, UP).shift(text_buff*DOWN)
+        self.play(Write(dp_c2))
+
+        loc = Group(table_line_v2, table_line_v1).get_center()
+        pp_c2 = Text("High").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h2, UP).shift(text_buff*DOWN)
+        self.play(Write(pp_c2))
+
+        loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
+        tp_c2 = Text("High").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h2, UP).shift(text_buff*DOWN)
+        self.play(Write(tp_c2))
+
