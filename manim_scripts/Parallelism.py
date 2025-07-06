@@ -1158,3 +1158,66 @@ class Parallelism(VoiceoverScene):
         tp_c2 = Text("High").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h2, UP).shift(text_buff*DOWN)
         self.play(Write(tp_c2))
 
+        # Compere speed 
+        line_start = dp_c2.get_bottom() + text_buff*DOWN + 310*LEFT
+        line_end = line_start + 880*RIGHT
+        table_line_h3 = Line(line_start, line_end, stroke_width=4)
+        self.play(ShowCreation(table_line_h3))
+
+        c3 = Text("Speedup").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h3, UP).shift(text_buff*DOWN)
+        self.play(Write(c3))
+
+        loc = Group(table_line_v3, table_line_v1).get_center()
+        dp_c3 = Text("For big batches").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
+        self.play(Write(dp_c3))
+
+        loc = Group(table_line_v2, table_line_v1).get_center()
+        pp_c3 = Text("For big batches").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
+        self.play(Write(pp_c3))
+
+        loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
+        tp_c3 = Text("Since batch size 1").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
+        self.play(Write(tp_c3))
+
+        # Compere GPU communication 
+        line_start = dp_c3.get_bottom() + text_buff*DOWN + 310*LEFT
+        line_end = line_start + 880*RIGHT
+        table_line_h4 = Line(line_start, line_end, stroke_width=4)
+        self.play(ShowCreation(table_line_h4))
+
+        c4 = Text("GPU communication").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h4, UP).shift(text_buff*DOWN)
+        self.play(Write(c4))
+
+        loc = Group(table_line_v3, table_line_v1).get_center()
+        dp_c4 = Text("None").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
+        self.play(Write(dp_c4))
+
+        loc = Group(table_line_v2, table_line_v1).get_center()
+        pp_c4 = Text("Very little").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
+        self.play(Write(pp_c4))
+
+        loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
+        tp_c4 = Text("Very high").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
+        self.play(Write(tp_c4))
+
+        # Compere maximum parallelism 
+        line_start = dp_c4.get_bottom() + text_buff*DOWN + 310*LEFT
+        line_end = line_start + 880*RIGHT
+        table_line_h5 = Line(line_start, line_end, stroke_width=4)
+        self.play(ShowCreation(table_line_h5))
+
+        c5 = Text("Parallelism limit").scale(text_scale).next_to(table_line_v3, LEFT, buff=text_buff).align_to(table_line_h5, UP).shift(text_buff*DOWN)
+        self.play(Write(c5))
+
+        loc = Group(table_line_v3, table_line_v1).get_center()
+        dp_c5 = Text("None").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
+        self.play(Write(dp_c5))
+
+        loc = Group(table_line_v2, table_line_v1).get_center()
+        pp_c5 = Text("Compute blocks").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
+        self.play(Write(pp_c5))
+
+        loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
+        tp_c5 = Text("Matrix shape").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
+        self.play(Write(tp_c5))
+
