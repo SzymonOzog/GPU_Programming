@@ -1064,3 +1064,12 @@ class Parallelism(VoiceoverScene):
 
         focus = Group(gpu0, gpu5)
         self.play(self.frame.animate.rescale_to_fit(focus.get_width() + 20, dim=0).move_to(focus).align_to(pp_t, UP).shift(10*UP))
+
+        dp_good = BulletedList("item1",
+                     "item2").set_color(GREEN)
+
+        dp_bad = BulletedList("item1",
+                     "item2").set_color(RED)
+
+        Group(dp_good, dp_bad).arrange(RIGHT).next_to(gpu1, DOWN, buff=12).scale(20)
+        self.play(ShowCreation(dp_good), ShowCreation(dp_bad))
