@@ -1119,20 +1119,28 @@ class Parallelism(VoiceoverScene):
                   )
 
         # Compare implementation
-        c1 = Text("Implementation").scale(40).next_to(table_line_v3, LEFT, buff=20).align_to(table_line_h1, UP).shift(10*DOWN)
+        text_scale = 45
+        text_buff = 15
+        c1 = Text("Implementation").scale(text_scale).next_to(table_line_v3, LEFT, buff=20).align_to(table_line_h1, UP).shift(text_buff*DOWN)
         self.play(Write(c1))
 
         loc = Group(table_line_v3, table_line_v1).get_center()
-        dp_c1 = Text("Easy").scale(40).set_color(GREEN).move_to(loc).align_to(table_line_h1, UP).shift(10*DOWN)
+        dp_c1 = Text("Easy").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h1, UP).shift(text_buff*DOWN)
         self.play(Write(dp_c1))
 
         loc = Group(table_line_v2, table_line_v1).get_center()
-        pp_c1 = Text("Medium").scale(40).set_color(YELLOW).move_to(loc).align_to(table_line_h1, UP).shift(10*DOWN)
+        pp_c1 = Text("Medium").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h1, UP).shift(text_buff*DOWN)
         self.play(Write(pp_c1))
 
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
-        tp_c1 = Text("Hard").scale(40).set_color(RED).move_to(loc).align_to(table_line_h1, UP).shift(10*DOWN)
+        tp_c1 = Text("Hard").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h1, UP).shift(text_buff*DOWN)
         self.play(Write(tp_c1))
+
+        # Compere memory reduction
+        line_start = dp_c1.get_bottom() + text_buff*DOWN + 300*LEFT
+        line_end = line_start + 900*RIGHT
+        table_line_h2 = Line(line_start, line_end, stroke_width=4)
+        self.play(ShowCreation(table_line_h2))
 
         # kp_good = MyBulletedList("Easy to implement",
         #                          "No communication\\\\between GPUs",
