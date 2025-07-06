@@ -1094,11 +1094,40 @@ class Parallelism(VoiceoverScene):
         focus = Group(gpu0, gpu5)
         self.play(self.frame.animate.rescale_to_fit(focus.get_width() + 20, dim=0).move_to(focus).align_to(pp_t, UP).shift(10*UP))
 
-        dp_good = BulletedList("item1",
-                     "item2").set_color(GREEN)
+        
+        # Create bullet list
+        line_start = (dp_t.get_center() + pp_t.get_center())/2 + 10*UP
+        line_end = line_start + 800*DOWN
+        table_line_v1 = Line(line_start, line_end, stroke_width=4)
 
-        dp_bad = BulletedList("item1",
-                     "item2").set_color(RED)
+        line_start = (tp_t.get_center() + pp_t.get_center())/2 + 10*UP
+        line_end = line_start + 800*DOWN
+        table_line_v2 = Line(line_start, line_end, stroke_width=4)
 
-        Group(dp_good, dp_bad).arrange(RIGHT).next_to(gpu1, DOWN, buff=12).scale(20)
-        self.play(ShowCreation(dp_good), ShowCreation(dp_bad))
+        line_start = table_line_v1.get_top() - (table_line_v2.get_top() - table_line_v1.get_top())
+        line_end = line_start + 800*DOWN
+        table_line_v3 = Line(line_start, line_end, stroke_width=4)
+
+
+        line_start = gpu1.get_bottom() + 20*DOWN + 300*LEFT
+        line_end = line_start + 900*RIGHT
+        table_line_h1 = Line(line_start, line_end, stroke_width=4)
+        self.play(ShowCreation(table_line_v1),
+                  ShowCreation(table_line_v2),
+                  ShowCreation(table_line_v3),
+                  ShowCreation(table_line_h1),
+                  )
+
+
+        # kp_good = MyBulletedList("Easy to implement",
+        #                          "No communication\\\\between GPUs",
+        #                          label="[+]").set_color(GREEN)
+        #
+        # dp_bad = MyBulletedList("Doesn't reduce \\\\memory footprint",
+        #                         "Requires a lot of \\\\requests for a speedup",
+        #                         label="[-]").set_color(RED)
+        #
+        # Group(dp_good, dp_bad).arrange(RIGHT).next_to(gpu1, DOWN, buff=32).scale(20)
+        # self.play(ShowCreation(dp_good), ShowCreation(dp_bad))
+
+        
