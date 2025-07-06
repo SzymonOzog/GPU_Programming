@@ -1118,6 +1118,21 @@ class Parallelism(VoiceoverScene):
                   ShowCreation(table_line_h1),
                   )
 
+        # Compare implementation
+        c1 = Text("Implementation").scale(40).next_to(table_line_v3, LEFT, buff=20).align_to(table_line_h1, UP).shift(10*DOWN)
+        self.play(Write(c1))
+
+        loc = Group(table_line_v3, table_line_v1).get_center()
+        dp_c1 = Text("Easy").scale(40).set_color(GREEN).move_to(loc).align_to(table_line_h1, UP).shift(10*DOWN)
+        self.play(Write(dp_c1))
+
+        loc = Group(table_line_v2, table_line_v1).get_center()
+        pp_c1 = Text("Medium").scale(40).set_color(YELLOW).move_to(loc).align_to(table_line_h1, UP).shift(10*DOWN)
+        self.play(Write(pp_c1))
+
+        loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
+        tp_c1 = Text("Hard").scale(40).set_color(RED).move_to(loc).align_to(table_line_h1, UP).shift(10*DOWN)
+        self.play(Write(tp_c1))
 
         # kp_good = MyBulletedList("Easy to implement",
         #                          "No communication\\\\between GPUs",
