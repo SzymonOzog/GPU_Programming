@@ -1085,7 +1085,8 @@ class Parallelism(VoiceoverScene):
             if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
                 mob2.set_rgba_array(mob1.data["rgba"].copy())
 
-        with self.voiceover(text="""""") as trk:
+        with self.voiceover(text="""With this setup, we can run with a reduced memory footprint and with our GPUs working together
+                            even with one request, this made the Tensor Parallel standard the most common standard across the industry""") as trk:
             self.play(Restore(self.frame),
                       transformer6.duplicate_to(transformer4, False),
                       transformer7.duplicate_to(transformer5, False))
