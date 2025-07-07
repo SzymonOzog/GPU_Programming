@@ -637,7 +637,7 @@ class Parallelism(VoiceoverScene):
         self.play(transformer.create(), self.frame.animate.match_width(transformer))
 
 
-        gpu0 = SurroundingRectangle(transformer, buff=2, color=GREEN)
+        gpu0 = SurroundingRectangle(transformer, buff=2, color=GREY)
         gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
         # Create GPU
         with self.voiceover(text="""In the simple case we have our model that is living on the GPU""") as trk:
@@ -651,20 +651,27 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""And a CPU that is orchestrating it""") as trk:
             self.play(ShowCreation(cpu0_i), ShowCreation(cpu0), Write(cpu0_t))
 
+        def trigger_gpu(gpu, on=True):
+            return gpu.animate.set_color(GREEN if on else GREY)
+
         #run transformer
         with self.voiceover(text="""In a very simplified form the CPU is sending a task to process to the model,
                             getting the output, processing it and sending another task to our model living on the GPU""") as trk:
             while trk.get_remaining_duration() > 0:
                 request = Square3D(color=RED, side_length=6).move_to(transformer.embeddings.get_left())
-                self.play(FadeIn(request, shift=request.get_center() - cpu0_i.get_center(), remover=True), run_time=2)
+                self.play(FadeIn(request, shift=request.get_center() - cpu0_i.get_center(), remover=True),
+                          trigger_gpu(gpu0, True),
+                          run_time=2)
                 run_transformers([transformer])
                 request = Square3D(color=RED, side_length=6).move_to(cpu0_i)
-                self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True), run_time=2)
+                self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True) ,
+                          trigger_gpu(gpu0, False),
+                          run_time=2)
 
 
         # Create next GPU
         transformer2 = Transformer(4, 12).next_to(transformer, DOWN, buff=16)
-        gpu1 = SurroundingRectangle(transformer2, buff=2, color=GREEN)
+        gpu1 = SurroundingRectangle(transformer2, buff=2, color=GREY)
         gpu1_t = Text("GPU1").set_color(GREEN).scale(10).next_to(gpu1, UP, aligned_edge=LEFT, buff=2)
 
         with self.voiceover(text="""But let's say we get another GPU and want to use this fact to speed up our inference""") as trk:
@@ -698,17 +705,23 @@ class Parallelism(VoiceoverScene):
                 run_transformers(transformers)
                 self.play(*end_anims, run_time=2)
 
+        gpus = [gpu0, gpu1]
         # Insufficient load
         with self.voiceover(text="""First of all, we might not have enough load, in this case the CPU is unable to 
                             schedule a task on both GPUs at once meaning that essentially one of those becomes idle""") as trk:
             while trk.get_remaining_duration() > 0:
                 transformers = [transformer, transformer2]
-                for t in transformers:
+                for t, g in zip(transformers, gpus):
                     request = Square3D(color=RED, side_length=6).move_to(t.embeddings.get_left())
-                    self.play(FadeIn(request, shift=request.get_center() - cpu0_i.get_center(), remover=True), run_time=2)
+                    self.play(FadeIn(request, shift=request.get_center() - cpu0_i.get_center(), remover=True),
+                              trigger_gpu(g, True),
+                              run_time=2)
                     run_transformers([t])
                     request = Square3D(color=RED, side_length=6).move_to(cpu0_i)
-                    self.play(FadeIn(request, shift=request.get_center() - t.softmax.get_right(), remover=True), run_time=2)
+                    self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True) ,
+                              trigger_gpu(g, False),
+                              run_time=2)
+        self.play(*[trigger_gpu(g, True) for g in gpus])
 
         
         with self.voiceover(text="""But the more popular reason for ditching data parallel is just the simple fact that the models of today
@@ -720,9 +733,9 @@ class Parallelism(VoiceoverScene):
         cpu1_t = cpu0_t.copy()
         cpu1_i = cpu0_i.copy()
         transformer3 = Transformer(4, 12).move_to(transformer)
-        gpu2 = gpu0.copy()
+        gpu2 = gpu0.copy().set_color(GREY)
         gpu2_t = gpu0_t.copy()
-        gpu3 = gpu1.copy()
+        gpu3 = gpu1.copy().set_color(GREY)
         gpu3_t = gpu1_t.copy()
         cp = Group(cpu1, cpu1_t, cpu1_i, transformer3, gpu2, gpu2_t, gpu3, gpu3_t).next_to(
                 Group(cpu0_t, gpu1), RIGHT, buff = 20)
@@ -758,9 +771,9 @@ class Parallelism(VoiceoverScene):
             while trk.get_remaining_duration() > 0:
                 request = Square3D(color=RED, side_length=6).move_to(transformer3.embeddings.get_left())
                 self.play(FadeIn(request, shift=request.get_center() - cpu1_i.get_center(), remover=True), run_time=2)
-                a1 = AnimationGroup(gpu2.animate.set_color(GREEN), gpu3.animate.set_color(GREY))
-                a2 = AnimationGroup(gpu2.animate.set_color(GREY), gpu3.animate.set_color(GREEN))
-                a3 = AnimationGroup(gpu2.animate.set_color(GREY), gpu3.animate.set_color(GREY))
+                a1 = AnimationGroup(trigger_gpu(gpu2, True), trigger_gpu(gpu3, False))
+                a2 = AnimationGroup(trigger_gpu(gpu2, False), trigger_gpu(gpu3, True))
+                a3 = AnimationGroup(trigger_gpu(gpu2, False), trigger_gpu(gpu3, False))
                 run_transformers([transformer], 1, [a1, a2, a3])
                 request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
                 self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
@@ -770,12 +783,13 @@ class Parallelism(VoiceoverScene):
             while trk.get_remaining_duration() > 0:
                 request = Square3D(color=RED, side_length=6).move_to(transformer3.embeddings.get_left())
                 self.play(FadeIn(request, shift=request.get_center() - cpu1_i.get_center(), remover=True), run_time=2)
-                a1 = AnimationGroup(gpu2.animate.set_color(GREEN), gpu3.animate.set_color(GREY), run_time=2)
-                a2 = AnimationGroup(gpu2.animate.set_color(GREY), gpu3.animate.set_color(GREEN), run_time=2)
-                a3 = AnimationGroup(gpu2.animate.set_color(GREY), gpu3.animate.set_color(GREY), run_time=2)
+                a1 = AnimationGroup(trigger_gpu(gpu2, True), trigger_gpu(gpu3, False), run_time=2)
+                a2 = AnimationGroup(trigger_gpu(gpu2, False), trigger_gpu(gpu3, True), run_time=2)
+                a3 = AnimationGroup(trigger_gpu(gpu2, False), trigger_gpu(gpu3, False), run_time=2)
                 run_transformers([transformer], anim=[a1, a2, a3])
                 request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
                 self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
+
         # start TP
         tp_t = Text("Tensor Parallel").scale(50).next_to(cpu2, UP, buff=5).set_color(GREEN)
         with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
