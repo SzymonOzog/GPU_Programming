@@ -790,6 +790,8 @@ class Parallelism(VoiceoverScene):
                 request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
                 self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
 
+        self.play(*[trigger_gpu(g, True) for g in [gpu2, gpu3]])
+
         # start TP
         tp_t = Text("Tensor Parallel").scale(50).next_to(cpu2, UP, buff=5).set_color(GREEN)
         with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
