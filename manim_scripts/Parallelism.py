@@ -774,7 +774,7 @@ class Parallelism(VoiceoverScene):
                 a1 = AnimationGroup(trigger_gpu(gpu2, True), trigger_gpu(gpu3, False))
                 a2 = AnimationGroup(trigger_gpu(gpu2, False), trigger_gpu(gpu3, True))
                 a3 = AnimationGroup(trigger_gpu(gpu2, False), trigger_gpu(gpu3, False))
-                run_transformers([transformer], 1, [a1, a2, a3])
+                run_transformers([transformer3], 1, [a1, a2, a3])
                 request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
                 self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
 
@@ -786,7 +786,7 @@ class Parallelism(VoiceoverScene):
                 a1 = AnimationGroup(trigger_gpu(gpu2, True), trigger_gpu(gpu3, False), run_time=2)
                 a2 = AnimationGroup(trigger_gpu(gpu2, False), trigger_gpu(gpu3, True), run_time=2)
                 a3 = AnimationGroup(trigger_gpu(gpu2, False), trigger_gpu(gpu3, False), run_time=2)
-                run_transformers([transformer], anim=[a1, a2, a3])
+                run_transformers([transformer3], anim=[a1, a2, a3])
                 request = Square3D(color=RED, side_length=6).move_to(cpu1_i)
                 self.play(FadeIn(request, shift=request.get_center() - transformer3.softmax.get_right(), remover=True), run_time=2)
 
