@@ -834,11 +834,11 @@ class Parallelism(VoiceoverScene):
             anims = []
             for b, b2 in zip(t1_mobs, t2_mobs):
 
-                down = b.copy().set_height(b.get_height()/2, True)
-                down.move_to(b, aligned_edge=DOWN).set_color(color).scale(1.01)
+                down = b.copy().rescale_to_fit(b.length_over_dim(dim)/2, dim, True)
+                down.move_to(b, aligned_edge=DOWN if dim == 1 else RIGHT).set_color(color).scale(1.01)
 
-                up = b.copy().set_height(b.get_height()/2, True)
-                up.move_to(b2, aligned_edge=DOWN).set_color(color).scale(1.01)
+                up = b.copy().rescale_to_fit(b.length_over_dim(dim)/2, dim, True)
+                up.move_to(b2, aligned_edge=DOWN if dim == 1 else RIGHT).set_color(color).scale(1.01)
                 anims.append(Transform(down, up, remover=True))
 
                 mid = b.get_center()[dim]
