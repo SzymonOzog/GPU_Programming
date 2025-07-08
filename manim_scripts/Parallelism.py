@@ -922,7 +922,7 @@ class Parallelism(VoiceoverScene):
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
                          ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
                          ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                         ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]])
+                         ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]]).scale(1.6)
         mat.move_to(w)
         with self.voiceover(text="""They have multiple weights for each head but the way that it runs in the background, is that all 
                             the head weights ar <bookmark mark='1'/>stacked on top of each other and we run this as a single matrix multiplication""") as trk:
@@ -945,18 +945,17 @@ class Parallelism(VoiceoverScene):
         mat_down = TexMatrix([["w_{\\frac{m}{2}+1,0}", "w_{\\frac{m}{2}+1,1}", "\\cdots", "w_{\\frac{m}{2}+1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]])
-        Group(mat_up, mat_down).scale(0.8).arrange(DOWN).move_to(mat,aligned_edge=LEFT)
+        Group(mat_up, mat_down).scale(1.6).arrange(DOWN).move_to(mat,aligned_edge=LEFT)
 
         mat_up.get_brackets()[0]
         with self.voiceover(text="""The way that we split this matrix is that we cut it in the middle, and give one part to one GPU and another to the second one""") as trk:
             self.play(ReplacementTransform(mat.get_brackets()[0], VGroup(mat_up.get_brackets()[0], mat_down.get_brackets()[0])),
                       ReplacementTransform(mat.get_brackets()[1], VGroup(mat_up.get_brackets()[1], mat_down.get_brackets()[1])),
                       ReplacementTransform(VGroup(*mat.elements[len(mat.elements)//2:]), VGroup(*mat_down.elements)),
-                      ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=1)
-            self.wait(1)
-            self.play(FadeOut(mat_up), FadeOut(mat_down))
+                      ReplacementTransform(VGroup(*mat.elements[:len(mat.elements)//2]), VGroup(*mat_up.elements)), run_time=2, rate_func=rush_into)
 
         with self.voiceover(text="""This is called a rowwise split, we split all 3 matrices this way""") as trk:
+            self.play(FadeOut(mat_up), FadeOut(mat_down))
             split_weights([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj], TEAL, dim=1)
 
         with self.voiceover(text="""RoPE as well as attention we also run independently across the GPUs, as the input to those will 
