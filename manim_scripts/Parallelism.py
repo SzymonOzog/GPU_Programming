@@ -963,7 +963,8 @@ class Parallelism(VoiceoverScene):
             self.play(self.frame.animate.shift((t2.attn.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
             self.play(t2.attn.block.animate.set_color(GOLD_E),
                       t2.rotary1.block.animate.set_color(BLUE),
-                      t2.rotary2.block.animate.set_color(BLUE)
+                      t2.rotary2.block.animate.set_color(BLUE),
+                      run_time=2
                       )
 
         #create input
@@ -976,7 +977,7 @@ class Parallelism(VoiceoverScene):
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["x_{m,0}", "x_{m,1}", "\\cdots", "x_{m,b}"]])
         
-        Group(inp_up, inp_down).arrange(DOWN,buff=1).move_to(Group(t.attn, t2.attn)).scale(0.7)
+        Group(inp_up, inp_down).arrange(DOWN,buff=1).move_to(Group(t.attn, t2.attn)).scale(1.3)
         with self.voiceover(text="""Next we have our out projection matrix""") as trk:
             self.play(self.frame.animate.shift((t2.out_proj.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
 
@@ -990,17 +991,17 @@ class Parallelism(VoiceoverScene):
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,m}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,m}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]])
+                                      ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]]).scale(1.6)
         w = t.out_proj.w.copy()
         mat_left = TexMatrix([["w_{0,0}", "\\cdots", "w_{0,\\frac{m}{2}}"],
                                       ["w_{1,0}", "\\cdots", "w_{1,\\frac{m}{2}}"],
                                       ["\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{h,0}", "\\cdots", "w_{h,\\frac{m}{2}}"]], h_buff=1.15).scale(0.6)
+                                      ["w_{h,0}", "\\cdots", "w_{h,\\frac{m}{2}}"]], h_buff=1.15).scale(1.6)
 
         mat_right = TexMatrix([["w_{0,\\frac{m}{2}+1}", "\\cdots", "w_{0,n}"],
                               ["w_{1,\\frac{m}{2}+1}", "\\cdots", "w_{1,n}"],
                               ["\\vdots", "\\ddots", "\\vdots"],
-                              ["w_{h,\\frac{m}{2}+1}", "\\cdots", "w_{h,n}"]]).scale(0.6)
+                              ["w_{h,\\frac{m}{2}+1}", "\\cdots", "w_{h,n}"]]).scale(1.6)
         Group(mat_left, mat_right).arrange(RIGHT).next_to(Group(inp_up, inp_down), RIGHT)
         mat.move_to(Group(mat_left, mat_right))
         with self.voiceover(text="""We can take our input matrix from the out projection""") as trk:
@@ -1024,18 +1025,18 @@ class Parallelism(VoiceoverScene):
 
         #move matrices
         with self.voiceover(text="""Right now, the shapes of those matrices are compatible with our inputs""") as trk:
-            self.play(Group(mat_left, mat_right).animate.arrange(DOWN).move_to(mat))
+            self.play(Group(mat_left, mat_right).animate.arrange(DOWN).next_to(Group(inp_up, inp_down), RIGHT))
 
         #create output
         out_up = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,h}"],
                                       ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,h}"]]).scale(0.6).next_to(mat_left, RIGHT, buff=1)
+                                      ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,h}"]]).scale(1.6).next_to(mat_left, RIGHT, buff=1)
 
         out_down = TexMatrix([["x_{0,0}", "x_{0,1}", "\\cdots", "x_{0,h}"],
                                       ["x_{1,0}", "x_{1,1}", "\\cdots", "x_{1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,h}"]]).scale(0.6).next_to(mat_right, RIGHT, buff=1)
+                                      ["x_{b,0}", "x_{b,1}", "\\cdots", "x_{b,h}"]]).scale(1.6).next_to(mat_right, RIGHT, buff=1)
         u = mat_left.copy()
         d = mat_right.copy()
         with self.voiceover(text="""And after we perform our matrix mutliplication""") as trk:
