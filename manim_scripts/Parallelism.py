@@ -637,12 +637,27 @@ class Parallelism(VoiceoverScene):
         self.play(transformer.create(), self.frame.animate.match_width(transformer))
 
 
-        gpu0 = SurroundingRectangle(transformer, buff=2, color=GREY)
-        gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
+
         # Create GPU
+        gpu0_f = SurroundingRectangle(transformer, buff=2, color=GREY)
+        w = gpu0_f.get_width()
+        h = gpu0_f.get_height()
+        gpu0_bg = Square3D(color=GREY, resolution=(100, 100)).move_to(gpu0_f)
+        gpu0_bg.rescale_to_fit(w, 0, stretch=True)
+        gpu0_bg.rescale_to_fit(h, 1, stretch=True)
+        center_x = gpu0_bg.get_center()[0]
+        center_y = gpu0_bg.get_center()[1]
+
+        rgba = gpu0_bg.data['rgba'].copy()
+        points = gpu0_bg.get_points()
+        rgba[:, 3] = 2*(np.maximum(np.abs(points[:, 0] - center_x)/w, np.abs(points[:, 1] - center_y)/h) ** 2)
+        gpu0_bg.set_rgba_array(rgba, 'rgba')
+
+        gpu0 = Group(gpu0_f, gpu0_bg)
+        gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
         with self.voiceover(text="""In the simple case we have our model that is living on the GPU""") as trk:
-            self.play(ShowCreation(gpu0))
             self.play(self.frame.animate.rescale_to_fit(gpu0.get_width() + 10, dim=0), Write(gpu0_t))
+            self.play(ShowCreation(gpu0.submobjects[0]), ShowCreation(gpu0.submobjects[1]))
 
         cpu0_i = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
         cpu0 = SurroundingRectangle(cpu0_i, buff=2, color=BLUE)
@@ -652,8 +667,8 @@ class Parallelism(VoiceoverScene):
             self.play(ShowCreation(cpu0_i), ShowCreation(cpu0), Write(cpu0_t))
 
         def trigger_gpu(gpu, on=True):
-            return gpu.animate.set_color(GREEN if on else GREY)
-
+            return AnimationGroup(gpu.submobjects[0].animate.set_color(GREEN if on else GREY), 
+                                  gpu.submobjects[1].animate.set_color(GREEN if on else GREY))
         #run transformer
         with self.voiceover(text="""In a very simplified form the CPU is sending a task to process to the model,
                             getting the output, processing it and sending another task to our model living on the GPU""") as trk:
@@ -671,7 +686,8 @@ class Parallelism(VoiceoverScene):
 
         # Create next GPU
         transformer2 = Transformer(4, 12).next_to(transformer, DOWN, buff=16)
-        gpu1 = SurroundingRectangle(transformer2, buff=2, color=GREY)
+        # gpu1 = SurroundingRectangle(transformer2, buff=2, color=GREY)
+        gpu1 = gpu0.copy().move_to(transformer2)
         gpu1_t = Text("GPU1").set_color(GREEN).scale(10).next_to(gpu1, UP, aligned_edge=LEFT, buff=2)
 
         with self.voiceover(text="""But let's say we get another GPU and want to use this fact to speed up our inference""") as trk:
