@@ -898,12 +898,7 @@ class Parallelism(VoiceoverScene):
             end[1] = gpu5.get_top()[1]
             c4 = Line3D(all_reduce2.get_bottom(), end, **line_kwargs)
             self.play(ShowCreation(c3), ShowCreation(c4), all_reduce2.create())
-        # l1 = transformer6.submobjects[1]
-        # l2 = transformer7.submobjects[1]
-        # all_reduce1 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
-        # line_kwargs = dict(color=RED, width=0.3)
-        # c1 = Line3D(l1.get_center(), all_reduce1.get_top(), **line_kwargs)
-        # c2 = Line3D(all_reduce1.get_bottom(), l2.get_center(), **line_kwargs)
+
         with self.voiceover(text="""After running it, we perform an allreduce operation to synchronize our embeddings""") as trk:
             create_allreduce(transformer6, transformer7, transformer6.embeddings, transformer7.embeddings)
         
@@ -917,20 +912,29 @@ class Parallelism(VoiceoverScene):
 
         # do mats
         t.set_mats()
-        w = t.q_proj.w.copy()
+        w = t.q_proj.w.scale(1.4)
         with self.voiceover(text="""Next we have our Q, K and V matrices, they are structured in a simillar way so let's just take Q as an example""") as trk:
             self.play(self.frame.animate.shift((t2.qkv_group.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
             self.play(w.animate.rotate(radians(-25), DOWN).arrange(DOWN).move_to(Group(t.qkv_group, t2.qkv_group)))
 
 
+        # Transform to second matrix
         mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
-                                      ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
-                                      ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]])
+                         ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
+                         ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
+                         ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]])
         mat.move_to(w)
         with self.voiceover(text="""They have multiple weights for each head but the way that it runs in the background, is that all 
-                            the head weights are stacked on top of each other and we run this as a single matrix multiplication""") as trk:
-            self.play(ReplacementTransform(w, Group(mat)))
+                            the head weights ar <bookmark mark='1'/>stacked on top of each other and we run this as a single matrix multiplication""") as trk:
+            self.wait_until_bookmark("1")
+            self.play(ReplacementTransform(VGroup(*[x.get_brackets()[0] for x in w.submobjects]), mat.get_brackets()[0]),
+                      ReplacementTransform(VGroup(*[x.get_brackets()[1] for x in w.submobjects]), mat.get_brackets()[1]),
+                      ReplacementTransform(VGroup(*w.submobjects[0].elements), VGroup(*mat.elements[:4])),
+                      ReplacementTransform(VGroup(*w.submobjects[1].elements), VGroup(*mat.elements[4:8])),
+                      ReplacementTransform(VGroup(*w.submobjects[2].elements), VGroup(*mat.elements[8:12])),
+                      ReplacementTransform(VGroup(*w.submobjects[3].elements), VGroup(*mat.elements[12:])),
+                      run_time=2
+                      )
 
         #Create rowwise split 
         mat_up = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
