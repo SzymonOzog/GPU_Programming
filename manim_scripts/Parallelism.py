@@ -827,19 +827,56 @@ class Parallelism(VoiceoverScene):
         for mob in it.chain(transformer7.get_family(True), *[x.get_family(True) for x in transformer7.transformer_layers]):
             if isinstance(mob, Prism):
                 mob.set_color(GREY)
+
         with self.voiceover(text="""And we split all model weights and calculations across all stages of the model""") as trk:
             self.play(transformer4.duplicate_to(transformer6, copy=False), transformer5.duplicate_to(transformer7, copy=False))
+
+        def my_path_fn(
+            start_points: np.ndarray,
+            end_points: np.ndarray,
+            alpha: float,
+        ) -> np.ndarray:
+            s_points = start_points.copy()
+            e_points = end_points.copy()
+            if alpha < 0.5:
+                a = alpha*2
+                w_alpha = 1 * (1 - a) + 0.01*a
+            else:
+                a = alpha*2 - 1
+                w_alpha = 0.1 * (1 - a) + 1*a
+
+            if len(start_points):
+                interm = interpolate(s_points, e_points, alpha)
+                center = (np.min(start_points[:, 1]) + np.max(end_points[:, 1]))/2
+                total_dist = (np.min(start_points[:, 1]) - np.max(end_points[:, 1]))/2
+                dist = np.abs(interm[:, 1] - center)
+                dist_alpha = np.clip(dist/total_dist, a_min=0.1, a_max=1)
+                final_alpha = rush_from(dist_alpha*w_alpha) 
+
+                min = np.min(start_points[:, 0])
+                max = np.max(start_points[:, 0])
+                center = (max+min)/2
+                norm = start_points[:, 0] - center
+                s_points[:, 0] = final_alpha*norm + center
+
+                min = np.min(end_points[:, 0])
+                max = np.max(end_points[:, 0])
+                center = (max+min)/2
+                norm = end_points[:, 0] - center
+                e_points[:, 0] = norm*final_alpha + center
+
+            return interpolate(s_points, e_points, alpha)
 
         def split_weights(t1_mobs, t2_mobs, color, dim=0, run_time=1):
             anims = []
             for b, b2 in zip(t1_mobs, t2_mobs):
 
-                down = b.copy().rescale_to_fit(b.length_over_dim(dim)/2, dim, True)
+                down = b.block.copy().rescale_to_fit(b.length_over_dim(dim)/2, dim, True)
                 down.move_to(b, aligned_edge=DOWN if dim == 1 else RIGHT).set_color(color).scale(1.01)
 
-                up = b.copy().rescale_to_fit(b.length_over_dim(dim)/2, dim, True)
+                up = b.block.copy().rescale_to_fit(b.length_over_dim(dim)/2, dim, True)
                 up.move_to(b2, aligned_edge=DOWN if dim == 1 else RIGHT).set_color(color).scale(1.01)
-                anims.append(Transform(down, up, remover=True))
+                anims.append(Transform(down, up, remover=True, path_func=my_path_fn))
 
                 mid = b.get_center()[dim]
                 self.add(down)
@@ -1049,9 +1086,8 @@ class Parallelism(VoiceoverScene):
             self.play(FadeOut(x_sum), FadeOut(mat_left), FadeOut(mat_right))
 
         #transfer data
-
         with self.voiceover(text="""That's why we split every second matrix columnwise""") as trk:
-            split_weights([t.out_proj], [t2.out_proj], TEAL)
+            split_weights([t.out_proj], [t2.out_proj], TEAL, run_time=2)
 
         with self.voiceover(text="""It allows us to do a GPU to GPU sync every second matrix multiplication""") as trk:
             create_allreduce(t, t2, t.out_proj, t2.out_proj)
