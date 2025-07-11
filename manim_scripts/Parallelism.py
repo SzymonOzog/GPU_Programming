@@ -923,7 +923,7 @@ class Parallelism(VoiceoverScene):
 
     
         # create allreduce
-        def create_allreduce(t, t2, obj, obj2):
+        def create_allreduce(t, t2, obj, obj2, run_time=1):
             l1 = t.submobjects[t.submobjects.index(obj) + 1]
             l2 = t2.submobjects[t2.submobjects.index(obj2) + 1]
             all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
@@ -934,7 +934,7 @@ class Parallelism(VoiceoverScene):
             end = l2.get_center().copy()
             end[1] = gpu5.get_top()[1]
             c4 = Line3D(all_reduce2.get_bottom(), end, **line_kwargs)
-            self.play(ShowCreation(c3), ShowCreation(c4), all_reduce2.create())
+            self.play(ShowCreation(c3), ShowCreation(c4), all_reduce2.create(), run_time=run_time)
 
         with self.voiceover(text="""After running it, we perform an allreduce operation to synchronize our embeddings""") as trk:
             create_allreduce(transformer6, transformer7, transformer6.embeddings, transformer7.embeddings)
@@ -1103,32 +1103,32 @@ class Parallelism(VoiceoverScene):
             self.play(t2.residual2.block.animate.set_color(BLUE))
 
 
-        total_time = 36 # Take from print below
+        # run to the end
+        total_time = 15.3 # Take from print below
         total_distance = transformer7.get_right()[0] - self.frame.get_center()[0]
         start_time = self.time 
         def updater(m, dt):
-            #TODO why is the updater called twice?
-            dist = dt*total_distance/(2*total_time)
+            dist = dt*total_distance/total_time
             self.frame.shift(dist*RIGHT)
         self.frame.add_updater(updater)
 
         for i in range(1, len(transformer6.transformer_layers)):
             t = transformer6.transformer_layers[i]
             t2 = transformer7.transformer_layers[i]
-            self.play(t2.rms_norm1.block.animate.set_color(YELLOW_E))
-            split_weights([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj], TEAL, dim=1)
+            self.play(t2.rms_norm1.block.animate.set_color(YELLOW_E), run_time=0.5)
+            split_weights([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj], TEAL, dim=1, run_time=0.5)
             self.play(t2.attn.block.animate.set_color(GOLD_E),
                       t2.rotary1.block.animate.set_color(BLUE),
-                      t2.rotary2.block.animate.set_color(BLUE))
-            split_weights([t.out_proj], [t2.out_proj], TEAL)
-            create_allreduce(t, t2, t.out_proj, t2.out_proj)
-            self.play(t2.residual1.block.animate.set_color(BLUE))
-            self.play(t2.rms_norm2.block.animate.set_color(YELLOW_E))
-            split_weights([t.ffn_gate, t.ffn_up], [t2.ffn_gate, t2.ffn_up], TEAL, dim=1)
-            self.play(t2.swiglu.block.animate.set_color(BLUE))
-            split_weights([t.ffn_down], [t2.ffn_down], TEAL)
-            create_allreduce(t, t2, t.ffn_down, t2.ffn_down)
-            self.play(t2.residual2.block.animate.set_color(BLUE))
+                      t2.rotary2.block.animate.set_color(BLUE), run_time=0.5)
+            split_weights([t.out_proj], [t2.out_proj], TEAL, run_time=0.5)
+            create_allreduce(t, t2, t.out_proj, t2.out_proj, run_time=0.3)
+            self.play(t2.residual1.block.animate.set_color(BLUE), 
+                      t2.rms_norm2.block.animate.set_color(YELLOW_E), run_time=0.5, lag_ratio=0.2)
+            split_weights([t.ffn_gate, t.ffn_up], [t2.ffn_gate, t2.ffn_up], TEAL, dim=1, run_time=0.5)
+            self.play(t2.swiglu.block.animate.set_color(BLUE), run_time=0.5)
+            split_weights([t.ffn_down], [t2.ffn_down], TEAL, run_time=0.5)
+            create_allreduce(t, t2, t.ffn_down, t2.ffn_down, run_time=0.3)
+            self.play(t2.residual2.block.animate.set_color(BLUE), run_time=0.5)
 
         print("creating took", self.time - start_time)
         self.frame.remove_updater(updater)
