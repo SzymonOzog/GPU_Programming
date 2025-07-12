@@ -9,6 +9,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from voicover_gl import VoiceoverScene
 import moderngl
 
+CONNECTOR_WIDTH=0.25
+
 class MyBulletedList(VGroup):
     def __init__(
         self,
@@ -249,8 +251,8 @@ class Parallelism(VoiceoverScene):
                 self.k_proj = FBlock("K Proj","K = XW_k", width=self.std_width*2/3, height=self.std_height/3, color=TEAL, *args, **kwargs)
                 self.v_proj = FBlock("V Proj","V = XW_v", width=self.std_width*2/3, height=self.std_height/3, color=TEAL, *args, **kwargs)
                 self.qkv_group = Group(
-                        Group(self.q_proj, self.rotary1).arrange(RIGHT, buff=0.4).add(Connector(self.q_proj, self.rotary1, width=0.1, color=WHITE)) , 
-                        Group(self.k_proj, self.rotary2).arrange(RIGHT, buff=0.4).add(Connector(self.k_proj, self.rotary2, width=0.1, color=WHITE)) , 
+                        Group(self.q_proj, self.rotary1).arrange(RIGHT, buff=0.4).add(Connector(self.q_proj, self.rotary1, width=CONNECTOR_WIDTH, color=WHITE)) , 
+                        Group(self.k_proj, self.rotary2).arrange(RIGHT, buff=0.4).add(Connector(self.k_proj, self.rotary2, width=CONNECTOR_WIDTH, color=WHITE)) , 
                         self.v_proj)
                 self.qkv_group.arrange(DOWN, buff=0.5, aligned_edge=LEFT)
 
@@ -291,7 +293,7 @@ class Parallelism(VoiceoverScene):
 
                 lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
-                    l = Connector(x1, x2, width=0.1, color=WHITE)
+                    l = Connector(x1, x2, width=CONNECTOR_WIDTH, color=WHITE)
                     lines.append(l)
                 i = len(self.submobjects) - 1
                 for l in reversed(lines):
@@ -335,9 +337,9 @@ class Parallelism(VoiceoverScene):
 
             def create_residuals(self, inp):
                 res_y = self.rms_norm1.get_top()[1] + 1
-                self.res = Residual(inp, self.residual1, res_y, width=0.1, color=WHITE)
+                self.res = Residual(inp, self.residual1, res_y, width=CONNECTOR_WIDTH, color=WHITE)
                 self.add(self.res)
-                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y, width=0.1, color=WHITE)
+                self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y, width=CONNECTOR_WIDTH, color=WHITE)
                 self.add(self.res2)
 
 
@@ -443,7 +445,7 @@ class Parallelism(VoiceoverScene):
 
                 self.lines = []
                 for x1, x2 in zip(self.submobjects, self.submobjects[1:]):
-                    l = Connector(x1, x2, width=0.1, color=WHITE)
+                    l = Connector(x1, x2, width=CONNECTOR_WIDTH, color=WHITE)
                     self.lines.append(l)
 
                 for l, tb, hl in zip(self.lines, self.transformer_layers, self.high_levels):
@@ -491,7 +493,7 @@ class Parallelism(VoiceoverScene):
                         cum_dist += dist
                         tmp2 = Dot().move_to(b.get_right() + cum_dist*DOWN)
                         #TODO this is too much hacks
-                        anims.append(Transform(b, Connector(tmp, Group(tmp2), width=0.1, color=WHITE)))
+                        anims.append(Transform(b, Connector(tmp, Group(tmp2), width=CONNECTOR_WIDTH, color=WHITE)))
                     else:
                         anims.append(b.animate.shift(cum_dist*DOWN))
                 anims.append(self.rms_norm.animate.shift(cum_dist*DOWN))
@@ -916,6 +918,7 @@ class Parallelism(VoiceoverScene):
         focus_obj = Group(transformer6.embeddings, transformer7.embeddings)
         self.frame.save_state()
 
+        # split embeddings
         with self.voiceover(text="""Going layer by layer, we first encounter our embeddings. The way we split them is that we just
                             divide them equally across all GPUs, each embedding only the tokens it has in it's range""") as trk:
             self.play(self.frame.animate.rescale_to_fit(focus_obj.get_height() + 3, 1).move_to(focus_obj))
@@ -927,7 +930,7 @@ class Parallelism(VoiceoverScene):
             l1 = t.submobjects[t.submobjects.index(obj) + 1]
             l2 = t2.submobjects[t2.submobjects.index(obj2) + 1]
             all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
-            line_kwargs = dict(color=RED, width=0.3)
+            line_kwargs = dict(color=RED, width=CONNECTOR_WIDTH)
             start = l1.get_center().copy()
             start[1] = gpu4.get_bottom()[1]
             c3 = Line3D(start, all_reduce2.get_top(), **line_kwargs)
