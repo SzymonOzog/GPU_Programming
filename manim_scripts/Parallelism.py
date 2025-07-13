@@ -361,13 +361,10 @@ class Parallelism(VoiceoverScene):
                 self.ffn_down.set_weights(mat)
 
 
-            def create_residuals(self, inp):
+            def create_residuals(self):
                 res_y = self.rms_norm1.get_top()[1] + 1
-                self.res = Residual(inp, self.residual1, res_y, width=CONNECTOR_WIDTH, color=WHITE)
-                self.add(self.res)
+                self.res = Residual(self.res_inp, self.residual1, res_y, width=CONNECTOR_WIDTH, color=WHITE)
                 self.res2 = Residual(self.submobjects[self.submobjects.index(self.residual1) + 1], self.residual2, res_y, width=CONNECTOR_WIDTH, color=WHITE)
-                self.add(self.res2)
-
 
             def extend_at(self, obj, dist=2):
                 idx = self.submobjects.index(obj)
@@ -412,14 +409,15 @@ class Parallelism(VoiceoverScene):
 
             def transform(self):
                 if self.is_hl:
+                    self.create_residuals()
                     self.deactivate_depth_test()
                     self.high_level.apply_depth_test()
-                    ret = AnimationGroup(FadeOut(self.high_level), self.create(False))
+                    ret = AnimationGroup(FadeOut(self.high_level), self.create(False), self.res.create(), self.res2.create())
                     self.is_hl = False
                 else:
                     self.apply_depth_test()
                     self.high_level.deactivate_depth_test()
-                    ret = AnimationGroup(FadeOut(self), self.create(True))
+                    ret = AnimationGroup(FadeOut(self), self.create(True), FadeOut(self.res), FadeOut(self.res2))
                     self.is_hl = True
                 return ret
 
@@ -477,7 +475,8 @@ class Parallelism(VoiceoverScene):
                 for l, tb, hl in zip(self.lines, self.transformer_layers, self.high_levels):
                     if high_level:
                         tb.move_to(hl)
-                    tb.create_residuals(l)
+                    # tb.create_residuals(l)
+                    tb.res_inp = l
                     tb.set_mats()
                 i = len(self.submobjects) - 1
                 for l in reversed(self.lines):
