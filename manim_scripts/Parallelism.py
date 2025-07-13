@@ -10,6 +10,7 @@ from voicover_gl import VoiceoverScene
 import moderngl
 
 CONNECTOR_WIDTH=0.25
+hd_render = False
 
 class MyBulletedList(VGroup):
     def __init__(
@@ -90,11 +91,12 @@ class Parallelism(VoiceoverScene):
             )
         shader_dir = os.path.dirname(os.path.abspath(__file__)) + "/shaders/one_sided"
         Square3D.shader_folder = shader_dir
+        hd_render = self.camera_config["resolution"][0] >= 1280
 
         class FBlock(Group):
             def __init__(self, text=None, formula=None, text_scale=1, text_rotation_deg=-90, weights=None, *args, **kwargs):
                 super().__init__()
-                self.block = Prism(square_resolution=(10,10),*args, **kwargs)
+                self.block = Prism(square_resolution=(100, 100) if hd_render else (10,10),*args, **kwargs)
                 
                 self.t = None
                 self.f = None
@@ -209,6 +211,23 @@ class Parallelism(VoiceoverScene):
                 self.s += dist*LEFT
                 self.e += dist*RIGHT
                 return Transform(self.l, Line3D(self.s, self.e, *self.args, **self.kwargs)) 
+        def trim_corner(mobject, corner, size):
+            corn = mobject.get_corner(corner)
+
+            dir1 = RIGHT if all(corner == UL) or all(corner == DL) else LEFT
+            dir2 = DOWN if all(corner == UL) or all(corner == UR) else UP
+
+            ptd = []
+            for i, p in enumerate(mobject.get_points()):
+                v = p - corn
+                d0 = np.dot(v, dir1)
+                d1 = np.dot(v, dir2)
+                if d0 >= 0 and d1 >= 0 and (d0+d1) < size:
+                    ptd.append(i)
+            mobject.data['rgba'][ptd, 3] = 0
+            mobject.data['point'][ptd] = corn - (corner * np.array([size, size, size])) 
+            for mob in mobject.family_members_with_points():
+                mob.note_changed_data()
 
         class Residual(Group):
             def __init__(self, start, end, y, *args, **kwargs):
@@ -220,9 +239,16 @@ class Parallelism(VoiceoverScene):
                 self.e_point[1] = y
                 self.s_point[1] = y
 
-                self.s_line = Line3D(start.get_top(), self.s_point, *args, **kwargs)
-                self.h_line = Connector(self.s_point, self.e_point, *args, **kwargs)
-                self.e_line = Line3D(self.e_point, end.get_top(), *args, **kwargs)
+                resolution = (600,600) if hd_render else (21, 25)
+                self.s_line = Line3D(start.get_top(), self.s_point+(CONNECTOR_WIDTH/2)*UP, resolution=resolution, *args, **kwargs)
+                self.h_line = Line3D(self.s_point+(CONNECTOR_WIDTH/2)*LEFT, self.e_point+(CONNECTOR_WIDTH/2)*RIGHT, resolution=resolution, *args, **kwargs)
+                self.e_line = Line3D(self.e_point+(CONNECTOR_WIDTH/2)*UP, end.get_top(), resolution=resolution, *args, **kwargs)
+
+                trim_corner(self.s_line, UR, CONNECTOR_WIDTH*0.99)
+                trim_corner(self.h_line, DL, CONNECTOR_WIDTH*0.99)
+                trim_corner(self.h_line, DR, CONNECTOR_WIDTH*0.99)
+                trim_corner(self.e_line, UL, CONNECTOR_WIDTH*0.99)
+
                 self.add(self.s_line)
                 self.add(self.h_line)
                 self.add(self.e_line)
