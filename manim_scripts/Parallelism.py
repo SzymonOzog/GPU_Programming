@@ -11,6 +11,23 @@ import moderngl
 
 CONNECTOR_WIDTH=0.25
 hd_render = False
+def trim_corner(mobject, corner, size):
+    corn = mobject.get_corner(corner)
+
+    dir1 = RIGHT if all(corner == UL) or all(corner == DL) else LEFT
+    dir2 = DOWN if all(corner == UL) or all(corner == UR) else UP
+
+    ptd = []
+    for i, p in enumerate(mobject.get_points()):
+        v = p - corn
+        d0 = np.dot(v, dir1)
+        d1 = np.dot(v, dir2)
+        if d0 >= 0 and d1 >= 0 and (d0+d1) < size:
+            ptd.append(i)
+    mobject.data['rgba'][ptd, 3] = 0
+    mobject.data['point'][ptd] = corn - (corner * np.array([size, size, size])) 
+    for mob in mobject.family_members_with_points():
+        mob.note_changed_data()
 
 class MyBulletedList(VGroup):
     def __init__(
@@ -61,9 +78,9 @@ def get_vline_start_end(start, end):
             min_y = min(min_y, smo.get_left()[1])
             max_y = max(max_y, smo.get_left()[1])
     left = center.copy()
-    left[1] = min_y
+    left[1] = min_y - CONNECTOR_WIDTH/2
     right = center.copy()
-    right[1] = max_y
+    right[1] = max_y + CONNECTOR_WIDTH/2
     return left, right
 
 def connect(v_line, obj, up=True, *args, **kwargs):
@@ -72,6 +89,7 @@ def connect(v_line, obj, up=True, *args, **kwargs):
         for smo in obj.submobjects: 
             start = smo.get_left() if up else smo.get_right()
             end = v_line.get_center().copy()
+            end[0] += -(CONNECTOR_WIDTH/2) if up else (CONNECTOR_WIDTH/2)
             end[1] = start[1]
             lines.append(Line3D(start, end, *args, **kwargs))
         return lines
@@ -111,9 +129,7 @@ class Parallelism(VoiceoverScene):
                     if b_h/t_h > b_w/t_w:
                         self.t.match_width(self.block)
                         self.t.rescale_to_fit(b_w*0.8, dim=0)
-                        # self.t.match_x(
                     else:
-                        # self.t.match_height(self.block)
                         self.t.rescale_to_fit(b_h*0.8, dim=1)
                     self.add(self.t)
                 if formula is not None:
@@ -163,10 +179,11 @@ class Parallelism(VoiceoverScene):
                 elif is_grp(end):
                     self.is_grp = True
                     l, r = get_vline_start_end(start, end)
-                    self.v_line = Line3D(l, r, *args, **kwargs)
+                    resolution = (600,600) if hd_render else (21, 25)
+                    self.v_line = Line3D(l, r, *args, resolution=resolution, **kwargs)
                     self.add(self.v_line)
-                    self.bot = connect(self.v_line, start, False, *args, **kwargs)
-                    self.top = connect(self.v_line, end, True, *args, **kwargs)
+                    self.bot = connect(self.v_line, start, False, *args, resolution=resolution, **kwargs)
+                    self.top = connect(self.v_line, end, True, *args, resolution=resolution, **kwargs)
                     self.b_s = []
                     self.b_e = []
                     self.t_s = []
@@ -211,23 +228,6 @@ class Parallelism(VoiceoverScene):
                 self.s += dist*LEFT
                 self.e += dist*RIGHT
                 return Transform(self.l, Line3D(self.s, self.e, *self.args, **self.kwargs)) 
-        def trim_corner(mobject, corner, size):
-            corn = mobject.get_corner(corner)
-
-            dir1 = RIGHT if all(corner == UL) or all(corner == DL) else LEFT
-            dir2 = DOWN if all(corner == UL) or all(corner == UR) else UP
-
-            ptd = []
-            for i, p in enumerate(mobject.get_points()):
-                v = p - corn
-                d0 = np.dot(v, dir1)
-                d1 = np.dot(v, dir2)
-                if d0 >= 0 and d1 >= 0 and (d0+d1) < size:
-                    ptd.append(i)
-            mobject.data['rgba'][ptd, 3] = 0
-            mobject.data['point'][ptd] = corn - (corner * np.array([size, size, size])) 
-            for mob in mobject.family_members_with_points():
-                mob.note_changed_data()
 
         class Residual(Group):
             def __init__(self, start, end, y, *args, **kwargs):
@@ -430,6 +430,19 @@ class Parallelism(VoiceoverScene):
                         anims.append(ReplacementTransform(x.copy() if copy else x, target.submobjects[i]))
                 return AnimationGroup(*anims)
 
+            def trim_connectors(self):
+                c1 = self.submobjects[self.submobjects.index(self.rms_norm1)+1]
+                trim_corner(c1.v_line, UR, CONNECTOR_WIDTH*0.99)
+                trim_corner(c1.v_line, DR, CONNECTOR_WIDTH*0.99)
+                trim_corner(c1.top[0], DL, CONNECTOR_WIDTH*0.99)
+                trim_corner(c1.top[-1], UL, CONNECTOR_WIDTH*0.99)
+
+                c2 = self.submobjects[self.submobjects.index(self.rms_norm2)+1]
+                trim_corner(c2.v_line, UR, CONNECTOR_WIDTH*0.99)
+                trim_corner(c2.v_line, DR, CONNECTOR_WIDTH*0.99)
+                trim_corner(c2.top[0], DL, CONNECTOR_WIDTH*0.99)
+                trim_corner(c2.top[-1], UL, CONNECTOR_WIDTH*0.99)
+
         class Transformer(Group):
             def __init__(self, std_width=4, std_height=4, num_blocks=4, high_level=True, *args, **kwargs):
                 super().__init__()
@@ -489,6 +502,9 @@ class Parallelism(VoiceoverScene):
                                       ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,n}"]]).rotate(radians(25), DOWN).scale(0.7)
                 mat.move_to(self.linear)
                 self.linear.set_weights(mat)
+                self.trimmed = False
+                # I have no idea why this messes things up if we do it on creation
+                self.trim_connectors()
 
             def create(self, *args, **kwargs):
                 anims = []
@@ -498,6 +514,13 @@ class Parallelism(VoiceoverScene):
                     else:
                         anims.append(ShowCreation(obj, *args, **kwargs))
                 return AnimationGroup(*anims)
+
+            def trim_connectors(self):
+                if self.trimmed:
+                    return
+                self.trimmed = True
+                for l in self.transformer_layers:
+                    l.trim_connectors()
 
             def pipeline_parallelize(self, n, dist=8):
                 split_blocks = []
