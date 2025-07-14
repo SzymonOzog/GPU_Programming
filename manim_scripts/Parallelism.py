@@ -428,6 +428,12 @@ class Parallelism(VoiceoverScene):
                 else:
                     for i, x in enumerate(self.submobjects):
                         anims.append(ReplacementTransform(x.copy() if copy else x, target.submobjects[i]))
+                    if not hasattr(self, "res"):
+                        self.create_residuals()
+                    if not hasattr(target, "res"):
+                        target.create_residuals()
+                    anims.append(ReplacementTransform(self.res.copy() if copy else self.res, target.res))
+                    anims.append(ReplacementTransform(self.res2.copy() if copy else self.res2, target.res2))
                 return AnimationGroup(*anims)
 
             def trim_connectors(self):
