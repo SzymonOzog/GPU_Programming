@@ -262,8 +262,9 @@ class Parallelism(VoiceoverScene):
                                       self.e_line.animate.shift(dist*RIGHT))
 
         class TransformerBlock(Group):
-            def __init__(self, width, height, *args, **kwargs):
+            def __init__(self, width, height, moe=False, *args, **kwargs):
                 super().__init__()
+                self.moe = moe
                 self.std_width = width 
                 self.std_height = height 
                 
@@ -292,6 +293,9 @@ class Parallelism(VoiceoverScene):
                 self.rms_norm2 = FBlock("RMS Norm", r"\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^n x_i^2}}",
                                         width=self.std_width*2/3, height=self.std_height, color=YELLOW_E)
                 
+                if moe:
+                    self.moe_router = FBlock("Router", "XW_g", width=self.std_width*2/3, height=self.std_height, color=TEAL, *args, **kwargs)
+
                 self.ffn_gate = FBlock("Gate", "XW_g", width=self.std_width, height=self.std_height/2, color=TEAL, *args, **kwargs)
                 self.ffn_up = FBlock("Up Proj", "XW_u", width=self.std_width, height=self.std_height/2, color=TEAL, *args, **kwargs)
                 
@@ -310,6 +314,8 @@ class Parallelism(VoiceoverScene):
                 self.add(self.out_proj)
                 self.add(self.residual1)
                 self.add(self.rms_norm2)
+                if moe:
+                    self.add(self.moe_router)
                 self.add(self.ffn_group)
                 self.add(self.swiglu)
                 self.add(self.ffn_down)
@@ -443,14 +449,14 @@ class Parallelism(VoiceoverScene):
                 trim_corner(c1.top[0], DL, CONNECTOR_WIDTH*0.99)
                 trim_corner(c1.top[-1], UL, CONNECTOR_WIDTH*0.99)
 
-                c2 = self.submobjects[self.submobjects.index(self.rms_norm2)+1]
+                c2 = self.submobjects[self.submobjects.index(self.moe_router if self. moe else self.rms_norm2)+1]
                 trim_corner(c2.v_line, UR, CONNECTOR_WIDTH*0.99)
                 trim_corner(c2.v_line, DR, CONNECTOR_WIDTH*0.99)
                 trim_corner(c2.top[0], DL, CONNECTOR_WIDTH*0.99)
                 trim_corner(c2.top[-1], UL, CONNECTOR_WIDTH*0.99)
 
         class Transformer(Group):
-            def __init__(self, std_width=4, std_height=4, num_blocks=4, high_level=True, *args, **kwargs):
+            def __init__(self, std_width=4, std_height=4, num_blocks=4, high_level=True, moe=False, *args, **kwargs):
                 super().__init__()
 
                 self.std_width = std_width
@@ -459,7 +465,7 @@ class Parallelism(VoiceoverScene):
                 self.transformer_layers = []
                 self.high_levels = []
                 for _ in range(num_blocks):
-                    self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height, *args, **kwargs))
+                    self.transformer_layers.append(TransformerBlock(self.std_width, self.std_height, moe, *args, **kwargs))
                     self.high_levels.append(self.transformer_layers[-1].high_level)
                     self.transformer_layers[-1].is_hl = high_level
 
@@ -878,12 +884,14 @@ class Parallelism(VoiceoverScene):
             self.play(transformer4.transform([0, 1, 2, 3]), transformer5.transform([0, 1, 2, 3]))
 
 
+        #duplicate transformers
         transformer6 = Transformer(4,4, high_level=False, text_rotation_deg=0).move_to(transformer4, aligned_edge=DOWN)
         transformer7 = Transformer(4,4, high_level=False, text_rotation_deg=0).move_to(transformer5, aligned_edge=UP)
         for mob in it.chain(transformer7.get_family(True), *[x.get_family(True) for x in transformer7.transformer_layers]):
             if isinstance(mob, Prism):
                 mob.set_color(GREY)
 
+        
         with self.voiceover(text="""And we split all model weights and calculations across all stages of the model""") as trk:
             self.play(transformer4.duplicate_to(transformer6, copy=False), transformer5.duplicate_to(transformer7, copy=False))
 
@@ -1222,6 +1230,42 @@ class Parallelism(VoiceoverScene):
             run_transformers(Group(transformer4, transformer5))
 
         
+        # Make ep scene part
+        cpu3 = cpu0.copy()
+        cpu3_t = cpu0_t.copy()
+        cpu3_i = cpu0_i.copy()
+        gpu6 = gpu0.copy()
+        gpu6_t = gpu0_t.copy()
+        gpu7 = gpu1.copy()
+        gpu7_t = gpu1_t.copy()
+        transformer8 = Transformer(4, 12, high_level=False, moe=True).move_to(gpu6)
+        transformer9 = Transformer(4, 12, high_level=False, moe=True).move_to(gpu7)
+        cp3 = Group(cpu3, cpu3_t, cpu3_i, transformer8, transformer9, gpu6, gpu6_t, gpu7, gpu7_t).next_to(
+                Group(cpu2_t, gpu5), RIGHT, buff = 20)
+
+        for name, obj in transformer4.__dict__.items():
+            if isinstance(obj, Mobject):
+                mob1 = obj
+                mob2 = getattr(transformer8, name)
+                if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+                    mob2.set_rgba_array(mob1.data["rgba"].copy())
+
+        for name, obj in transformer5.__dict__.items():
+            if isinstance(obj, Mobject):
+                mob1 = obj
+                mob2 = getattr(transformer9, name)
+                if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+                    mob2.set_rgba_array(mob1.data["rgba"].copy())
+        # for mob1, mob2 in zip(transformer5.get_family(), transformer9.get_family()):
+        #     if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+        #         mob2.set_rgba_array(mob1.data["rgba"].copy())
+
+        self.play(FadeIn(cp3))
+        ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(GOLD)
+        with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
+            self.play(self.frame.animate.shift(gpu6.get_center() - gpu4.get_center()), run_time=trk.get_remaining_duration())
+            self.play(Write(ep_t))
+
         # Create bullet list
         line_start = (dp_t.get_center() + pp_t.get_center())/2 + 10*UP
         line_end = line_start + 800*DOWN
