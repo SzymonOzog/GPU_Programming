@@ -1240,30 +1240,49 @@ class Parallelism(VoiceoverScene):
         gpu7_t = gpu1_t.copy()
         transformer8 = Transformer(4, 12, high_level=False, moe=True).move_to(gpu6)
         transformer9 = Transformer(4, 12, high_level=False, moe=True).move_to(gpu7)
+        gpu6.rescale_to_fit(transformer8.get_width()+2, dim=0)
+        gpu7.rescale_to_fit(transformer8.get_width()+2, dim=0)
         cp3 = Group(cpu3, cpu3_t, cpu3_i, transformer8, transformer9, gpu6, gpu6_t, gpu7, gpu7_t).next_to(
                 Group(cpu2_t, gpu5), RIGHT, buff = 20)
 
+
         for name, obj in transformer4.__dict__.items():
             if isinstance(obj, Mobject):
-                mob1 = obj
-                mob2 = getattr(transformer8, name)
-                if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
-                    mob2.set_rgba_array(mob1.data["rgba"].copy())
+                for mob1, mob2 in zip(obj.get_family(), getattr(transformer8, name).get_family()):
+                    if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+                        print(mob1, mob2, name)
+                        mob2.set_rgba_array(mob1.data["rgba"].copy())
+
+        for b, b2 in zip(transformer4.transformer_layers, transformer8.transformer_layers):
+            b2.create_residuals()
+            for name, obj in b.__dict__.items():
+                if isinstance(obj, Mobject):
+                    for mob1, mob2 in zip(obj.get_family(), getattr(b2, name).get_family()):
+                        if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+                            print(mob1, mob2, name)
+                            mob2.set_rgba_array(mob1.data["rgba"].copy())
 
         for name, obj in transformer5.__dict__.items():
             if isinstance(obj, Mobject):
-                mob1 = obj
-                mob2 = getattr(transformer9, name)
-                if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
-                    mob2.set_rgba_array(mob1.data["rgba"].copy())
-        # for mob1, mob2 in zip(transformer5.get_family(), transformer9.get_family()):
-        #     if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
-        #         mob2.set_rgba_array(mob1.data["rgba"].copy())
+                for mob1, mob2 in zip(obj.get_family(), getattr(transformer9, name).get_family()):
+                    if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+                        print(mob1, mob2, name)
+                        mob2.set_rgba_array(mob1.data["rgba"].copy())
+
+        for b, b2 in zip(transformer5.transformer_layers, transformer9.transformer_layers):
+            b2.create_residuals()
+            for name, obj in b.__dict__.items():
+                if isinstance(obj, Mobject):
+                    for mob1, mob2 in zip(obj.get_family(), getattr(b2, name).get_family()):
+                        if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
+                            print(mob1, mob2, name)
+                            mob2.set_rgba_array(mob1.data["rgba"].copy())
 
         self.play(FadeIn(cp3))
         ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(GOLD)
         with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
-            self.play(self.frame.animate.shift(gpu6.get_center() - gpu4.get_center()), run_time=trk.get_remaining_duration())
+            self.play(self.frame.animate.shift(gpu6.get_center() - gpu4.get_center()).rescale_to_fit(gpu6.get_width() + 10, dim=0) , 
+                      run_time=trk.get_remaining_duration())
             self.play(Write(ep_t))
 
         # Create bullet list
