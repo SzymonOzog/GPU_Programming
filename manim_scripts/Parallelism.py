@@ -1250,7 +1250,6 @@ class Parallelism(VoiceoverScene):
             if isinstance(obj, Mobject):
                 for mob1, mob2 in zip(obj.get_family(), getattr(transformer8, name).get_family()):
                     if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
-                        print(mob1, mob2, name)
                         mob2.set_rgba_array(mob1.data["rgba"].copy())
 
         for b, b2 in zip(transformer4.transformer_layers, transformer8.transformer_layers):
@@ -1259,14 +1258,12 @@ class Parallelism(VoiceoverScene):
                 if isinstance(obj, Mobject):
                     for mob1, mob2 in zip(obj.get_family(), getattr(b2, name).get_family()):
                         if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
-                            print(mob1, mob2, name)
                             mob2.set_rgba_array(mob1.data["rgba"].copy())
 
         for name, obj in transformer5.__dict__.items():
             if isinstance(obj, Mobject):
                 for mob1, mob2 in zip(obj.get_family(), getattr(transformer9, name).get_family()):
                     if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
-                        print(mob1, mob2, name)
                         mob2.set_rgba_array(mob1.data["rgba"].copy())
 
         for b, b2 in zip(transformer5.transformer_layers, transformer9.transformer_layers):
@@ -1275,7 +1272,6 @@ class Parallelism(VoiceoverScene):
                 if isinstance(obj, Mobject):
                     for mob1, mob2 in zip(obj.get_family(), getattr(b2, name).get_family()):
                         if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
-                            print(mob1, mob2, name)
                             mob2.set_rgba_array(mob1.data["rgba"].copy())
 
         self.play(FadeIn(cp3))
