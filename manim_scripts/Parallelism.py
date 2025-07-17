@@ -716,9 +716,9 @@ class Parallelism(VoiceoverScene):
         gpu0_bg.set_rgba_array(rgba, 'rgba')
 
         gpu0 = Group(gpu0_f, gpu0_bg)
-        gpu0_t = Text("GPU0").set_color(GREEN).scale(10).next_to(gpu0, UP, aligned_edge=LEFT, buff=2)
+        gpu0_t = Text("GPU0").set_color(GREEN).scale(10).rotate(radians(90)).next_to(gpu0, LEFT, buff=2)
         with self.voiceover(text="""In the simple case we have our model that is living on the GPU""") as trk:
-            self.play(self.frame.animate.rescale_to_fit(gpu0.get_width() + 10, dim=0), Write(gpu0_t))
+            self.play(self.frame.animate.rescale_to_fit(Group(gpu0, gpu0_t).get_width() + 10, dim=0), Write(gpu0_t))
             self.play(ShowCreation(gpu0.submobjects[0]), ShowCreation(gpu0.submobjects[1]))
 
         cpu0_i = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
@@ -750,7 +750,7 @@ class Parallelism(VoiceoverScene):
         transformer2 = Transformer(4, 12).next_to(transformer, DOWN, buff=16)
         # gpu1 = SurroundingRectangle(transformer2, buff=2, color=GREY)
         gpu1 = gpu0.copy().move_to(transformer2)
-        gpu1_t = Text("GPU1").set_color(GREEN).scale(10).next_to(gpu1, UP, aligned_edge=LEFT, buff=2)
+        gpu1_t = Text("GPU1").set_color(GREEN).scale(10).rotate(radians(90)).next_to(gpu1, LEFT, buff=2)
 
         with self.voiceover(text="""But let's say we get another GPU and want to use this fact to speed up our inference""") as trk:
             self.play(ShowCreation(gpu1))
@@ -1235,13 +1235,13 @@ class Parallelism(VoiceoverScene):
         cpu3_t = cpu0_t.copy()
         cpu3_i = cpu0_i.copy()
         gpu6 = gpu0.copy()
-        gpu6_t = gpu0_t.copy()
         gpu7 = gpu1.copy()
-        gpu7_t = gpu1_t.copy()
         transformer8 = Transformer(4, 12, high_level=False, moe=True).move_to(gpu6)
         transformer9 = Transformer(4, 12, high_level=False, moe=True).move_to(gpu7)
         gpu6.rescale_to_fit(transformer8.get_width()+2, dim=0)
         gpu7.rescale_to_fit(transformer8.get_width()+2, dim=0)
+        gpu6_t = gpu0_t.copy().next_to(gpu6, LEFT, buff=2)
+        gpu7_t = gpu1_t.copy().next_to(gpu7, LEFT, buff=2)
         cp3 = Group(cpu3, cpu3_t, cpu3_i, transformer8, transformer9, gpu6, gpu6_t, gpu7, gpu7_t).next_to(
                 Group(cpu2_t, gpu5), RIGHT, buff = 20)
 
@@ -1277,7 +1277,7 @@ class Parallelism(VoiceoverScene):
         self.play(FadeIn(cp3))
         ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(GOLD)
         with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
-            self.play(self.frame.animate.shift(gpu6.get_center() - gpu4.get_center()).rescale_to_fit(gpu6.get_width() + 10, dim=0) , 
+            self.play(self.frame.animate.shift(gpu6.get_center() - gpu4.get_center()).rescale_to_fit(Group(gpu6, gpu6_t).get_width() + 10, dim=0) , 
                       run_time=trk.get_remaining_duration())
             self.play(Write(ep_t))
 
