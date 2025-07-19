@@ -1517,3 +1517,60 @@ class Parallelism(VoiceoverScene):
         with self.voiceover(text="""Expert parallelism solves this problem and lets us scale without any limits, we can always keep adding redundant experts""") as trk:
             self.play(Write(ep_c5))
 
+        code = """import torch
+import torch.distributed as dist
+dist.init_process_group(backend="nccl",
+                        world_size=getenv("WORLD_SIZE"),
+                        rank=getenv("RANK"),
+                        )
+local_rank = dist.get_rank() % torch.cuda.device_count()
+torch.cuda.set_device(local_rank)
+data = torch.FloatTensor([1,] * 128).to("cuda")
+dist.all_reduce(data, op=dist.ReduceOp.SUM)
+torch.cuda.synchronize()
+value = data.mean().item()
+world_size = dist.get_world_size()
+assert value == world_size, f"Expected {world_size}, got {value}"
+"""
+        # Switch to code scene
+        code_obj = Code(code, alignment="LEFT")
+        self.play(*[FadeOut(x) for x in self.mobjects])
+        self.frame.rescale_to_fit(code_obj.get_width() + 10, dim=0).move_to(code_obj)
+
+
+        with self.voiceover(text="""In terms of programming the communication, this is how the basic script
+                            would look like in a high level framework like torch""") as trk:
+            self.play(ShowCreation(code_obj))
+
+
+        
+        # create highlights
+        import re
+        code_s = code.replace("\n", "").replace(" ", "")
+        s, e = re.search("backend=\"nccl\"", code_s).span()
+        hl = SurroundingRectangle(Group(*code_obj.submobjects[s:e]), buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        with self.voiceover(text="""We have a few important components here, first would be the backend to use. This would be 
+                            the library used for communication, in our case it's Nvidia's Collective Communications Library
+                            so a library that works for GPU communication""") as trk:
+            self.play(ShowCreation(hl))
+
+        s, e = re.search(r'world_size=getenv\("WORLD_SIZE"\)', code_s).span()
+        hl_t = SurroundingRectangle(Group(*code_obj.submobjects[s:e]), buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        with self.voiceover(text="""World size is how many processes, so in our case GPU's work together""") as trk:
+            self.play(Transform(hl, hl_t))
+
+        s, e = re.search(r'rank=getenv\("RANK"\)', code_s).span()
+        hl_t = SurroundingRectangle(Group(*code_obj.submobjects[s:e]), buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        with self.voiceover(text="""Rank is the index of the GPU used by this process""") as trk:
+            self.play(Transform(hl, hl_t))
+
+        s, e = re.search(r'local_rank', code_s).span()
+        hl_t = SurroundingRectangle(Group(*code_obj.submobjects[s:e]), buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        with self.voiceover(text="""and local rank would be localized to the current system, as there might be multiple 
+                            nodes participating in our forward pass""") as trk:
+            self.play(Transform(hl, hl_t))
+
+        s, e = re.search(r'dist.all_reduce\(data,op=dist.ReduceOp.SUM\)', code_s).span()
+        hl_t = SurroundingRectangle(Group(*code_obj.submobjects[s:e]), buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
+        with self.voiceover(text="""After initialization, we can now perform operations across GPU's like the forementioned allreduce""") as trk:
+            self.play(Transform(hl, hl_t))
