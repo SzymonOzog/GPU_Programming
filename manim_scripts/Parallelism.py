@@ -1281,6 +1281,40 @@ class Parallelism(VoiceoverScene):
                       run_time=trk.get_remaining_duration())
             self.play(Write(ep_t))
 
+        # create allreduce 2
+        def create_allreduce(t, t2, obj, obj2, run_time=1):
+            l1 = t.submobjects[t.submobjects.index(obj) + 1]
+            l2 = t2.submobjects[t2.submobjects.index(obj2) + 1]
+            all_reduce2 = FBlock("All Reduce\nSum", width=2.8, height=1.4, text_rotation_deg=0).move_to(Group(l1, l2))
+            line_kwargs = dict(color=RED, width=CONNECTOR_WIDTH)
+            start = l1.get_center().copy()
+            start[1] = gpu6.get_bottom()[1]
+            c3 = Line3D(start, all_reduce2.get_top(), **line_kwargs)
+            end = l2.get_center().copy()
+            end[1] = gpu7.get_top()[1]
+            c4 = Line3D(all_reduce2.get_bottom(), end, **line_kwargs)
+            return AnimationGroup(ShowCreation(c3), ShowCreation(c4), all_reduce2.create(), run_time=run_time)
+
+        anims = []
+        for i in range(0, len(transformer6.transformer_layers)):
+            t = transformer8.transformer_layers[i]
+            t2 = transformer9.transformer_layers[i]
+
+            anims.append(create_allreduce(t, t2, t.out_proj, t2.out_proj, run_time=0.3))
+            anims.append(create_allreduce(t, t2, t.ffn_down, t2.ffn_down, run_time=0.3))
+
+        with self.voiceover(text="""All of the communications required for tensor parallel are present""") as trk:
+            self.play(LaggedStart(*anims))
+
+        #create allreduce for routers
+        anims = []
+        for i in range(0, len(transformer6.transformer_layers)):
+            t = transformer8.transformer_layers[i]
+            t2 = transformer9.transformer_layers[i]
+            anims.append(create_allreduce(t, t2, t.moe_router, t2.moe_router, run_time=0.3))
+        with self.voiceover(text="""but we need to add another communication point after routing each experts""") as trk:
+            self.play(LaggedStart(*anims))
+
         # Create bullet list
         line_start = (dp_t.get_center() + pp_t.get_center())/2 + 10*UP
         line_end = line_start + 800*DOWN
