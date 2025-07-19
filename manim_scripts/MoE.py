@@ -79,6 +79,8 @@ class MoE(VoiceoverScene):
             self.play(*[ShowCreation(x) for x in lines3])
             self.play(ShowCreation(final))
 
+        self.play(*[FadeOut(x) for x in self.mobjects])
+
         return
         # more tokens
         toks = [vector2.copy().shift(2*x*IN + 16*OUT) for x in range(16)]
