@@ -662,9 +662,9 @@ class Parallelism(VoiceoverScene):
                                 m_x_min = np.min(points[:, 0])
                                 m_x_max = np.max(points[:, 0])
                                 m_x_total = m_x_max - m_x_min
-                                start = np.stack((color_to_rgb(YELLOW),)*len(points))
+                                start = np.stack((color_to_rgb(RED),)*len(points))
                                 end = saved_colors[mob]
-                                alpha = np.clip(np.abs(flash_x - points[:, 0]), 0, 1)
+                                alpha = np.clip(np.abs(flash_x - points[:, 0])*0.2, 0.2, 1)
                                 new_color = start*(1 - alpha)[..., np.newaxis] + end*alpha[..., np.newaxis]
                                 rgba[:, :3] = new_color
                                 mob.set_rgba_array(rgba)
