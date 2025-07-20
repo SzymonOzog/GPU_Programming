@@ -179,7 +179,7 @@ class Parallelism(VoiceoverScene):
                 elif is_grp(end):
                     self.is_grp = True
                     l, r = get_vline_start_end(start, end)
-                    resolution = (600,600) if hd_render else (21, 25)
+                    resolution = (50,600) if hd_render else (21, 25)
                     self.v_line = Line3D(l, r, *args, resolution=resolution, **kwargs)
                     self.add(self.v_line)
                     self.bot = connect(self.v_line, start, False, *args, resolution=resolution, **kwargs)
@@ -239,7 +239,7 @@ class Parallelism(VoiceoverScene):
                 self.e_point[1] = y
                 self.s_point[1] = y
 
-                resolution = (600,600) if hd_render else (21, 25)
+                resolution = (50,600) if hd_render else (21, 25)
                 self.s_line = Line3D(start.get_top(), self.s_point+(CONNECTOR_WIDTH/2)*UP, resolution=resolution, *args, **kwargs)
                 self.h_line = Line3D(self.s_point+(CONNECTOR_WIDTH/2)*LEFT, self.e_point+(CONNECTOR_WIDTH/2)*RIGHT, resolution=resolution, *args, **kwargs)
                 self.e_line = Line3D(self.e_point+(CONNECTOR_WIDTH/2)*UP, end.get_top(), resolution=resolution, *args, **kwargs)
