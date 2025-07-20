@@ -819,25 +819,12 @@ class Parallelism(VoiceoverScene):
                 Group(cpu0_t, gpu1), RIGHT, buff = 20)
         self.play(FadeIn(cp))
 
-        # Make tp scene part
-        cpu2 = cpu0.copy()
-        cpu2_t = cpu0_t.copy()
-        cpu2_i = cpu0_i.copy()
-        transformer4 = Transformer(4, 12).move_to(transformer)
-        gpu4 = gpu0.copy()
-        gpu4_t = gpu0_t.copy()
-        gpu5 = gpu1.copy()
-        gpu5_t = gpu1_t.copy()
-        cp2 = Group(cpu2, cpu2_t, cpu2_i, transformer4, gpu4, gpu4_t, gpu5, gpu5_t).next_to(
-                Group(cpu1_t, gpu3), RIGHT, buff = 20)
-        self.play(FadeIn(cp2))
-
 
         with self.voiceover(text="""This has created a needs for methods that split our model parameters across multiple GPUs""") as trk:
             self.play(self.frame.animate.shift(gpu2.get_center() - gpu0.get_center()), run_time=trk.get_remaining_duration())
 
         # Pipeline parallel
-        pp_t = Text("Pipeline Parallel").scale(50).next_to(cpu1, UP, buff=5).set_color(YELLOW)
+        pp_t = Text("Pipeline Parallel").scale(50).next_to(cpu1, UP, buff=5).set_color(YELLOW).align_to(dp_t, UP)
         dist = gpu2.get_center()[1] - gpu3.get_center() [1]
         with self.voiceover(text="""One such method would be Pipeline Parallelizm. In this setting, in this setting, a subset of 
                             our model layers is placed on one GPU  while the rest is placed on a different one""") as trk:
@@ -870,8 +857,21 @@ class Parallelism(VoiceoverScene):
 
         self.play(*[trigger_gpu(g, True) for g in [gpu2, gpu3]])
 
+        # Make tp scene part
+        cpu2 = cpu0.copy()
+        cpu2_t = cpu0_t.copy()
+        cpu2_i = cpu0_i.copy()
+        transformer4 = Transformer(4, 12).move_to(transformer)
+        gpu4 = gpu0.copy()
+        gpu4_t = gpu0_t.copy()
+        gpu5 = gpu1.copy()
+        gpu5_t = gpu1_t.copy()
+        cp2 = Group(cpu2, cpu2_t, cpu2_i, transformer4, gpu4, gpu4_t, gpu5, gpu5_t).next_to(
+                Group(cpu1_t, gpu3), RIGHT, buff = 20)
+        self.play(FadeIn(cp2))
+
         # start TP
-        tp_t = Text("Tensor Parallel").scale(50).next_to(cpu2, UP, buff=5).set_color(GREEN)
+        tp_t = Text("Tensor Parallel").scale(50).next_to(cpu2, UP, buff=5).set_color(GREEN).align_to(dp_t, UP)
         with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
             self.play(self.frame.animate.shift(gpu4.get_center() - gpu2.get_center()), run_time=trk.get_remaining_duration())
             self.play(Write(tp_t))
@@ -1274,8 +1274,12 @@ class Parallelism(VoiceoverScene):
                         if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
                             mob2.set_rgba_array(mob1.data["rgba"].copy())
 
+        with self.voiceover(text="""My wonderful reviewers, the scene will now switch to the one in the second video included, if you want
+                            to watch in order please switch to it and resume this one when you finish""") as trk:
+            pass
+
         self.play(FadeIn(cp3))
-        ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(GOLD)
+        ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(GOLD).align_to(dp_t, UP)
         with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
             self.play(self.frame.animate.shift(gpu6.get_center() - gpu4.get_center()).rescale_to_fit(Group(gpu6, gpu6_t).get_width() + 10, dim=0) , 
                       run_time=trk.get_remaining_duration())
