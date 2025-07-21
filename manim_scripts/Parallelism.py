@@ -1467,7 +1467,7 @@ class Parallelism(VoiceoverScene):
         pp_c4 = Text("Very little").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
 
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
-        tp_c4 = Text("Very high").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
+        tp_c4 = Text("High").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
 
         loc = Group(table_line_v3, table_line_v2).get_center() + (table_line_v3.get_center() - table_line_v2.get_center())
         ep_c4 = Text("Very high").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h4, UP).shift(text_buff*DOWN)
@@ -1483,7 +1483,7 @@ class Parallelism(VoiceoverScene):
             self.play(Write(pp_c4))
 
         with self.voiceover(text="""Tensor and expoert parallel requires the most communication, as we have to synchronize our activations every second forward
-                            layer""") as trk:
+                            layer and for routing in expert parallel""") as trk:
             self.play(Write(tp_c4))
             self.play(Write(ep_c4))
 
@@ -1499,7 +1499,7 @@ class Parallelism(VoiceoverScene):
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
         tp_c5 = Text("Matrix shape").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
         loc = Group(table_line_v3, table_line_v2).get_center() + (table_line_v3.get_center() - table_line_v2.get_center())
-        ep_c5 = Text("No limit").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
+        ep_c5 = Text("No limit").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h5, UP).shift(text_buff*DOWN)
 
         with self.voiceover(text="""As for the limitations on how much we can parallelize""") as trk:
             self.play(ShowCreation(table_line_h5))
