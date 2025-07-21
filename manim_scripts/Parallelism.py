@@ -633,6 +633,26 @@ class Parallelism(VoiceoverScene):
                             rgba_f[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             rgba_s[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
+        # t.set_opacity(0)
+        # for s,c,e,b in mats:
+        #     self.add(c)
+        # # self.add(t.mat)
+        # self.frame.save_state()
+        # # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
+        # self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
+        # #animate creation
+        # t.set_opacity(0)
+        # self.wait(1)
+        # self.frame.add_updater(updater)
+        # self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
+        # self.frame.remove_updater(updater)
+        # self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
+        # self.wait(1)
+        # self.play(t.duplicate_to(t2))
+
+        #Create the transformer
+        transformer = Transformer(4, 12).shift(5*DOWN)
+        self.play(transformer.create(), self.frame.animate.match_width(transformer))
 
         # This is so hacky I feel stupid
         def run_transformers(transformers, run_time=1, anim=None):
@@ -675,30 +695,17 @@ class Parallelism(VoiceoverScene):
                 for a in anim:
                     self.play(a)
             self.wait(0.1)
+            for t in transformers:
+                for mob in t.get_family(True):
+                    points = mob.get_points()
+                    if len(points):
+                        if "rgba" in mob.data_dtype.names:
+                            if mob not in saved_colors:
+                                print("no color for", mob)
+                            rgba = mob.data["rgba"].copy()
+                            rgba[:, :3] = saved_colors[mob]
+                            mob.set_rgba_array(rgba)
             self.frame.remove_updater(flash_updater)
-                
-        # t.set_opacity(0)
-        # for s,c,e,b in mats:
-        #     self.add(c)
-        # # self.add(t.mat)
-        # self.frame.save_state()
-        # # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
-        # self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(28.885307, 16.235258).move_to([-92.19126   ,   0.4578367 ,   0.18124883])        
-        # #animate creation
-        # t.set_opacity(0)
-        # self.wait(1)
-        # self.frame.add_updater(updater)
-        # self.play(self.frame.animate.shift(RIGHT * t.get_width() * 1.05), run_time=20, rate_func=linear)
-        # self.frame.remove_updater(updater)
-        # self.play(Restore(self.frame), AnimationGroup(*[x.transform() for x in t.transformer_layers]), run_time=2)
-        # self.wait(1)
-        # self.play(t.duplicate_to(t2))
-
-        #Create the transformer
-        transformer = Transformer(4, 12).shift(5*DOWN)
-        self.play(transformer.create(), self.frame.animate.match_width(transformer))
-
-
 
         # Create GPU
         gpu0_f = SurroundingRectangle(transformer, buff=2, color=GREY)
