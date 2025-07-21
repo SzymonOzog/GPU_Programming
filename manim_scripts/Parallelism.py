@@ -1280,7 +1280,7 @@ class Parallelism(VoiceoverScene):
 
         self.play(FadeIn(cp3))
         ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(GOLD).align_to(dp_t, UP)
-        with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
+        with self.voiceover(text="""This type of model allowed us to parallelize by the expert dimension""") as trk:
             self.play(self.frame.animate.shift(gpu6.get_center() - gpu4.get_center()).rescale_to_fit(Group(gpu6, gpu6_t).get_width() + 10, dim=0) , 
                       run_time=trk.get_remaining_duration())
             self.play(Write(ep_t))
