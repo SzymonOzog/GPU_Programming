@@ -553,7 +553,9 @@ class Parallelism(VoiceoverScene):
                         cum_dist += dist
                         tmp2 = Dot().move_to(b.get_right() + cum_dist*DOWN)
                         #TODO this is too much hacks
-                        anims.append(Transform(b, Connector(tmp, Group(tmp2), width=CONNECTOR_WIDTH, color=WHITE)))
+                        transformed = Connector(tmp, Group(tmp2), width=CONNECTOR_WIDTH, color=WHITE)
+                        anims.append(Uncreate(b))
+                        anims.append(ShowCreation(transformed))
                     else:
                         anims.append(b.animate.shift(cum_dist*DOWN))
                 anims.append(self.rms_norm.animate.shift(cum_dist*DOWN))
