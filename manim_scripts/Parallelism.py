@@ -902,7 +902,7 @@ class Parallelism(VoiceoverScene):
 
         
         with self.voiceover(text="""And we split all model weights and calculations across all stages of the model""") as trk:
-            self.play(transformer4.duplicate_to(transformer6, copy=False), transformer5.duplicate_to(transformer7, copy=False))
+            pass
 
         def my_path_fn(
             start_points: np.ndarray,
@@ -992,7 +992,8 @@ class Parallelism(VoiceoverScene):
         # split embeddings
         with self.voiceover(text="""Going layer by layer, we first encounter our embeddings. The way we split them is that we just
                             divide them equally across all GPUs, each embedding only the tokens it has in it's range""") as trk:
-            self.play(self.frame.animate.rescale_to_fit(focus_obj.get_height() + 3, 1).move_to(focus_obj))
+            self.play(self.frame.animate.rescale_to_fit(focus_obj.get_height() + 3, 1).move_to(focus_obj),
+                      transformer4.duplicate_to(transformer6, copy=False), transformer5.duplicate_to(transformer7, copy=False))
             split_weights([transformer6.embeddings], [transformer7.embeddings], RED, 1)
 
     
