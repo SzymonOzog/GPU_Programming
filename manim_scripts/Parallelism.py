@@ -925,6 +925,7 @@ class Parallelism(VoiceoverScene):
                 dist = np.abs(interm[:, 1] - center)
                 dist_alpha = np.clip(dist/total_dist, a_min=0.1, a_max=1)
                 final_alpha = rush_from(dist_alpha*w_alpha) 
+                final_alpha=np.clip(final_alpha, a_min=0.2, a_max=1)
 
                 min = np.min(start_points[:, 0])
                 max = np.max(start_points[:, 0])
