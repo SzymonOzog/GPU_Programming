@@ -1024,10 +1024,10 @@ class Parallelism(VoiceoverScene):
 
         # do mats
         t.set_mats()
-        w = t.q_proj.w.scale(1.4)
+        w = t.q_proj.w.shift(LEFT)
         with self.voiceover(text="""Next we have our Q, K and V matrices, they are structured in a simillar way so let's just take Q as an example""") as trk:
             self.play(self.frame.animate.shift((t2.qkv_group.get_center()[0] - self.frame.get_center()[0]) * RIGHT))
-            self.play(w.animate.rotate(radians(-25), DOWN).arrange(DOWN).move_to(Group(t.qkv_group, t2.qkv_group)))
+            self.play(w.animate.scale(1.4).rotate(radians(-25), DOWN).arrange(DOWN).move_to(Group(t.qkv_group, t2.qkv_group)))
 
 
         # Transform to second matrix
