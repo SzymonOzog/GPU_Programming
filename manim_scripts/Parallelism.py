@@ -109,7 +109,9 @@ class Parallelism(VoiceoverScene):
             )
         shader_dir = os.path.dirname(os.path.abspath(__file__)) + "/shaders/one_sided"
         Square3D.shader_folder = shader_dir
+        Line3D.shader_folder = shader_dir
         hd_render = self.camera_config["resolution"][0] >= 1280
+        hd_render = False
 
         class FBlock(Group):
             def __init__(self, text=None, formula=None, text_scale=1, text_rotation_deg=-90, weights=None, *args, **kwargs):
@@ -339,7 +341,7 @@ class Parallelism(VoiceoverScene):
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]]) 
                                 for _ in range(4)]).arrange(OUT, buff=0.5).rotate(radians(25), DOWN).scale(0.5) for _ in range(3)]
-                Group(*mats).arrange(DOWN).move_to(self.k_proj).shift(2*RIGHT)
+                Group(*mats).arrange(DOWN).move_to(self.k_proj).shift(8*RIGHT)
                 self.q_proj.set_weights(mats[0])
                 self.k_proj.set_weights(mats[1])
                 self.v_proj.set_weights(mats[2])
@@ -348,14 +350,14 @@ class Parallelism(VoiceoverScene):
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,m}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]]).rotate(radians(25), DOWN).scale(0.9)
-                mat.move_to(self.out_proj).shift(2*RIGHT)
+                mat.move_to(self.out_proj).shift(8*RIGHT)
                 self.out_proj.set_weights(mat)
 
                 mats = [TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{i,0}", "w_{i,1}", "\\cdots", "w_{i,h}"]]).rotate(radians(25), DOWN).scale(0.7) for _ in range(2)]
-                Group(*mats).arrange(DOWN).move_to(self.ffn_group).shift(2*RIGHT)
+                Group(*mats).arrange(DOWN).move_to(self.ffn_group).shift(8*RIGHT)
                 self.ffn_gate.set_weights(mats[0])
                 self.ffn_up.set_weights(mats[1])
 
@@ -363,7 +365,7 @@ class Parallelism(VoiceoverScene):
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,i}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,i}"]]).rotate(radians(25), DOWN).scale(0.9)
-                mat.move_to(self.ffn_down).shift(2*RIGHT)
+                mat.move_to(self.ffn_down).shift(8*RIGHT)
                 self.ffn_down.set_weights(mat)
 
 
@@ -607,6 +609,8 @@ class Parallelism(VoiceoverScene):
                         m_x_total = m_x_max - m_x_min
                         rgba[:, 3] = -np.clip(((camera_x-points[:, 0])*speed), 0, 1)
                         mob.set_rgba_array(rgba)
+                        # if isinstance(mob, Line3D):
+                        #     print(rgba, mob)
                     else:
                         rgba_s = mob.data["stroke_rgba"].copy()
                         rgba_f = mob.data["fill_rgba"].copy()
@@ -689,21 +693,10 @@ class Parallelism(VoiceoverScene):
                             mob.set_rgba_array(rgba)
             self.frame.remove_updater(flash_updater)
                 
-        transformer = Transformer(4, 12).shift(5*DOWN)
-        for s,c,e,b in mats:
-            self.add(c)
-        self.add(transformer)
-        # self.frame.set_euler_angles(-1.55674497,  0.5891779 ,  1.55853628).set_shape(30.301018, 17.031006).move_to([-85.44072  ,   1.0943325,  -0.4649295])
-        self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(1.4*28.885307, 1.4*16.235258).move_to([-102.19126   ,   -4.4578367 ,   0.18124883])        
-        #animate creation
-        transformer.set_opacity(0)
-        self.wait(1)
-        self.frame.add_updater(updater)
-        self.play(self.frame.animate.shift(RIGHT * transformer.get_width() * 1.05), run_time=20, rate_func=linear)
-        self.frame.remove_updater(updater)
-        return
+        transformer = Transformer(4, 12, high_level=False).shift(5*DOWN)
+        for t in transformer.transformer_layers:
+            t.create_residuals()
 
-        # Create GPU
         gpu0_f = SurroundingRectangle(transformer, buff=2, color=GREY)
         w = gpu0_f.get_width()
         h = gpu0_f.get_height()
@@ -720,9 +713,24 @@ class Parallelism(VoiceoverScene):
 
         gpu0 = Group(gpu0_f, gpu0_bg)
         gpu0_t = Text("GPU0").set_color(GREEN).scale(10).rotate(radians(90)).next_to(gpu0, LEFT, buff=2)
+        self.frame.rescale_to_fit(Group(gpu0, gpu0_t).get_width() + 10, dim=0)
+        self.frame.save_state()
+
+        for s,c,e,b in mats:
+            Group(s,c,e).shift(5*DOWN)
+            self.add(c.scale(3))
+        self.add(transformer)
+        self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(1.8*28.885307, 1.8*16.235258).move_to([-102.19126   ,   -4.4578367 ,   0.18124883])        
+        #animate creation
+        transformer.set_opacity(0)
+        self.frame.add_updater(updater)
+        self.play(self.frame.animate.shift(RIGHT * transformer.get_width() * 1.05), run_time=20, rate_func=linear)
+        self.frame.remove_updater(updater)
+
+        # Create GPU
         with self.voiceover(text="""In the simple case we have our model that is living on the GPU""") as trk:
-            self.play(self.frame.animate.rescale_to_fit(Group(gpu0, gpu0_t).get_width() + 10, dim=0), Write(gpu0_t))
-            self.play(ShowCreation(gpu0.submobjects[0]), ShowCreation(gpu0.submobjects[1]))
+            self.play(Restore(self.frame), transformer.transform([0,1,2,3]))
+            self.play(ShowCreation(gpu0.submobjects[0]), ShowCreation(gpu0.submobjects[1]), Write(gpu0_t))
 
         cpu0_i = SVGMobject("./icons/cpu.svg").scale(8).set_color(WHITE).next_to(transformer, UP).shift(10*UP).set_color(BLUE)
         cpu0 = SurroundingRectangle(cpu0_i, buff=2, color=BLUE)
