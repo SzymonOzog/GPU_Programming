@@ -595,22 +595,32 @@ class Parallelism(VoiceoverScene):
 
 
         # t2 = Transformer(4, 4).next_to(t, DOWN)
+        global saved_colors
+        saved_colors = {}
         
         def updater(m, dt):
+            global saved_colors
             camera_x = self.frame.get_center()[0]
             speed = 0.2
             for mob in transformer.get_family(True):
                 points = mob.get_points()
                 if len(points):
                     if "rgba" in mob.data_dtype.names:
+                        if mob not in saved_colors:
+                            saved_colors[mob] = mob.data["rgba"][..., :3].copy()
                         rgba = mob.data["rgba"].copy()
                         m_x_min = np.min(points[:, 0])
                         m_x_max = np.max(points[:, 0])
                         m_x_total = m_x_max - m_x_min
-                        rgba[:, 3] = -np.clip(((camera_x-points[:, 0])*speed), 0, 1)
+                        alpha = np.clip(((camera_x-points[:, 0])*speed), 0, 1)
+                        rgba[:, 3] = -alpha
+
+                        end = saved_colors[mob]
+                        start = np.stack((color_to_rgb(WHITE),)*len(points))
+                        new_color = start*(1 - alpha)[..., np.newaxis] + end*alpha[..., np.newaxis]
+
+                        rgba[:, :3] = new_color
                         mob.set_rgba_array(rgba)
-                        # if isinstance(mob, Line3D):
-                        #     print(rgba, mob)
                     else:
                         rgba_s = mob.data["stroke_rgba"].copy()
                         rgba_f = mob.data["fill_rgba"].copy()
