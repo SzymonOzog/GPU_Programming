@@ -602,7 +602,9 @@ class Parallelism(VoiceoverScene):
             global saved_colors
             camera_x = self.frame.get_center()[0]
             speed = 0.2
-            for mob in transformer.get_family(True):
+            residuals = [(t.res.get_family(True) + t.res2.get_family(True)) for t in transformer.transformer_layers]
+            mobjects = (*transformer.get_family(True), *it.chain(*residuals))
+            for mob in mobjects:
                 points = mob.get_points()
                 if len(points):
                     if "rgba" in mob.data_dtype.names:
@@ -729,7 +731,7 @@ class Parallelism(VoiceoverScene):
         for s,c,e,b in mats:
             Group(s,c,e).shift(5*DOWN)
             self.add(c.scale(3))
-        self.add(transformer)
+        self.add(transformer, *[t.res for t in transformer.transformer_layers], *[t.res2 for t in transformer.transformer_layers])
         self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(1.8*28.885307, 1.8*16.235258).move_to([-102.19126   ,   -4.4578367 ,   0.18124883])        
         #animate creation
         transformer.set_opacity(0)
