@@ -140,7 +140,7 @@ class Parallelism(VoiceoverScene):
                 self.add(self.block)
                 self.showing_text = True
                 if text is not None:
-                    self.t = Text(text).move_to(self.block.get_corner(OUT)).rotate(radians(text_rotation_deg)).scale(text_scale)
+                    self.t = Text(text, font="Inter Light").move_to(self.block.get_corner(OUT)).rotate(radians(text_rotation_deg)).scale(text_scale)
                     t_h = self.t.get_height()
                     t_w = self.t.get_width()
                     b_h = self.block.get_height()
