@@ -641,8 +641,8 @@ class Parallelism(VoiceoverScene):
                         rgba[:, :3] = new_color
                         mob.set_rgba_array(rgba)
                     else:
-                        rgba_s = mob.data["stroke_rgba"].copy()
-                        rgba_f = mob.data["fill_rgba"].copy()
+                        rgba_s = mob.data["stroke_rgba"]#.copy()
+                        rgba_f = mob.data["fill_rgba"]#.copy()
                         m_x_min = np.min(points[:, 0])
                         m_x_max = np.max(points[:, 0])
                         m_x_total = m_x_max - m_x_min
@@ -663,8 +663,8 @@ class Parallelism(VoiceoverScene):
                     if alpha <= 1:
                         points = m_c.get_points()
                         if len(points):
-                            rgba_s = m_c.data["stroke_rgba"].copy()
-                            rgba_f = m_c.data["fill_rgba"].copy()
+                            rgba_s = m_c.data["stroke_rgba"]#.copy()
+                            rgba_f = m_c.data["fill_rgba"]#.copy()
                             rgba_f[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             rgba_s[:, 3] = np.clip(((camera_x-points[:, 0]+MAT_START_OFFSET)*speed), 0, 1)
                             m_c.set_rgba_array(rgba_f, name="fill_rgba")
@@ -693,7 +693,7 @@ class Parallelism(VoiceoverScene):
                                 if mob not in saved_colors:
                                     # saved_colors[mob] = color_to_rgb(mob.get_color())
                                     saved_colors[mob] = mob.data["rgba"][..., :3].copy()
-                                rgba = mob.data["rgba"].copy()
+                                rgba = mob.data["rgba"]#.copy()
                                 m_x_min = np.min(points[:, 0])
                                 m_x_max = np.max(points[:, 0])
                                 m_x_total = m_x_max - m_x_min
@@ -717,7 +717,7 @@ class Parallelism(VoiceoverScene):
                         if "rgba" in mob.data_dtype.names:
                             if mob not in saved_colors:
                                 print("no color for", mob)
-                            rgba = mob.data["rgba"].copy()
+                            rgba = mob.data["rgba"]#.copy()
                             rgba[:, :3] = saved_colors[mob]
                             mob.set_rgba_array(rgba)
             self.frame.remove_updater(flash_updater)
