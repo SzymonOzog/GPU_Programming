@@ -1,6 +1,8 @@
 #version 330
 
 // uniform vec3 camera_position;
+uniform vec3 center;
+uniform vec3 shape;
 
 in vec3 point;
 in vec3 d_normal_point;
@@ -25,6 +27,17 @@ void main(){
         out_rgba.w = -1*rgba.w;
         new_point += (1 - out_rgba.w) * unit_normal;
     }
+    float s = 0.f;
+    float x = (point.x - center.x)/(shape.x + EPSILON);
+    s += (x*x);
+    float y = (point.y - center.y)/(shape.y + EPSILON);
+    s += (y*y);
+    float z = (point.z - center.z)/(shape.z + EPSILON);
+    s += (z*z);
+    s+=0.5f;
+    out_rgba.x *= s;
+    out_rgba.y *= s;
+    out_rgba.z *= s;
 
     emit_gl_Position(new_point);
     vec3 camera_normal = normalize(camera_position - point);

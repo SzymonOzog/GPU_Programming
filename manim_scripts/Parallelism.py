@@ -116,24 +116,24 @@ class Parallelism(VoiceoverScene):
             def __init__(self, text=None, formula=None, text_scale=1, text_rotation_deg=-90, weights=None, *args, **kwargs):
                 super().__init__()
                 self.block = Prism(square_resolution=(100, 100) if hd_render else (10,10),*args, **kwargs)
-                for mob in self.block.get_family():
-                    points = mob.get_points()
-                    center_x = mob.get_center()[0]
-                    center_y = mob.get_center()[1]
-                    center_z = mob.get_center()[2]
-                    w, h, d = mob.get_width(), mob.get_height(), mob.get_depth()
-                    alphas = []
-                    if len(points):
-                        if w > 0:
-                            alphas.append(((points[:, 0] - center_x)/w)**2)
-                        if h > 0:
-                            alphas.append(((points[:, 1] - center_y)/h)**2)
-                        if d > 0:
-                            alphas.append(((points[:, 2] - center_z)/d)**2)
-                        alpha = np.sum(alphas, axis=0) + 0.5  
-                        rgba = mob.data["rgba"]
-                        rgba[:, :3] *= np.stack((alpha,)*3, axis=1)
-                        mob.set_rgba_array(rgba)
+                # for mob in self.block.get_family():
+                #     points = mob.get_points()
+                #     center_x = mob.get_center()[0]
+                #     center_y = mob.get_center()[1]
+                #     center_z = mob.get_center()[2]
+                #     w, h, d = mob.get_width(), mob.get_height(), mob.get_depth()
+                #     alphas = []
+                #     if len(points):
+                #         if w > 0:
+                #             alphas.append(((points[:, 0] - center_x)/w)**2)
+                #         if h > 0:
+                #             alphas.append(((points[:, 1] - center_y)/h)**2)
+                #         if d > 0:
+                #             alphas.append(((points[:, 2] - center_z)/d)**2)
+                #         alpha = np.sum(alphas, axis=0) + 0.5  
+                #         rgba = mob.data["rgba"].copy()
+                #         rgba[:, :3] *= np.stack((alpha,)*3, axis=1)
+                #         mob.set_rgba_array(rgba)
                 
                 self.t = None
                 self.f = None
@@ -153,6 +153,7 @@ class Parallelism(VoiceoverScene):
                     self.add(self.t)
                 if formula is not None:
                     self.f = Tex(formula).move_to(self.block.get_corner(OUT)).scale(text_scale)
+                self.set_new_uniforms()
 
             def set_weights(self, weights):
                 self.w = weights
@@ -175,6 +176,19 @@ class Parallelism(VoiceoverScene):
                 self.add(self.f)
                 self.remove(self.t)
                 return ReplacementTransform(self.t, self.f)
+            
+            def set_new_uniforms(self):
+                for mob in self.get_family():
+                    if len(mob.get_points()):
+                        uniforms = {
+                            "center": mob.get_center().astype(np.float32),
+                            "shape": np.array(mob.get_shape()).astype(np.float32)
+                            }
+                        mob.set_uniforms(uniforms)
+
+            def note_changed_data(self):
+                self.set_new_uniforms()
+                super().note_changed_data()
 
         class Connector(Group):
             def __init__(self, start, end, *args, **kwargs):
