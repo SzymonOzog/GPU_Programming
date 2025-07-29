@@ -25,7 +25,7 @@ void main(){
     if (rgba.w < 0)
     {
         out_rgba.w = -1*rgba.w;
-        new_point += (1 - out_rgba.w) * unit_normal;
+        new_point += -1*(1 - out_rgba.w)*0.25 * unit_normal;
     }
     float s = 0.f;
     float x = (point.x - center.x)/(shape.x + EPSILON);
