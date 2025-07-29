@@ -372,7 +372,7 @@ class Parallelism(VoiceoverScene):
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
                                       ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,h}"]]) 
-                                for _ in range(4)]).arrange(OUT, buff=0.5).rotate(radians(25), DOWN).scale(0.5) for _ in range(3)]
+                                for _ in range(4)]).arrange(OUT, buff=0.5).rotate(radians(25), DOWN).scale(0.8) for _ in range(3)]
                 Group(*mats).arrange(DOWN).move_to(self.k_proj).shift(8*RIGHT)
                 self.q_proj.set_weights(mats[0])
                 self.k_proj.set_weights(mats[1])
@@ -381,14 +381,14 @@ class Parallelism(VoiceoverScene):
                 mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,m}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,m}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]]).rotate(radians(25), DOWN).scale(0.9)
+                                      ["w_{h,0}", "w_{h,1}", "\\cdots", "w_{h,m}"]]).rotate(radians(25), DOWN).scale(1.5)
                 mat.move_to(self.out_proj).shift(8*RIGHT)
                 self.out_proj.set_weights(mat)
 
                 mats = [TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,h}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,h}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{i,0}", "w_{i,1}", "\\cdots", "w_{i,h}"]]).rotate(radians(25), DOWN).scale(0.7) for _ in range(2)]
+                                      ["w_{i,0}", "w_{i,1}", "\\cdots", "w_{i,h}"]]).rotate(radians(25), DOWN).scale(1.4) for _ in range(2)]
                 Group(*mats).arrange(DOWN).move_to(self.ffn_group).shift(8*RIGHT)
                 self.ffn_gate.set_weights(mats[0])
                 self.ffn_up.set_weights(mats[1])
@@ -396,7 +396,7 @@ class Parallelism(VoiceoverScene):
                 mat = TexMatrix([["w_{0,0}", "w_{0,1}", "\\cdots", "w_{0,i}"],
                                       ["w_{1,0}", "w_{1,1}", "\\cdots", "w_{1,i}"],
                                       ["\\vdots", "\\vdots", "\\ddots", "\\vdots"],
-                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,i}"]]).rotate(radians(25), DOWN).scale(0.9)
+                                      ["w_{m,0}", "w_{m,1}", "\\cdots", "w_{m,i}"]]).rotate(radians(25), DOWN).scale(1.5)
                 mat.move_to(self.ffn_down).shift(8*RIGHT)
                 self.ffn_down.set_weights(mat)
 
@@ -674,7 +674,7 @@ class Parallelism(VoiceoverScene):
                 # m_x_max = s.get_right()[0] - MAT_START_OFFSET
                 m_x_min = b.get_left()[0]
                 m_x_max = b.get_center()[0]
-                MAT_START_OFFSET = (s.get_left()[0] - m_x_min)/speed
+                MAT_START_OFFSET = (s.get_left()[0] - m_x_min)*2
                 alpha = clip(camera_x - m_x_min, 0, 1)
                 alpha2 = clip((camera_x - m_x_max)*speed, 0, 1)
                 for m_s, m_c, m_e in zip(s.get_family(True), c.get_family(True), e.get_family(True)):
@@ -766,12 +766,13 @@ class Parallelism(VoiceoverScene):
 
         for s,c,e,b in mats:
             Group(s,c,e).shift(5*DOWN)
-            self.add(c.scale(3))
+            self.add(c)
         self.add(transformer, *[t.res for t in transformer.transformer_layers], *[t.res2 for t in transformer.transformer_layers])
         self.frame.set_euler_angles(-1.62773323,  0.46361119,  1.62378591).set_shape(1.8*28.885307, 1.8*16.235258).move_to([-102.19126   ,   -4.4578367 ,   0.18124883])        
         #animate creation
         transformer.set_opacity(0)
         self.frame.add_updater(updater)
+        # self.play(self.frame.animate.shift(RIGHT * 20.05), run_time=1, rate_func=linear)
         self.play(self.frame.animate.shift(RIGHT * transformer.get_width() * 1.05), run_time=20, rate_func=linear)
         self.frame.remove_updater(updater)
 
