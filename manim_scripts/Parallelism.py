@@ -627,12 +627,16 @@ class Parallelism(VoiceoverScene):
 
 
         # t2 = Transformer(4, 4).next_to(t, DOWN)
-        global saved_colors
+        global saved_colors, last_camera_x
         saved_colors = {}
+        last_camera_x = float("inf")
         
         def updater(m, dt):
-            global saved_colors
+            global saved_colors, last_camera_x
             camera_x = self.frame.get_center()[0]
+            if camera_x == last_camera_x:
+                return
+            last_camera_x = camera_x
             speed = 0.2
             residuals = [(t.res.get_family(True) + t.res2.get_family(True)) for t in transformer.transformer_layers]
             mobjects = (*transformer.get_family(True), *it.chain(*residuals))
