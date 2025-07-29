@@ -108,8 +108,9 @@ class Parallelism(VoiceoverScene):
             GTTSService()
             )
         shader_dir = os.path.dirname(os.path.abspath(__file__)) + "/shaders/one_sided"
+        shader_dir2  = os.path.dirname(os.path.abspath(__file__)) + "/shaders/one_sided2"
         Square3D.shader_folder = shader_dir
-        Line3D.shader_folder = shader_dir
+        Line3D.shader_folder = shader_dir2
         hd_render = self.camera_config["resolution"][0] >= 1280
 
         class FBlock(Group):
