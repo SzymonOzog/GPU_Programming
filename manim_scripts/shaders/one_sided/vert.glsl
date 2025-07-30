@@ -3,7 +3,7 @@
 // uniform vec3 camera_position;
 uniform vec3 center;
 uniform vec3 shape;
-uniform bool fade_shading;
+uniform float fade_shading;
 
 in vec3 point;
 in vec3 d_normal_point;
@@ -29,7 +29,7 @@ void main(){
         new_point += (1 - out_rgba.w) * unit_normal;
     }
 
-    if (fade_shading)
+    if (fade_shading > 0.f)
     {
         float s = 0.f;
         float x = (point.x - center.x)/(shape.x + EPSILON);

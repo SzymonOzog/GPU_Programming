@@ -116,7 +116,7 @@ class Parallelism(VoiceoverScene):
                 "is_fixed_in_frame": 0.0,
                 "shading": np.array(cls.shading, dtype=float),
                 "clip_plane": np.zeros(4),
-                "fade_shading": False,
+                "fade_shading": 0.0,
             }
         Square3D.init_uniforms = updated_uniforms
         hd_render = self.camera_config["resolution"][0] >= 1280
@@ -173,7 +173,7 @@ class Parallelism(VoiceoverScene):
                         uniforms = {
                             "center": mob.get_center().astype(np.float32),
                             "shape": np.array(mob.get_shape()).astype(np.float32),
-                            "fade_shading": True,
+                            "fade_shading": 1.0,
                             }
                         mob.set_uniforms(uniforms)
 
