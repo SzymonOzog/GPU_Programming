@@ -1199,6 +1199,7 @@ class Parallelism(VoiceoverScene):
 
         x_sum = out_up.copy().move_to(Group(out_up, out_down))
         with self.voiceover(text="""We just need to sum both matrices for the final output""") as trk:
+            self.wait(3)
             self.play(ReplacementTransform(Group(out_up, out_down), Group(x_sum)))
             self.play(FadeOut(x_sum), FadeOut(mat_left), FadeOut(mat_right))
 
