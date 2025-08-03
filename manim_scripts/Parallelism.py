@@ -102,6 +102,7 @@ mats = []
 
 
 class Parallelism(VoiceoverScene):
+    samples=4
     def construct(self):
         self.set_speech_service(
             # RecorderService(transcription_model="base")
