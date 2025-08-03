@@ -985,12 +985,23 @@ class Parallelism(VoiceoverScene):
         def split_weights(t1_mobs, t2_mobs, color, dim=0, run_time=1):
             anims = []
             for b, b2 in zip(t1_mobs, t2_mobs):
-
                 down = b.block.copy().rescale_to_fit(b.length_over_dim(dim)/2, dim, True)
                 down.move_to(b, aligned_edge=DOWN if dim == 1 else RIGHT).set_color(color).scale(1.01)
+                for mob in down.get_family():
+                    mob.set_uniforms({
+                            "center": mob.get_center().astype(np.float32),
+                            "shape": np.array(mob.get_shape()).astype(np.float32),
+                            "fade_shading": 1.0,
+                            })
 
                 up = b.block.copy().rescale_to_fit(b.length_over_dim(dim)/2, dim, True)
                 up.move_to(b2, aligned_edge=DOWN if dim == 1 else RIGHT).set_color(color).scale(1.01)
+                for mob in up.get_family():
+                    mob.set_uniforms({
+                            "center": mob.get_center().astype(np.float32),
+                            "shape": np.array(mob.get_shape()).astype(np.float32),
+                            "fade_shading": 1.0,
+                            })
                 anims.append(Transform(down, up, remover=True, path_func=my_path_fn))
 
                 mid = b.get_center()[dim]
