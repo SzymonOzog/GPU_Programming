@@ -812,7 +812,7 @@ class Parallelism(VoiceoverScene):
             self.play(transformer.duplicate_to(transformer2))
 
         # Name it
-        dp_t = Text("Data Parallel").scale(50).next_to(cpu0, UP, buff=8).set_color(RED)
+        dp_t = Text("Data Parallel").scale(50).next_to(cpu0, UP, buff=8).set_color(WHITE)
         with self.voiceover(text="""This is called data parallelizm""") as trk:
             self.play(Write(dp_t))
 
@@ -874,7 +874,7 @@ class Parallelism(VoiceoverScene):
             self.play(self.frame.animate.shift(gpu2.get_center() - gpu0.get_center()), run_time=trk.get_remaining_duration())
 
         # Pipeline parallel
-        pp_t = Text("Pipeline Parallel").scale(50).next_to(cpu1, UP, buff=5).set_color(YELLOW).align_to(dp_t, UP)
+        pp_t = Text("Pipeline Parallel").scale(50).next_to(cpu1, UP, buff=5).set_color(WHITE).align_to(dp_t, UP)
         dist = gpu2.get_center()[1] - gpu3.get_center() [1]
         with self.voiceover(text="""One such method would be Pipeline Parallelizm. In this setting, in this setting, a subset of 
                             our model layers is placed on one GPU  while the rest is placed on a different one""") as trk:
@@ -921,7 +921,7 @@ class Parallelism(VoiceoverScene):
         self.play(FadeIn(cp2))
 
         # start TP
-        tp_t = Text("Tensor Parallel").scale(50).next_to(cpu2, UP, buff=5).set_color(GREEN).align_to(dp_t, UP)
+        tp_t = Text("Tensor Parallel").scale(50).next_to(cpu2, UP, buff=5).set_color(WHITE).align_to(dp_t, UP)
         with self.voiceover(text="""This has lead to a new method called Tensor Parallelizm""") as trk:
             self.play(self.frame.animate.shift(gpu4.get_center() - gpu2.get_center()), run_time=trk.get_remaining_duration())
             self.play(Write(tp_t))
@@ -1343,7 +1343,7 @@ class Parallelism(VoiceoverScene):
             pass
 
         self.play(FadeIn(cp3))
-        ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(GOLD).align_to(dp_t, UP)
+        ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(WHITE).align_to(dp_t, UP)
         with self.voiceover(text="""This type of model allowed us to parallelize by the expert dimension""") as trk:
             self.play(self.frame.animate.shift(gpu6.get_center() - gpu4.get_center()).rescale_to_fit(Group(gpu6, gpu6_t).get_width() + 10, dim=0) , 
                       run_time=trk.get_remaining_duration())
@@ -1502,7 +1502,7 @@ class Parallelism(VoiceoverScene):
         pp_c3 = Text("For big batches").scale(text_scale).set_color(RED).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
 
         loc = Group(table_line_v2, table_line_v1).get_center() + (table_line_v2.get_center() - table_line_v1.get_center())
-        tp_c3 = Text("Since batch size 1").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
+        tp_c3 = Text("For all batch sizes").scale(text_scale).set_color(GREEN).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
 
         loc = Group(table_line_v3, table_line_v2).get_center() + (table_line_v3.get_center() - table_line_v2.get_center())
         ep_c3 = Text("For medium batches").scale(text_scale).set_color(YELLOW).move_to(loc).align_to(table_line_h3, UP).shift(text_buff*DOWN)
