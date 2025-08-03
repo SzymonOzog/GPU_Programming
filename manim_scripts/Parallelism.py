@@ -1482,6 +1482,12 @@ class Parallelism(VoiceoverScene):
             self.play(Write(tp_c2))
             self.play(Write(ep_c2))
 
+        with self.voiceover(text="""With pipeline parallel there is one caveat, sometimmes it'self.
+                            impossible to split weights across the GPUs equally so we end up with uneven memory 
+                            consumption""") as trk:
+            self.wait(3)
+            self.play(pp_c2.animate.set_color(GREEN_E))
+
         # Compere speed 
         line_start = dp_c2.get_bottom() + text_buff*DOWN + 310*LEFT
         line_end = line_start + H_LINE_LEN*RIGHT
