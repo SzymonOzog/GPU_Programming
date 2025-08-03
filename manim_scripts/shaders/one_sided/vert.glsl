@@ -39,9 +39,12 @@ void main(){
         float z = (point.z - center.z)/(shape.z + EPSILON);
         s += (z*z);
         s+=0.5f;
-        out_rgba.x *= s;
-        out_rgba.y *= s;
-        out_rgba.z *= s;
+        if (s > 0.f && s < 1.f)
+        {
+            out_rgba.x *= s;
+            out_rgba.y *= s;
+            out_rgba.z *= s;
+        }
     }
 
     emit_gl_Position(new_point);
