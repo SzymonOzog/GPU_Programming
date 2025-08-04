@@ -826,9 +826,9 @@ class Parallelism(VoiceoverScene):
                 end_anims = []
                 for t in transformers:
                     request_s = Square3D(color=RED, side_length=6).move_to(t.embeddings.get_left())
-                    start_anims.append(FadeIn(request_s, shift=request_s.get_center() - cpu0_i.get_center(), remover=True))
-                    request_e = Square3D(color=RED, side_length=6).move_to(cpu0_i)
-                    end_anims.append(FadeIn(request_e, shift=request_e.get_center() - t.softmax.get_right(), remover=True))
+                    start_anims.extend([FadeIn(request_s, shift=request_s.get_center() - cpu0_i.get_center(), remover=True), trigger_gpu(gpu0, True), trigger_gpu(gpu1, True)])
+                    request_e = Square3D(color=RED, side_length=6).move_to(cpu0_i) 
+                    end_anims.extend([FadeIn(request_e, shift=request_e.get_center() - t.softmax.get_right(), remover=True), trigger_gpu(gpu0, False), trigger_gpu(gpu1, False)])
 
                 self.play(*start_anims, run_time=2)
                 run_transformers(transformers)
