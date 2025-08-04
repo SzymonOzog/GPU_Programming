@@ -847,7 +847,7 @@ class Parallelism(VoiceoverScene):
                               run_time=2)
                     run_transformers([t])
                     request = Square3D(color=RED, side_length=6).move_to(cpu0_i)
-                    self.play(FadeIn(request, shift=request.get_center() - transformer.softmax.get_right(), remover=True) ,
+                    self.play(FadeIn(request, shift=request.get_center() - t.softmax.get_right(), remover=True) ,
                               trigger_gpu(g, False),
                               run_time=2)
         self.play(*[trigger_gpu(g, True) for g in gpus])
