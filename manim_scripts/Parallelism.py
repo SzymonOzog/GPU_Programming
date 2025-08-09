@@ -1382,9 +1382,7 @@ class Parallelism(VoiceoverScene):
                         if len(mob1.get_points()) and "rgba" in mob1.data_dtype.names:
                             mob2.set_rgba_array(mob1.data["rgba"].copy())
 
-        with self.voiceover(text="""My wonderful reviewers, the scene will now switch to the one in the second video included, if you want
-                            to watch in order please switch to it and resume this one when you finish""") as trk:
-            pass
+        self.wait(1)
 
         self.play(FadeIn(cp3))
         ep_t = Text("Expert Parallel").scale(50).next_to(cpu3, UP, buff=5).set_color(WHITE).align_to(dp_t, UP)
