@@ -764,6 +764,12 @@ class Parallelism(VoiceoverScene):
         transformer.set_opacity(0)
         self.frame.add_updater(updater)
         # self.play(self.frame.animate.shift(RIGHT * 20.05), run_time=1, rate_func=linear)
+
+        # In the recent years there were a lot of advances in the LLM space, apart from just the architectural differences
+        # the one big constant change that has been occuring, is increasing the model size. They went from milions to bilions
+        # and now even trilions of parameters in size, taking up more and more space of our GPUs. This has sparked a lot of 
+        # engineering efforts in making them run efficiently in a multi GPU setting. My name is Szymon and in this episode
+        # I will present those methods and show you how to implement them. Let's get started
         self.play(self.frame.animate.shift(RIGHT * transformer.get_width() * 1.05), run_time=20, rate_func=linear)
         self.frame.remove_updater(updater)
 
@@ -1489,9 +1495,13 @@ class Parallelism(VoiceoverScene):
             self.play(Write(pp_c1))
 
         with self.voiceover(text="""Tensor and Expert Parallel are the most complicated to implement, it requires intergpu communication 
-                            across many steps""") as trk:
+                            across many steps, and changes to how the forward pass of our model is implemented""") as trk:
             self.play(Write(tp_c1))
             self.play(Write(ep_c1))
+
+        with self.voiceover(text="""With expert parallel there are even more challenges as efficient implementations, require us
+                            to do load balancing of experts to ensure good GPU utilization""") as trk:
+            pass
 
         # Compere memory reduction
         c2 = Text("Memory Reduction").scale(text_scale).next_to(table_line_v4, LEFT, buff=text_buff).align_to(table_line_h2, UP).shift(text_buff*DOWN)
