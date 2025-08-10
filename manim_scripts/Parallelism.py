@@ -770,7 +770,7 @@ class Parallelism(VoiceoverScene):
         # and now even trilions of parameters in size, taking up more and more space of our GPUs. This has sparked a lot of 
         # engineering efforts in making them run efficiently in a multi GPU setting. My name is Szymon and in this episode
         # I will present those methods and show you how to implement them. Let's get started
-        self.play(self.frame.animate.shift(RIGHT * transformer.get_width() * 1.05), run_time=20, rate_func=linear)
+        self.play(self.frame.animate.shift(RIGHT * transformer.get_width() * 1.05), run_time=41, rate_func=linear)
         self.frame.remove_updater(updater)
 
         # Create GPU
@@ -1285,23 +1285,25 @@ class Parallelism(VoiceoverScene):
             self.frame.shift(dist*RIGHT)
         self.frame.add_updater(updater)
 
-        for i in range(1, len(transformer6.transformer_layers)):
-            t = transformer6.transformer_layers[i]
-            t2 = transformer7.transformer_layers[i]
-            self.play(t2.rms_norm1.block.animate.set_color(YELLOW_E), run_time=0.5)
-            split_weights([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj], TEAL, dim=1, run_time=0.5)
-            self.play(t2.attn.block.animate.set_color(GOLD_E),
-                      t2.rotary1.block.animate.set_color(BLUE),
-                      t2.rotary2.block.animate.set_color(BLUE), run_time=0.5)
-            split_weights([t.out_proj], [t2.out_proj], TEAL, run_time=0.5)
-            create_allreduce(t, t2, t.out_proj, t2.out_proj, run_time=0.3)
-            self.play(t2.residual1.block.animate.set_color(BLUE), 
-                      t2.rms_norm2.block.animate.set_color(YELLOW_E), run_time=0.5, lag_ratio=0.2)
-            split_weights([t.ffn_gate, t.ffn_up], [t2.ffn_gate, t2.ffn_up], TEAL, dim=1, run_time=0.5)
-            self.play(t2.swiglu.block.animate.set_color(BLUE), run_time=0.5)
-            split_weights([t.ffn_down], [t2.ffn_down], TEAL, run_time=0.5)
-            create_allreduce(t, t2, t.ffn_down, t2.ffn_down, run_time=0.3)
-            self.play(t2.residual2.block.animate.set_color(BLUE), run_time=0.5)
+        with self.voiceover(text="""the transformer blocks are stacked on top of each other, each models contaning usually several dozen of those
+                            for each one in tensor parallel the split looks the same""") as trk:
+            for i in range(1, len(transformer6.transformer_layers)):
+                t = transformer6.transformer_layers[i]
+                t2 = transformer7.transformer_layers[i]
+                self.play(t2.rms_norm1.block.animate.set_color(YELLOW_E), run_time=0.5)
+                split_weights([t.q_proj, t.k_proj, t.v_proj], [t2.q_proj, t2.k_proj, t2.v_proj], TEAL, dim=1, run_time=0.5)
+                self.play(t2.attn.block.animate.set_color(GOLD_E),
+                          t2.rotary1.block.animate.set_color(BLUE),
+                          t2.rotary2.block.animate.set_color(BLUE), run_time=0.5)
+                split_weights([t.out_proj], [t2.out_proj], TEAL, run_time=0.5)
+                create_allreduce(t, t2, t.out_proj, t2.out_proj, run_time=0.3)
+                self.play(t2.residual1.block.animate.set_color(BLUE), 
+                          t2.rms_norm2.block.animate.set_color(YELLOW_E), run_time=0.5, lag_ratio=0.2)
+                split_weights([t.ffn_gate, t.ffn_up], [t2.ffn_gate, t2.ffn_up], TEAL, dim=1, run_time=0.5)
+                self.play(t2.swiglu.block.animate.set_color(BLUE), run_time=0.5)
+                split_weights([t.ffn_down], [t2.ffn_down], TEAL, run_time=0.5)
+                create_allreduce(t, t2, t.ffn_down, t2.ffn_down, run_time=0.3)
+                self.play(t2.residual2.block.animate.set_color(BLUE), run_time=0.5)
 
         print("creating took", self.time - start_time)
         self.frame.remove_updater(updater)
@@ -1694,3 +1696,6 @@ assert value == world_size, f"Expected {world_size}, got {value}"
         hl_t = SurroundingRectangle(Group(*code_obj.submobjects[s:e]), buff=0.03, stroke_width=2, fill_opacity=0.3, color=BLUE)
         with self.voiceover(text="""After initialization, we can now perform operations across GPU's like the forementioned allreduce""") as trk:
             self.play(Transform(hl, hl_t))
+        
+        self.wait(2)
+        self.play(*[FadeOut(x) for x in self.mobjects])
