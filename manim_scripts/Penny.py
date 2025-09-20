@@ -28,13 +28,15 @@ class Penny(VoiceoverScene):
             gpu = Group(s, t).shift(3*dirs[i])
             gpus.append(gpu)
             c = []
+            c2 = []
             for j in range(4):
-                s2 = Rectangle(height=0.25, width=1.5)
+                c2.append(Rectangle(height=0.25, width=1.5, color=GREY, stroke_width=1))
+                s2 = Rectangle(height=0.25, width=1.5, depth_test=True)
                 t2 = Text(f"{j*4 + i}").scale(0.35).move_to(s2)
 
                 c.append(Group(s2, t2))
+            chunks_cp.append(Group(*c2).arrange(DOWN, buff=0.03).move_to(gpu).shift(0.2*DOWN))
             chunks.append(Group(*c).arrange(DOWN, buff=0.03).move_to(gpu).shift(0.2*DOWN))
-            chunks_cp.append(chunks[-1].copy())
 
 
 
@@ -56,6 +58,7 @@ class Penny(VoiceoverScene):
             self.add(gpus[i])
             self.add(arcs[i])
             self.add(chunks[i])
+            self.add(chunks_cp[i])
         # Test movement
         for j in range(3):
             anims = []
