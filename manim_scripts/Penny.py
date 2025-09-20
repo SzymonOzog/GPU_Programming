@@ -59,7 +59,7 @@ class Penny(VoiceoverScene):
             self.add(arcs[i])
             self.add(chunks[i])
             self.add(chunks_cp[i])
-        # Test movement
+        # REDUCE 
         for j in range(3):
             anims = []
             for i in range(4):
@@ -79,7 +79,6 @@ class Penny(VoiceoverScene):
             for i in range(4):
                 c = (i-j)%4
                 n = (i+1)%4
-                print(i, n,c, chunks[n][c].submobjects[1].text)
                 new_text = f"{chunks[i][c].submobjects[1].text} + {chunks[n][c].submobjects[1].text}"
                 anims.append(
                         AnimationGroup(
@@ -97,3 +96,33 @@ class Penny(VoiceoverScene):
             self.play(*anims)
 
 
+        # BROADCAST
+        for j in range(3):
+            anims = []
+            cif = []
+            for i in range(4):
+                c = (i+1-j)%4
+                n = (i+1)%4
+                cif.append(chunks[i][c].copy())
+            for i in range(4):
+                n = (i+1)%4
+                anims.append(cif[i].animate.move_to(gpus[i].get_corner(dirs[n])))
+            self.play(*anims)
+            #arc
+            anims = []
+            for i in range(4):
+                n = (i+1)%4
+                anims.append(MoveAlongPath(cif[i], arcs[n]))
+            self.play(*anims)
+            #transform
+            anims = []
+            for i in range(4):
+                c = (i+1-j)%4
+                n = (i+1)%4
+                anims.append(cif[i].animate.move_to(chunks_cp[n][c]))
+            self.play(*anims)
+            for i in range(4):
+                c = (i+1-j)%4
+                n = (i+1)%4
+                chunks[n].submobjects[c] = cif[i]
+            self.play(*anims)
