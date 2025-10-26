@@ -9,13 +9,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from voicover_gl import VoiceoverScene
 import moderngl
 
-class Penny(VoiceoverScene):
+class Penny(Scene):
     samples=4
     def construct(self):
-        self.set_speech_service(
-            RecorderService(transcription_model="base")
-            # GTTSService()
-            )
         self.frame.set_euler_angles(0., 0., 0.).set_shape(15.881941, 8.926617).move_to([ 0.07937918, -0.01939364,  0.        ])
         gpus = []
         chunks = []
@@ -128,13 +124,9 @@ class Penny(VoiceoverScene):
             self.play(*anims)
 
 
-class PennySimple(VoiceoverScene):
+class PennySimple(Scene):
     samples=4
     def construct(self):
-        self.set_speech_service(
-            RecorderService(transcription_model="base")
-            # GTTSService()
-        )
         self.frame.set_euler_angles(0., 0., 0.).set_shape(15.881941, 8.926617).move_to([ 0.07937918, -0.01939364,  0.        ])
 
         gpus = []
@@ -212,3 +204,116 @@ class PennySimple(VoiceoverScene):
             self.play(cif.animate.move_to(chunks_cp[n]))
             chunks[n] = cif
             self.play(*anims)
+
+class PennyOneShot(Scene):
+    samples=4
+    def construct(self):
+        self.frame.set_euler_angles(0., 0., 0.).set_shape(15.881941, 8.926617).move_to([ 0.07937918, -0.01939364,  0.        ])
+
+        gpus = []
+        chunks = []
+        output = []
+        symmem = []
+        chunks_cp = []
+        dirs = [UP, RIGHT, DOWN, LEFT]
+
+        for i in range(4):
+            s = Square(color=GREEN)
+            t = Text(f"GPU {i}").move_to(s, UP).scale(0.8).shift(0.1*DOWN)
+            gpu = Group(s, t).shift(3*dirs[i])
+            gpus.append(gpu)
+
+            c = []
+            c2 = []
+            s = []
+            o = []
+            for j in range(4):
+                c2.append(Rectangle(height=0.25, width=0.25, color=WHITE, stroke_width=2))
+                o.append(Rectangle(height=0.25, width=0.25, color=BLUE, stroke_width=2))
+                s.append(Rectangle(height=0.25, width=1.25, color=RED, stroke_width=2))
+                t2 = Text(f"{j*4 + i}").scale(0.35).move_to(c2[-1])
+                c.append(Group(c2[-1], t2))
+            # chunks_cp.append(Group(*c2).arrange(DOWN, buff=0.03).move_to(gpu).shift(0.2*DOWN))
+            chunks.append(Group(*c).arrange(DOWN, buff=0.03))
+            output.append(Group(*o).arrange(DOWN, buff=0.03))
+            symmem.append(Group(*s).arrange(DOWN, buff=0.03))
+            Group(chunks[-1], output[-1], symmem[-1]).arrange(RIGHT, buff=0.03).move_to(gpu).shift(0.2*DOWN)
+
+        gpus = Group(*gpus)
+        paths = []
+        for i in range(4):
+            paths.append([])
+            for j in range(4):
+                paths[i].append(None)
+                if i == j:
+                    continue
+                paths[i][j] = Line(gpus[i], gpus[j])
+                # paths.append(
+                    # ArcBetweenPoints(
+                    #     gpus[i-1].get_corner(dirs[i]),
+                    #     gpus[i].get_corner(dirs[i-1]),
+                    #     angle=-TAU/4,
+                    #     color=GREY
+                    # )
+                # )
+
+        for i in range(4):
+            self.add(gpus[i])
+            for j in range(4):
+                if paths[i][j] != None:
+                    self.add(paths[i][j])
+            self.add(chunks[i])
+            self.add(output[i])
+            self.add(symmem[i])
+
+        # Get from all other PEs
+        chunks_cp = []
+        for i in range(3):
+            n = i+1
+            c = chunks[n].copy()
+            chunks_cp.append(c)
+            self.play(c.animate.move_to(paths[n][0].get_start()))
+            self.play(MoveAlongPath(c, paths[n][0]))
+            self.play(c.animate.move_to(symmem[0].get_left() + n*0.33*RIGHT))
+
+
+        # for chunk in chunks_cp:
+        for i in reversed(range(1,3)):
+            n = i-1
+            anims = []
+            for c in range(4):
+                new_text = str(int(chunks_cp[i][c].submobjects[1].text) + int(chunks_cp[n][c].submobjects[1].text))
+                anims.append(
+                        AnimationGroup(
+                            Transform(chunks_cp[n][c].submobjects[1],
+                                      Text(new_text).scale(0.35).move_to(chunks_cp[n][c].submobjects[1])
+                                      ),
+                            Transform(chunks_cp[i][c],
+                                      Group(Text(new_text).scale(0.35).move_to(chunks_cp[n][c].submobjects[1])),
+                                      remover=True
+                                      ),
+                            )
+                        )
+                # somehow this doesn't get updated
+                chunks_cp[n][c].submobjects[1].text = new_text
+            self.play(*anims)
+
+        #final merge
+        out_texts = []
+        anims = []
+        for c in range(4):
+            new_text = str(int(chunks_cp[0][c].submobjects[1].text) + int(chunks[0][c].submobjects[1].text))
+            print(new_text)
+            out_texts.append(Text(new_text).scale(0.35).move_to(output[0][c]))
+            anims.append(
+                    AnimationGroup(
+                        Transform(Group(chunks_cp[0][c].submobjects[1].copy(), chunks[0][c].submobjects[1].copy()),
+                                  Group(out_texts[-1])
+                                  ),
+                        Transform(chunks_cp[0][c],
+                                  Group(output[0][c].copy()),
+                                  remover=True
+                                  ),
+                        )
+                    )
+        self.play(*anims)
