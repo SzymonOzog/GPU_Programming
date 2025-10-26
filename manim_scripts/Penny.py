@@ -216,6 +216,13 @@ class PennyOneShot(Scene):
         symmem = []
         chunks_cp = []
         dirs = [UP, RIGHT, DOWN, LEFT]
+        legend = Group(
+                Text("Input"),
+                Text("Output", fill_color = BLUE),
+                Text("Symmetric Memory", fill_color=RED),
+                )
+
+        self.add(legend.arrange(DOWN).to_corner(UR))
 
         for i in range(4):
             s = Square(color=GREEN)
@@ -267,53 +274,83 @@ class PennyOneShot(Scene):
             self.add(symmem[i])
 
         # Get from all other PEs
-        chunks_cp = []
-        for i in range(3):
-            n = i+1
-            c = chunks[n].copy()
-            chunks_cp.append(c)
-            self.play(c.animate.move_to(paths[n][0].get_start()))
-            self.play(MoveAlongPath(c, paths[n][0]))
-            self.play(c.animate.move_to(symmem[0].get_left() + n*0.33*RIGHT))
+        all_chunks_cp = []
+        anims = []
+        for g in range(4):
+            chunks_cp = []
+            for i in range(3):
+                n = i+int(i >= g)
+                c = chunks[n].copy()
+                chunks_cp.append(c)
+                anims.append(c.animate.move_to(paths[n][g].get_start()))
+            all_chunks_cp.append(chunks_cp)
+        self.play(*anims)
 
+        # stage 2
+        anims = []
+        for g in range(4):
+            chunks_cp = all_chunks_cp[g]
+            for i in range(3):
+                n = i+int(i >= g)
+                c = chunks_cp[i]
+                anims.append(MoveAlongPath(c, paths[n][g]))
+        self.play(*anims)
 
-        # for chunk in chunks_cp:
+        # state 3
+        anims = []
+        for g in range(4):
+            chunks_cp = all_chunks_cp[g]
+            for i in range(3):
+                n = i+int(i >= g)
+                c = chunks_cp[i]
+                anims.append(c.animate.move_to(symmem[g].get_left() + (i+1)*0.33*RIGHT))
+        self.play(*anims)
+
+        # sum
+        anims = []
         for i in reversed(range(1,3)):
-            n = i-1
             anims = []
+            for g in range(4):
+                chunks_cp = all_chunks_cp[g]
+                n = i-1
+                for c in range(4):
+                    new_text = str(int(chunks_cp[i][c].submobjects[1].text) + int(chunks_cp[n][c].submobjects[1].text))
+                    anims.append(
+                            AnimationGroup(
+                                Transform(chunks_cp[n][c].submobjects[1],
+                                          Text(new_text).scale(0.35).move_to(chunks_cp[n][c].submobjects[1])
+                                          ),
+                                Transform(chunks_cp[i][c],
+                                          Group(Text(new_text).scale(0.35).move_to(chunks_cp[n][c].submobjects[1])),
+                                          remover=True
+                                          ),
+                                )
+                            )
+                    # somehow this doesn't get updated
+                    chunks_cp[n][c].submobjects[1].text = new_text
+            self.play(*anims)
+
+        #final merge
+        anims = []
+        for g in range(4):
+            chunks_cp = all_chunks_cp[g]
+            out_texts = []
             for c in range(4):
-                new_text = str(int(chunks_cp[i][c].submobjects[1].text) + int(chunks_cp[n][c].submobjects[1].text))
+                new_text = str(int(chunks_cp[0][c].submobjects[1].text) + int(chunks[g][c].submobjects[1].text))
+                print(new_text)
+                out_texts.append(Text(new_text).scale(0.35).move_to(output[g][c]))
                 anims.append(
                         AnimationGroup(
-                            Transform(chunks_cp[n][c].submobjects[1],
-                                      Text(new_text).scale(0.35).move_to(chunks_cp[n][c].submobjects[1])
+                            Transform(chunks_cp[0][c].submobjects[1].copy(),
+                                      out_texts[-1]
                                       ),
-                            Transform(chunks_cp[i][c],
-                                      Group(Text(new_text).scale(0.35).move_to(chunks_cp[n][c].submobjects[1])),
+                            Transform(chunks[g][c].submobjects[1].copy(),
+                                      out_texts[-1].copy()
+                                      ),
+                            Transform(chunks_cp[0][c],
+                                      Group(output[g][c].copy()),
                                       remover=True
                                       ),
                             )
                         )
-                # somehow this doesn't get updated
-                chunks_cp[n][c].submobjects[1].text = new_text
-            self.play(*anims)
-
-        #final merge
-        out_texts = []
-        anims = []
-        for c in range(4):
-            new_text = str(int(chunks_cp[0][c].submobjects[1].text) + int(chunks[0][c].submobjects[1].text))
-            print(new_text)
-            out_texts.append(Text(new_text).scale(0.35).move_to(output[0][c]))
-            anims.append(
-                    AnimationGroup(
-                        Transform(Group(chunks_cp[0][c].submobjects[1].copy(), chunks[0][c].submobjects[1].copy()),
-                                  Group(out_texts[-1])
-                                  ),
-                        Transform(chunks_cp[0][c],
-                                  Group(output[0][c].copy()),
-                                  remover=True
-                                  ),
-                        )
-                    )
         self.play(*anims)
