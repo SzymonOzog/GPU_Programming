@@ -1,0 +1,300 @@
+
+Fatbin elf code:
+================
+arch = sm_90a
+code version = [1,8]
+host = linux
+compile_size = 64bit
+
+Fatbin ptx code:
+================
+arch = sm_90
+code version = [9,3]
+host = linux
+compile_size = 64bit
+compressed
+ptxasOptions = 
+
+
+
+
+
+
+
+
+.version 9.3
+.target sm_90
+.address_size 64
+
+
+.extern .shared .align 16 .b8 inp[];
+
+.visible .entry _Z8mma_kernPKfS0_Pf(
+.param .u64 _Z8mma_kernPKfS0_Pf_param_0,
+.param .u64 _Z8mma_kernPKfS0_Pf_param_1,
+.param .u64 _Z8mma_kernPKfS0_Pf_param_2
+)
+{
+.reg .pred %p<4>;
+.reg .b32 %r<171>;
+.reg .b64 %rd<14>;
+
+
+ld.param.u64 %rd4, [_Z8mma_kernPKfS0_Pf_param_0];
+ld.param.u64 %rd5, [_Z8mma_kernPKfS0_Pf_param_1];
+ld.param.u64 %rd6, [_Z8mma_kernPKfS0_Pf_param_2];
+mov.u32 %r1, %tid.x;
+setp.gt.s32 %p1, %r1, 255;
+@%p1 bra $L__BB0_3;
+
+mov.u32 %r2, %ntid.x;
+cvta.to.global.u64 %rd1, %rd4;
+cvta.to.global.u64 %rd2, %rd5;
+mov.u32 %r14, inp;
+mov.u32 %r166, %r1;
+
+$L__BB0_2:
+mul.wide.s32 %rd7, %r166, 4;
+add.s64 %rd8, %rd1, %rd7;
+shl.b32 %r13, %r166, 3;
+add.s32 %r15, %r14, %r13;
+ld.global.nc.v4.u32 {%r16, %r17, %r18, %r19}, [%rd8];
+st.shared.v4.u32 [%r15], {%r16, %r17, %r18, %r19};
+add.s64 %rd9, %rd2, %rd7;
+ld.global.nc.v4.u32 {%r24, %r25, %r26, %r27}, [%rd9];
+st.shared.v4.u32 [%r15+8192], {%r24, %r25, %r26, %r27};
+add.s32 %r166, %r166, %r2;
+setp.lt.s32 %p2, %r166, 256;
+@%p2 bra $L__BB0_2;
+
+$L__BB0_3:
+mov.u32 %r35, inp;
+add.s32 %r167, %r35, 8640;
+cvta.to.global.u64 %rd3, %rd6;
+mov.u32 %r168, 0;
+
+$L__BB0_4:
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r116, %r117, %r118, %r119}, [%r167+-8640];
+ld.shared.u32 %r40, [%r167+-8632];
+ld.shared.v2.u32 {%r120, %r121}, [%r167+-448];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r116, %r117, %r40, %r119}, {%r120, %r121}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r122, %r123, %r124, %r125}, [%r167+-8576];
+ld.shared.u32 %r50, [%r167+-8568];
+ld.shared.v2.u32 {%r126, %r127}, [%r167+-384];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r122, %r123, %r50, %r125}, {%r126, %r127}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r128, %r129, %r130, %r131}, [%r167+-8512];
+ld.shared.u32 %r60, [%r167+-8504];
+ld.shared.v2.u32 {%r132, %r133}, [%r167+-320];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r128, %r129, %r60, %r131}, {%r132, %r133}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r134, %r135, %r136, %r137}, [%r167+-8448];
+ld.shared.u32 %r70, [%r167+-8440];
+ld.shared.v2.u32 {%r138, %r139}, [%r167+-256];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r134, %r135, %r70, %r137}, {%r138, %r139}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r140, %r141, %r142, %r143}, [%r167+-8384];
+ld.shared.u32 %r80, [%r167+-8376];
+ld.shared.v2.u32 {%r144, %r145}, [%r167+-192];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r140, %r141, %r80, %r143}, {%r144, %r145}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r146, %r147, %r148, %r149}, [%r167+-8320];
+ld.shared.u32 %r90, [%r167+-8312];
+ld.shared.v2.u32 {%r150, %r151}, [%r167+-128];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r146, %r147, %r90, %r149}, {%r150, %r151}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r152, %r153, %r154, %r155}, [%r167+-8256];
+ld.shared.u32 %r100, [%r167+-8248];
+ld.shared.v2.u32 {%r156, %r157}, [%r167+-64];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r152, %r153, %r100, %r155}, {%r156, %r157}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r158, %r159, %r160, %r161}, [%r167+-8192];
+ld.shared.u32 %r110, [%r167+-8184];
+ld.shared.v2.u32 {%r162, %r163}, [%r167];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r158, %r159, %r110, %r161}, {%r162, %r163}, {%r169, %r170};
+
+add.s32 %r167, %r167, 512;
+add.s32 %r168, %r168, 64;
+setp.lt.u32 %p3, %r168, 1024;
+@%p3 bra $L__BB0_4;
+
+mul.wide.u32 %rd10, %r1, 4;
+add.s64 %rd11, %rd3, %rd10;
+st.global.u32 [%rd11], %r169;
+mov.u32 %r164, %ntid.x;
+add.s32 %r165, %r1, %r164;
+mul.wide.u32 %rd12, %r165, 4;
+add.s64 %rd13, %rd3, %rd12;
+st.global.u32 [%rd13], %r170;
+ret;
+
+}
+
+
+
+Fatbin elf code:
+================
+arch = sm_90a
+code version = [1,8]
+host = linux
+compile_size = 64bit
+
+Fatbin ptx code:
+================
+arch = sm_90a
+code version = [9,3]
+host = linux
+compile_size = 64bit
+compressed
+ptxasOptions = 
+
+
+
+
+
+
+
+
+.version 9.3
+.target sm_90a
+.address_size 64
+
+
+.extern .shared .align 16 .b8 inp[];
+
+.visible .entry _Z8mma_kernPKfS0_Pf(
+.param .u64 _Z8mma_kernPKfS0_Pf_param_0,
+.param .u64 _Z8mma_kernPKfS0_Pf_param_1,
+.param .u64 _Z8mma_kernPKfS0_Pf_param_2
+)
+{
+.reg .pred %p<4>;
+.reg .b32 %r<171>;
+.reg .b64 %rd<14>;
+
+
+ld.param.u64 %rd4, [_Z8mma_kernPKfS0_Pf_param_0];
+ld.param.u64 %rd5, [_Z8mma_kernPKfS0_Pf_param_1];
+ld.param.u64 %rd6, [_Z8mma_kernPKfS0_Pf_param_2];
+mov.u32 %r1, %tid.x;
+setp.gt.s32 %p1, %r1, 255;
+@%p1 bra $L__BB0_3;
+
+mov.u32 %r2, %ntid.x;
+cvta.to.global.u64 %rd1, %rd4;
+cvta.to.global.u64 %rd2, %rd5;
+mov.u32 %r14, inp;
+mov.u32 %r166, %r1;
+
+$L__BB0_2:
+mul.wide.s32 %rd7, %r166, 4;
+add.s64 %rd8, %rd1, %rd7;
+shl.b32 %r13, %r166, 3;
+add.s32 %r15, %r14, %r13;
+ld.global.nc.v4.u32 {%r16, %r17, %r18, %r19}, [%rd8];
+st.shared.v4.u32 [%r15], {%r16, %r17, %r18, %r19};
+add.s64 %rd9, %rd2, %rd7;
+ld.global.nc.v4.u32 {%r24, %r25, %r26, %r27}, [%rd9];
+st.shared.v4.u32 [%r15+8192], {%r24, %r25, %r26, %r27};
+add.s32 %r166, %r166, %r2;
+setp.lt.s32 %p2, %r166, 256;
+@%p2 bra $L__BB0_2;
+
+$L__BB0_3:
+mov.u32 %r35, inp;
+add.s32 %r167, %r35, 8640;
+cvta.to.global.u64 %rd3, %rd6;
+mov.u32 %r168, 0;
+
+$L__BB0_4:
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r116, %r117, %r118, %r119}, [%r167+-8640];
+ld.shared.u32 %r40, [%r167+-8632];
+ld.shared.v2.u32 {%r120, %r121}, [%r167+-448];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r116, %r117, %r40, %r119}, {%r120, %r121}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r122, %r123, %r124, %r125}, [%r167+-8576];
+ld.shared.u32 %r50, [%r167+-8568];
+ld.shared.v2.u32 {%r126, %r127}, [%r167+-384];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r122, %r123, %r50, %r125}, {%r126, %r127}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r128, %r129, %r130, %r131}, [%r167+-8512];
+ld.shared.u32 %r60, [%r167+-8504];
+ld.shared.v2.u32 {%r132, %r133}, [%r167+-320];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r128, %r129, %r60, %r131}, {%r132, %r133}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r134, %r135, %r136, %r137}, [%r167+-8448];
+ld.shared.u32 %r70, [%r167+-8440];
+ld.shared.v2.u32 {%r138, %r139}, [%r167+-256];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r134, %r135, %r70, %r137}, {%r138, %r139}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r140, %r141, %r142, %r143}, [%r167+-8384];
+ld.shared.u32 %r80, [%r167+-8376];
+ld.shared.v2.u32 {%r144, %r145}, [%r167+-192];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r140, %r141, %r80, %r143}, {%r144, %r145}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r146, %r147, %r148, %r149}, [%r167+-8320];
+ld.shared.u32 %r90, [%r167+-8312];
+ld.shared.v2.u32 {%r150, %r151}, [%r167+-128];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r146, %r147, %r90, %r149}, {%r150, %r151}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r152, %r153, %r154, %r155}, [%r167+-8256];
+ld.shared.u32 %r100, [%r167+-8248];
+ld.shared.v2.u32 {%r156, %r157}, [%r167+-64];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r152, %r153, %r100, %r155}, {%r156, %r157}, {%r169, %r170};
+
+.pragma "used_bytes_mask 61695";
+ld.shared.v4.u32 {%r158, %r159, %r160, %r161}, [%r167+-8192];
+ld.shared.u32 %r110, [%r167+-8184];
+ld.shared.v2.u32 {%r162, %r163}, [%r167];
+
+mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {%r169, %r170}, {%r158, %r159, %r110, %r161}, {%r162, %r163}, {%r169, %r170};
+
+add.s32 %r167, %r167, 512;
+add.s32 %r168, %r168, 64;
+setp.lt.u32 %p3, %r168, 1024;
+@%p3 bra $L__BB0_4;
+
+mul.wide.u32 %rd10, %r1, 4;
+add.s64 %rd11, %rd3, %rd10;
+st.global.u32 [%rd11], %r169;
+mov.u32 %r164, %ntid.x;
+add.s32 %r165, %r1, %r164;
+mul.wide.u32 %rd12, %r165, 4;
+add.s64 %rd13, %rd3, %rd12;
+st.global.u32 [%rd13], %r170;
+ret;
+
+}
+
+
